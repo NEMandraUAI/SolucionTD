@@ -58,8 +58,10 @@ namespace BLL
         }
         public void GuardarFamiliaCompleta(FamiliaBE familia)
         {
-            if (familia.Nombre.Trim().ToUpper() == "ADMINISTRADOR" || familia.Nombre.Trim().ToUpper() == "USUARIO SIMPLE")
-                throw new Exception("No se pueden modificar los roles estáticos del sistema desde esta interfaz.");
+            if (familia.Nombre.ToUpper() == "ADMINISTRADOR" || familia.Nombre.ToUpper() == "RECEPCIONISTA" || familia.Nombre.ToUpper() == "ENTRENADOR")
+            {
+                throw new Exception("Los roles operativos del gimnasio son estáticos y no pueden ser eliminados.");
+            }
             if (familia.ID == 0)
             {
                 familia.ID = permisoDAL.GuardarFamilia(familia);
@@ -81,8 +83,10 @@ namespace BLL
         }
         public void EliminarFamilia(FamiliaBE familia)
         {
-            if (familia.Nombre.Trim().ToUpper() == "ADMINISTRADOR" || familia.Nombre.Trim().ToUpper() == "USUARIO SIMPLE")
-                throw new Exception("Los roles 'Administrador' y 'Usuario Simple' son obligatorios para el funcionamiento del sistema y no pueden eliminarse.");
+            if (familia.Nombre.ToUpper() == "ADMINISTRADOR" || familia.Nombre.ToUpper() == "RECEPCIONISTA" || familia.Nombre.ToUpper() == "ENTRENADOR")
+            {
+                throw new Exception("Los roles operativos del gimnasio son estáticos y no pueden ser eliminados.");
+            }
             if (permisoDAL.RolAsignadoAAlgunUsuario(familia.ID))
                 throw new Exception("No se puede eliminar el rol porque se encuentra asignado a uno o más usuarios activos.");
             permisoDAL.EliminarFamilia(familia.ID);

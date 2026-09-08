@@ -32,6 +32,10 @@
             iniciarSesionToolStripMenuItem = new ToolStripMenuItem();
             iniciarSesiónToolStripMenuItem = new ToolStripMenuItem();
             registrarseToolStripMenuItem = new ToolStripMenuItem();
+            recepcionToolStripMenuItem = new ToolStripMenuItem();
+            venderPlanToolStripMenuItem = new ToolStripMenuItem();
+            entrenamientoToolStripMenuItem = new ToolStripMenuItem();
+            asignarRutinaToolStripMenuItem = new ToolStripMenuItem();
             salirToolStripMenuItem = new ToolStripMenuItem();
             cmbIdiomas = new ComboBox();
             btnNuevoIdioma = new Button();
@@ -42,7 +46,7 @@
             // 
             // menuStrip1
             // 
-            menuStrip1.Items.AddRange(new ToolStripItem[] { iniciarSesionToolStripMenuItem, salirToolStripMenuItem });
+            menuStrip1.Items.AddRange(new ToolStripItem[] { iniciarSesionToolStripMenuItem, recepcionToolStripMenuItem, entrenamientoToolStripMenuItem, salirToolStripMenuItem });
             menuStrip1.Location = new Point(0, 0);
             menuStrip1.Name = "menuStrip1";
             menuStrip1.Size = new Size(800, 24);
@@ -69,6 +73,36 @@
             registrarseToolStripMenuItem.Size = new Size(143, 22);
             registrarseToolStripMenuItem.Text = "Registrarse";
             registrarseToolStripMenuItem.Click += registrarseToolStripMenuItem_Click;
+            // 
+            // recepcionToolStripMenuItem
+            // 
+            recepcionToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { venderPlanToolStripMenuItem });
+            recepcionToolStripMenuItem.Name = "recepcionToolStripMenuItem";
+            recepcionToolStripMenuItem.Size = new Size(74, 20);
+            recepcionToolStripMenuItem.Text = "Recepción";
+            recepcionToolStripMenuItem.Visible = false;
+            // 
+            // venderPlanToolStripMenuItem
+            // 
+            venderPlanToolStripMenuItem.Name = "venderPlanToolStripMenuItem";
+            venderPlanToolStripMenuItem.Size = new Size(180, 22);
+            venderPlanToolStripMenuItem.Text = "Vender Plan";
+            venderPlanToolStripMenuItem.Click += venderPlanToolStripMenuItem_Click;
+            // 
+            // entrenamientoToolStripMenuItem
+            // 
+            entrenamientoToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { asignarRutinaToolStripMenuItem });
+            entrenamientoToolStripMenuItem.Name = "entrenamientoToolStripMenuItem";
+            entrenamientoToolStripMenuItem.Size = new Size(97, 20);
+            entrenamientoToolStripMenuItem.Text = "Entrenamiento";
+            entrenamientoToolStripMenuItem.Visible = false;
+            // 
+            // asignarRutinaToolStripMenuItem
+            // 
+            asignarRutinaToolStripMenuItem.Name = "asignarRutinaToolStripMenuItem";
+            asignarRutinaToolStripMenuItem.Size = new Size(180, 22);
+            asignarRutinaToolStripMenuItem.Text = "Asignar Rutina";
+            asignarRutinaToolStripMenuItem.Click += asignarRutinaToolStripMenuItem_Click;
             // 
             // salirToolStripMenuItem
             // 
@@ -137,5 +171,9 @@
         private ComboBox cmbIdiomas;
         private Button btnNuevoIdioma;
         private Panel panelIdioma;
+        private ToolStripMenuItem recepcionToolStripMenuItem;
+        private ToolStripMenuItem venderPlanToolStripMenuItem;
+        private ToolStripMenuItem entrenamientoToolStripMenuItem;
+        private ToolStripMenuItem asignarRutinaToolStripMenuItem;
     }
 }

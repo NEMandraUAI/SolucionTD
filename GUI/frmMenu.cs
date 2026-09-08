@@ -133,6 +133,7 @@ namespace GUI
             }
             AbrirSesion(e.Usuario);
             EvaluarPermisosIdioma();
+            AplicarPermisosUI();
         }
         private void AbrirSesion(UsuarioBE pUsuario)
         {
@@ -147,6 +148,7 @@ namespace GUI
             try
             {
                 EvaluarPermisosIdioma();
+                AplicarPermisosUI();
                 integridadBLL.VerificarIntegridadSistema();
                 AbrirLogin();
             }
@@ -313,6 +315,33 @@ namespace GUI
                 cmbIdiomas.SelectedIndexChanged += cmbIdiomas_SelectedIndexChanged;
             };
             frm.Show();
+        }
+        public void AplicarPermisosUI()
+        {
+            if (SessionManager.Instancia.UsuarioActual != null)
+            {
+                recepcionToolStripMenuItem.Visible = SessionManager.Instancia.UsuarioActual.TienePermiso("VENDER_PLAN");
+                entrenamientoToolStripMenuItem.Visible = SessionManager.Instancia.UsuarioActual.TienePermiso("ASIGNAR_RUTINA");
+            }
+            else
+            {
+                recepcionToolStripMenuItem.Visible = false;
+                entrenamientoToolStripMenuItem.Visible = false;
+            }
+        }
+
+        private void venderPlanToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            frmRecepcion formRecepcion = new frmRecepcion();
+            formRecepcion.MdiParent = this;
+            formRecepcion.Show();
+        }
+
+        private void asignarRutinaToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            frmEntrenamiento formEntrenamiento = new frmEntrenamiento();
+            formEntrenamiento.MdiParent = this;
+            formEntrenamiento.Show();
         }
     }
 }

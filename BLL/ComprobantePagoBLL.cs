@@ -30,5 +30,12 @@ namespace BLL
             intDal.ActualizarDVV("ComprobantePago", nuevoDVV);
             regBll.RegistrarEvento($"Venta de plan registrada. Comprobante Nro: {comprobante.NroComprobante} - Socio DNI: {comprobante.Socio.DNI}", SessionManager.Instancia.UsuarioActual, "INFO");
         }
+
+        public List<ComprobantePagoBE> ConsultarComprobantesFiltros(DateTime desde, DateTime hasta, string dniSocio)
+        {
+            if (desde > hasta)
+                throw new Exception("La fecha 'Desde' no puede ser mayor a la fecha 'Hasta'.");
+            return dal.ConsultarComprobantesFiltros(desde, hasta, dniSocio);
+        }
     }
 }

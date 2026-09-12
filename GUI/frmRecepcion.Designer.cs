@@ -44,6 +44,7 @@
             lblEmail = new Label();
             lblPlan = new Label();
             lblMetodoPago = new Label();
+            btnConsultarPlanes = new Button();
             SuspendLayout();
             // 
             // txtDNI
@@ -109,7 +110,7 @@
             // 
             // btnConfirmarVenta
             // 
-            btnConfirmarVenta.Location = new Point(12, 383);
+            btnConfirmarVenta.Location = new Point(199, 383);
             btnConfirmarVenta.Name = "btnConfirmarVenta";
             btnConfirmarVenta.Size = new Size(158, 38);
             btnConfirmarVenta.TabIndex = 8;
@@ -187,11 +188,22 @@
             lblMetodoPago.TabIndex = 15;
             lblMetodoPago.Text = "Métodos de Pago";
             // 
+            // btnConsultarPlanes
+            // 
+            btnConsultarPlanes.Location = new Point(12, 383);
+            btnConsultarPlanes.Name = "btnConsultarPlanes";
+            btnConsultarPlanes.Size = new Size(158, 38);
+            btnConsultarPlanes.TabIndex = 16;
+            btnConsultarPlanes.Text = "Consultar Planes";
+            btnConsultarPlanes.UseVisualStyleBackColor = true;
+            btnConsultarPlanes.Click += btnConsultarPlanes_Click;
+            // 
             // frmRecepcion
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(384, 450);
+            Controls.Add(btnConsultarPlanes);
             Controls.Add(lblMetodoPago);
             Controls.Add(lblPlan);
             Controls.Add(lblEmail);
@@ -234,5 +246,6 @@
         private Label lblEmail;
         private Label lblPlan;
         private Label lblMetodoPago;
+        private Button btnConsultarPlanes;
     }
 }

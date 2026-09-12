@@ -26,7 +26,6 @@ namespace GUI
         private void frmRecepcion_Load(object sender, EventArgs e)
         {
             CargarPlanes();
-            CargarMetodosPago();
             ActualizarIdioma(GestorIdioma.Instancia.IdiomaActual);
         }
 
@@ -35,6 +34,7 @@ namespace GUI
             var traducciones = idiomaBLL.ObtenerTraducciones(idioma, this.Name);
             if (traducciones.ContainsKey("btnBuscar")) btnBuscar.Text = traducciones["btnBuscar"];
             if (traducciones.ContainsKey("btnConfirmarVenta")) btnConfirmarVenta.Text = traducciones["btnConfirmarVenta"];
+            if (traducciones.ContainsKey("btnConsultarPlanes")) btnConsultarPlanes.Text = traducciones["btnConsultarPlanes"];
             if (traducciones.ContainsKey("lblDNI")) lblDNI.Text = traducciones["lblDNI"];
             if (traducciones.ContainsKey("lblNombre")) lblNombre.Text = traducciones["lblNombre"];
             if (traducciones.ContainsKey("lblApellido")) lblApellido.Text = traducciones["lblApellido"];
@@ -43,6 +43,31 @@ namespace GUI
             if (traducciones.ContainsKey("lblPlan")) lblPlan.Text = traducciones["lblPlan"];
             if (traducciones.ContainsKey("lblMetodoPago")) lblMetodoPago.Text = traducciones["lblMetodoPago"];
             this.Text = traducciones.ContainsKey("titRecepcion") ? traducciones["titRecepcion"] : "Recepción";
+            Dictionary<string, string> metodos = new Dictionary<string, string>();
+            metodos.Add("Efectivo", traducciones.ContainsKey("metodoEfectivo") ? traducciones["metodoEfectivo"] : "Efectivo");
+            metodos.Add("Tarjeta de Débito", traducciones.ContainsKey("metodoDebito") ? traducciones["metodoDebito"] : "Tarjeta de Débito");
+            metodos.Add("Tarjeta de Crédito", traducciones.ContainsKey("metodoCredito") ? traducciones["metodoCredito"] : "Tarjeta de Crédito");
+            metodos.Add("Transferencia", traducciones.ContainsKey("metodoTransferencia") ? traducciones["metodoTransferencia"] : "Transferencia");
+            cmbMetodoPago.DataSource = new BindingSource(metodos, null);
+            cmbMetodoPago.DisplayMember = "Value";
+            cmbMetodoPago.ValueMember = "Key";
+            if (cmbPlanes.DataSource != null)
+            {
+                int indicePlan = cmbPlanes.SelectedIndex;
+                List<PlanSuscripcionBE> planes = (List<PlanSuscripcionBE>)cmbPlanes.DataSource;
+                foreach (var plan in planes)
+                {
+                    if (plan.CodigoPlan == 1 && traducciones.ContainsKey("planMensual")) plan.Nombre = traducciones["planMensual"];
+                    if (plan.CodigoPlan == 2 && traducciones.ContainsKey("planTrimestral")) plan.Nombre = traducciones["planTrimestral"];
+                    if (plan.CodigoPlan == 3 && traducciones.ContainsKey("planAnual")) plan.Nombre = traducciones["planAnual"];
+                }
+                cmbPlanes.DataSource = null;
+                cmbPlanes.DataSource = planes;
+                cmbPlanes.DisplayMember = "Nombre";
+                cmbPlanes.ValueMember = "CodigoPlan";
+                if (indicePlan >= 0 && indicePlan < cmbPlanes.Items.Count)
+                    cmbPlanes.SelectedIndex = indicePlan;
+            }
         }
 
         private void CargarPlanes()
@@ -50,15 +75,6 @@ namespace GUI
             cmbPlanes.DataSource = planBLL.ListarPlanes();
             cmbPlanes.DisplayMember = "Nombre";
             cmbPlanes.ValueMember = "CodigoPlan";
-        }
-
-        private void CargarMetodosPago()
-        {
-            cmbMetodoPago.Items.Add("Efectivo");
-            cmbMetodoPago.Items.Add("Tarjeta de Débito");
-            cmbMetodoPago.Items.Add("Tarjeta de Crédito");
-            cmbMetodoPago.Items.Add("Transferencia");
-            cmbMetodoPago.SelectedIndex = 0;
         }
 
         private void btnBuscar_Click(object sender, EventArgs e)
@@ -103,7 +119,7 @@ namespace GUI
                 ComprobantePagoBE comprobante = new ComprobantePagoBE();
                 comprobante.Fecha = DateTime.Now;
                 comprobante.MontoTotal = planSeleccionado.Precio;
-                comprobante.MetodoPago = cmbMetodoPago.SelectedItem.ToString();
+                comprobante.MetodoPago = cmbMetodoPago.SelectedValue.ToString();
                 comprobante.Socio = socioActual;
                 comprobante.EmpleadoCobrador = SessionManager.Instancia.UsuarioActual;
                 comprobanteBLL.RegistrarVenta(comprobante);
@@ -119,6 +135,12 @@ namespace GUI
         private void frmRecepcion_FormClosing(object sender, FormClosingEventArgs e)
         {
             GestorIdioma.Instancia.Desuscribir(this);
+        }
+
+        private void btnConsultarPlanes_Click(object sender, EventArgs e)
+        {
+            frmConsultarPlanes catalogo = new frmConsultarPlanes();
+            catalogo.ShowDialog();
         }
     }
 }

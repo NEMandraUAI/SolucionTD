@@ -343,5 +343,19 @@ namespace GUI
             formEntrenamiento.MdiParent = this;
             formEntrenamiento.Show();
         }
+
+        private void consultarComprobantesToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            frmConsultarComprobantes formConsultar = new frmConsultarComprobantes();
+            formConsultar.MdiParent = this;
+            formConsultar.Show();
+        }
+
+        private void gestionRutinasToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            frmGestionRutinas formGestion = new frmGestionRutinas();
+            formGestion.MdiParent = this;
+            formGestion.Show();
+        }
     }
 }

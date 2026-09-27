@@ -14,4 +14,10 @@
     <ProjectReference Include="..\Seguridad\Seguridad.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="InitDB.sql">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

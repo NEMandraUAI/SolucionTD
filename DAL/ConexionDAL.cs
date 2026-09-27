@@ -12,10 +12,9 @@ namespace DAL
     {
         private static ConexionDAL instancia;
         private static readonly object candado = new object();
-        private string cadenaConexion;
+        public static string ConnectionStringTemporal { get; set; }
         private ConexionDAL()
         {
-            cadenaConexion = ConfigurationManager.ConnectionStrings["CadenaProyectoCampo"].ConnectionString;
         }
         public static ConexionDAL Instancia
         {
@@ -33,7 +32,20 @@ namespace DAL
         }
         public SqlConnection ObtenerConexion()
         {
-            return new SqlConnection(cadenaConexion);
+            string connectionString;
+            if (!string.IsNullOrEmpty(ConnectionStringTemporal))
+            {
+                connectionString = ConnectionStringTemporal;
+            }
+            else
+            {
+                connectionString = ConfigurationManager.ConnectionStrings["DefaultConnection"].ConnectionString;
+                if (connectionString == "DB_CONNECTION_STRING_PLACEHOLDER")
+                {
+                    connectionString = "Server=.;Database=ProyectoCampo;Trusted_Connection=True;TrustServerCertificate=True;";
+                }
+            }
+            return new SqlConnection(connectionString);
         }
     }
 }

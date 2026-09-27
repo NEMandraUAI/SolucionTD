@@ -27,7 +27,7 @@ namespace BLL
                 string scriptPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "InitDB.sql");
                 if (!File.Exists(scriptPath)) throw new Exception("No se encontró InitDB.sql");
                 string scriptContent = File.ReadAllText(scriptPath);
-                string[] comandos = Regex.Split(scriptContent, @"^\s*GO\s*$", RegexOptions.Multiline | RegexOptions.IgnoreCase);
+                string[] comandos = scriptContent.Split(new[] { "GO\r\n", "GO\n", "GO\t", "GO " }, StringSplitOptions.RemoveEmptyEntries);
                 foreach (string comandoSql in comandos)
                 {
                     if (string.IsNullOrWhiteSpace(comandoSql)) continue;

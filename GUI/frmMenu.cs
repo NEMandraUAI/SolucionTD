@@ -322,11 +322,13 @@ namespace GUI
             {
                 recepcionToolStripMenuItem.Visible = SessionManager.Instancia.UsuarioActual.TienePermiso("VENDER_PLAN");
                 entrenamientoToolStripMenuItem.Visible = SessionManager.Instancia.UsuarioActual.TienePermiso("ASIGNAR_RUTINA");
+                nutriciónToolStripMenuItem.Visible = SessionManager.Instancia.UsuarioActual.TienePermiso("ASIGNAR_PLAN_NUTRICIONAL");
             }
             else
             {
                 recepcionToolStripMenuItem.Visible = false;
                 entrenamientoToolStripMenuItem.Visible = false;
+                nutriciónToolStripMenuItem.Visible = false;
             }
         }
 
@@ -356,6 +358,20 @@ namespace GUI
             frmGestionRutinas formGestion = new frmGestionRutinas();
             formGestion.MdiParent = this;
             formGestion.Show();
+        }
+
+        private void agendarTurnoNutricionalToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            frmAgendaRecepcion frm = new frmAgendaRecepcion();
+            frm.MdiParent = this;
+            frm.Show();
+        }
+
+        private void nutriciónToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            frmGestionNutricion frm = new frmGestionNutricion();
+            frm.MdiParent = this;
+            frm.Show();
         }
     }
 }

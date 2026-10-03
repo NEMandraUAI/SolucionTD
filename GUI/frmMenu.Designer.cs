@@ -35,20 +35,22 @@
             recepcionToolStripMenuItem = new ToolStripMenuItem();
             venderPlanToolStripMenuItem = new ToolStripMenuItem();
             consultarComprobantesToolStripMenuItem = new ToolStripMenuItem();
+            agendarTurnoNutricionalToolStripMenuItem = new ToolStripMenuItem();
             entrenamientoToolStripMenuItem = new ToolStripMenuItem();
             asignarRutinaToolStripMenuItem = new ToolStripMenuItem();
+            gestionRutinasToolStripMenuItem = new ToolStripMenuItem();
+            nutriciónToolStripMenuItem = new ToolStripMenuItem();
             salirToolStripMenuItem = new ToolStripMenuItem();
             cmbIdiomas = new ComboBox();
             btnNuevoIdioma = new Button();
             panelIdioma = new Panel();
-            gestionRutinasToolStripMenuItem = new ToolStripMenuItem();
             menuStrip1.SuspendLayout();
             panelIdioma.SuspendLayout();
             SuspendLayout();
             // 
             // menuStrip1
             // 
-            menuStrip1.Items.AddRange(new ToolStripItem[] { iniciarSesionToolStripMenuItem, recepcionToolStripMenuItem, entrenamientoToolStripMenuItem, salirToolStripMenuItem });
+            menuStrip1.Items.AddRange(new ToolStripItem[] { iniciarSesionToolStripMenuItem, recepcionToolStripMenuItem, entrenamientoToolStripMenuItem, nutriciónToolStripMenuItem, salirToolStripMenuItem });
             menuStrip1.Location = new Point(0, 0);
             menuStrip1.Name = "menuStrip1";
             menuStrip1.Size = new Size(800, 24);
@@ -78,7 +80,7 @@
             // 
             // recepcionToolStripMenuItem
             // 
-            recepcionToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { venderPlanToolStripMenuItem, consultarComprobantesToolStripMenuItem });
+            recepcionToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { venderPlanToolStripMenuItem, consultarComprobantesToolStripMenuItem, agendarTurnoNutricionalToolStripMenuItem });
             recepcionToolStripMenuItem.Name = "recepcionToolStripMenuItem";
             recepcionToolStripMenuItem.Size = new Size(74, 20);
             recepcionToolStripMenuItem.Text = "Recepción";
@@ -87,16 +89,23 @@
             // venderPlanToolStripMenuItem
             // 
             venderPlanToolStripMenuItem.Name = "venderPlanToolStripMenuItem";
-            venderPlanToolStripMenuItem.Size = new Size(207, 22);
+            venderPlanToolStripMenuItem.Size = new Size(216, 22);
             venderPlanToolStripMenuItem.Text = "Vender Plan";
             venderPlanToolStripMenuItem.Click += venderPlanToolStripMenuItem_Click;
             // 
             // consultarComprobantesToolStripMenuItem
             // 
             consultarComprobantesToolStripMenuItem.Name = "consultarComprobantesToolStripMenuItem";
-            consultarComprobantesToolStripMenuItem.Size = new Size(207, 22);
+            consultarComprobantesToolStripMenuItem.Size = new Size(216, 22);
             consultarComprobantesToolStripMenuItem.Text = "Consultar Comprobantes";
             consultarComprobantesToolStripMenuItem.Click += consultarComprobantesToolStripMenuItem_Click;
+            // 
+            // agendarTurnoNutricionalToolStripMenuItem
+            // 
+            agendarTurnoNutricionalToolStripMenuItem.Name = "agendarTurnoNutricionalToolStripMenuItem";
+            agendarTurnoNutricionalToolStripMenuItem.Size = new Size(216, 22);
+            agendarTurnoNutricionalToolStripMenuItem.Text = "Agendar Turno Nutricional";
+            agendarTurnoNutricionalToolStripMenuItem.Click += agendarTurnoNutricionalToolStripMenuItem_Click;
             // 
             // entrenamientoToolStripMenuItem
             // 
@@ -112,6 +121,21 @@
             asignarRutinaToolStripMenuItem.Size = new Size(180, 22);
             asignarRutinaToolStripMenuItem.Text = "Asignar Rutina";
             asignarRutinaToolStripMenuItem.Click += asignarRutinaToolStripMenuItem_Click;
+            // 
+            // gestionRutinasToolStripMenuItem
+            // 
+            gestionRutinasToolStripMenuItem.Name = "gestionRutinasToolStripMenuItem";
+            gestionRutinasToolStripMenuItem.Size = new Size(180, 22);
+            gestionRutinasToolStripMenuItem.Text = "Gestión de Rutinas";
+            gestionRutinasToolStripMenuItem.Click += gestionRutinasToolStripMenuItem_Click;
+            // 
+            // nutriciónToolStripMenuItem
+            // 
+            nutriciónToolStripMenuItem.Name = "nutriciónToolStripMenuItem";
+            nutriciónToolStripMenuItem.Size = new Size(69, 20);
+            nutriciónToolStripMenuItem.Text = "Nutrición";
+            nutriciónToolStripMenuItem.Visible = false;
+            nutriciónToolStripMenuItem.Click += nutriciónToolStripMenuItem_Click;
             // 
             // salirToolStripMenuItem
             // 
@@ -151,13 +175,6 @@
             panelIdioma.Size = new Size(176, 79);
             panelIdioma.TabIndex = 6;
             // 
-            // gestionRutinasToolStripMenuItem
-            // 
-            gestionRutinasToolStripMenuItem.Name = "gestionRutinasToolStripMenuItem";
-            gestionRutinasToolStripMenuItem.Size = new Size(180, 22);
-            gestionRutinasToolStripMenuItem.Text = "Gestión de Rutinas";
-            gestionRutinasToolStripMenuItem.Click += gestionRutinasToolStripMenuItem_Click;
-            // 
             // frmMenu
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -193,5 +210,7 @@
         private ToolStripMenuItem asignarRutinaToolStripMenuItem;
         private ToolStripMenuItem consultarComprobantesToolStripMenuItem;
         private ToolStripMenuItem gestionRutinasToolStripMenuItem;
+        private ToolStripMenuItem nutriciónToolStripMenuItem;
+        private ToolStripMenuItem agendarTurnoNutricionalToolStripMenuItem;
     }
 }

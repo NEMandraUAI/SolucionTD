@@ -1,0 +1,117 @@
+﻿using BE;
+using Microsoft.Data.SqlClient;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace DAL
+{
+    public class TurnoDAL
+    {
+        public int InsertarTurno(TurnoBE turno)
+        {
+            int idGenerado = 0;
+            using (SqlConnection cx = ConexionDAL.Instancia.ObtenerConexion())
+            {
+                cx.Open();
+                string sql = @"INSERT INTO Turno (FechaHora, Estado, ID_Socio, ID_Nutricionista) 
+                               VALUES (@fecha, @estado, @idSocio, @idNutri);
+                               SELECT CAST(SCOPE_IDENTITY() AS INT);";
+                using (SqlCommand cmd = new SqlCommand(sql, cx))
+                {
+                    cmd.Parameters.AddWithValue("@fecha", turno.FechaHora);
+                    cmd.Parameters.AddWithValue("@estado", turno.Estado);
+                    cmd.Parameters.AddWithValue("@idSocio", turno.ID_Socio);
+                    cmd.Parameters.AddWithValue("@idNutri", turno.ID_Nutricionista);
+                    idGenerado = (int)cmd.ExecuteScalar();
+                }
+            }
+            return idGenerado;
+        }
+
+        public void ActualizarDVH(int idTurno, string dvh)
+        {
+            using (SqlConnection cx = ConexionDAL.Instancia.ObtenerConexion())
+            {
+                cx.Open();
+                string sql = "UPDATE Turno SET DVH = @dvh WHERE NroTurno = @id";
+                using (SqlCommand cmd = new SqlCommand(sql, cx))
+                {
+                    cmd.Parameters.AddWithValue("@dvh", dvh);
+                    cmd.Parameters.AddWithValue("@id", idTurno);
+                    cmd.ExecuteNonQuery();
+                }
+            }
+        }
+
+        public void ActualizarEstado(int idTurno, string estado, string nuevoDVH)
+        {
+            using (SqlConnection cx = ConexionDAL.Instancia.ObtenerConexion())
+            {
+                cx.Open();
+                string sql = "UPDATE Turno SET Estado = @estado, DVH = @dvh WHERE NroTurno = @id";
+                using (SqlCommand cmd = new SqlCommand(sql, cx))
+                {
+                    cmd.Parameters.AddWithValue("@estado", estado);
+                    cmd.Parameters.AddWithValue("@dvh", nuevoDVH);
+                    cmd.Parameters.AddWithValue("@id", idTurno);
+                    cmd.ExecuteNonQuery();
+                }
+            }
+        }
+
+        public List<string> ObtenerTodosLosDVH()
+        {
+            List<string> listaDVH = new List<string>();
+            using (SqlConnection cx = ConexionDAL.Instancia.ObtenerConexion())
+            {
+                cx.Open();
+                string sql = "SELECT DVH FROM Turno ORDER BY NroTurno ASC";
+                using (SqlCommand cmd = new SqlCommand(sql, cx))
+                {
+                    using (SqlDataReader dr = cmd.ExecuteReader())
+                    {
+                        while (dr.Read())
+                        {
+                            listaDVH.Add(dr["DVH"].ToString());
+                        }
+                    }
+                }
+            }
+            return listaDVH;
+        }
+
+        public List<TurnoBE> ConsultarTurnosPorFecha(DateTime fecha)
+        {
+            List<TurnoBE> turnos = new List<TurnoBE>();
+            using (SqlConnection cx = ConexionDAL.Instancia.ObtenerConexion())
+            {
+                cx.Open();
+                string sql = "SELECT * FROM Turno WHERE CAST(FechaHora AS DATE) = CAST(@fecha AS DATE) ORDER BY FechaHora ASC";
+                using (SqlCommand cmd = new SqlCommand(sql, cx))
+                {
+                    cmd.Parameters.AddWithValue("@fecha", fecha);
+                    using (SqlDataReader dr = cmd.ExecuteReader())
+                    {
+                        while (dr.Read())
+                        {
+                            TurnoBE turno = new TurnoBE
+                            {
+                                NroTurno = Convert.ToInt32(dr["NroTurno"]),
+                                FechaHora = Convert.ToDateTime(dr["FechaHora"]),
+                                Estado = dr["Estado"].ToString(),
+                                ID_Socio = Convert.ToInt32(dr["ID_Socio"]),
+                                ID_Nutricionista = Convert.ToInt32(dr["ID_Nutricionista"]),
+                                DVH = dr["DVH"].ToString()
+                            };
+                            turnos.Add(turno);
+                        }
+                    }
+                }
+            }
+            return turnos;
+        }
+    }
+}

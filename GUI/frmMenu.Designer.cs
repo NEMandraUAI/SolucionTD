@@ -118,14 +118,14 @@
             // asignarRutinaToolStripMenuItem
             // 
             asignarRutinaToolStripMenuItem.Name = "asignarRutinaToolStripMenuItem";
-            asignarRutinaToolStripMenuItem.Size = new Size(180, 22);
+            asignarRutinaToolStripMenuItem.Size = new Size(172, 22);
             asignarRutinaToolStripMenuItem.Text = "Asignar Rutina";
             asignarRutinaToolStripMenuItem.Click += asignarRutinaToolStripMenuItem_Click;
             // 
             // gestionRutinasToolStripMenuItem
             // 
             gestionRutinasToolStripMenuItem.Name = "gestionRutinasToolStripMenuItem";
-            gestionRutinasToolStripMenuItem.Size = new Size(180, 22);
+            gestionRutinasToolStripMenuItem.Size = new Size(172, 22);
             gestionRutinasToolStripMenuItem.Text = "Gestión de Rutinas";
             gestionRutinasToolStripMenuItem.Click += gestionRutinasToolStripMenuItem_Click;
             // 
@@ -186,6 +186,7 @@
             MainMenuStrip = menuStrip1;
             Name = "frmMenu";
             Text = "Menu";
+            FormClosing += frmMenu_FormClosing;
             Load += frmMenu_Load;
             menuStrip1.ResumeLayout(false);
             menuStrip1.PerformLayout();

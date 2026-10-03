@@ -30,5 +30,7 @@ namespace BE
 
         public SocioBE Socio { get; set; }
         public UsuarioBE Nutricionista { get; set; }
+        public string NombreSocio { get { return Socio != null ? Socio.Nombre + " " + Socio.Apellido : ""; } }
+        public string NombreNutricionista { get { return Nutricionista != null ? Nutricionista.Nombre : ""; } }
     }
 }

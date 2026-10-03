@@ -74,7 +74,15 @@ namespace DAL
             using (SqlConnection cx = ConexionDAL.Instancia.ObtenerConexion())
             {
                 cx.Open();
-                string sql = "SELECT * FROM PlanNutricional WHERE ID_Socio = @idSocio ORDER BY FechaCreacion DESC";
+                string sql = @"SELECT p.CodigoPlan, p.FechaCreacion, p.EvaluacionAntropometrica, p.DetalleHabitos, 
+                                      p.ID_Socio, p.ID_Nutricionista, p.DVH,
+                                      s.DNI, s.Nombre as SocioNombre, s.Apellido as SocioApellido,
+                                      u.Nombre as NutriNombre
+                               FROM PlanNutricional p
+                               INNER JOIN Socio s ON p.ID_Socio = s.ID_Socio
+                               INNER JOIN Usuario u ON p.ID_Nutricionista = u.ID
+                               WHERE p.ID_Socio = @idSocio 
+                               ORDER BY p.FechaCreacion DESC";
                 using (SqlCommand cmd = new SqlCommand(sql, cx))
                 {
                     cmd.Parameters.AddWithValue("@idSocio", idSocio);
@@ -90,7 +98,19 @@ namespace DAL
                                 DetalleHabitos = dr["DetalleHabitos"].ToString(),
                                 ID_Socio = Convert.ToInt32(dr["ID_Socio"]),
                                 ID_Nutricionista = Convert.ToInt32(dr["ID_Nutricionista"]),
-                                DVH = dr["DVH"].ToString()
+                                DVH = dr["DVH"] != DBNull.Value ? dr["DVH"].ToString() : null,
+                                Socio = new SocioBE
+                                {
+                                    ID_Socio = Convert.ToInt32(dr["ID_Socio"]),
+                                    DNI = dr["DNI"].ToString(),
+                                    Nombre = dr["SocioNombre"].ToString(),
+                                    Apellido = dr["SocioApellido"].ToString()
+                                },
+                                Nutricionista = new UsuarioBE
+                                {
+                                    ID = Convert.ToInt32(dr["ID_Nutricionista"]),
+                                    Nombre = dr["NutriNombre"].ToString()
+                                }
                             };
                             planes.Add(plan);
                         }

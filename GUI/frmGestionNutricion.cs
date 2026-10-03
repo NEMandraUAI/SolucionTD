@@ -50,6 +50,21 @@ namespace GUI
                 }
             }
             dgvAgendaHoy.DataSource = misTurnos;
+            if (dgvAgendaHoy.Columns["ID_Socio"] != null) dgvAgendaHoy.Columns["ID_Socio"].Visible = false;
+            if (dgvAgendaHoy.Columns["ID_Nutricionista"] != null) dgvAgendaHoy.Columns["ID_Nutricionista"].Visible = false;
+            if (dgvAgendaHoy.Columns["DVH"] != null) dgvAgendaHoy.Columns["DVH"].Visible = false;
+            if (dgvAgendaHoy.Columns["Socio"] != null) dgvAgendaHoy.Columns["Socio"].Visible = false;
+            if (dgvAgendaHoy.Columns["Nutricionista"] != null) dgvAgendaHoy.Columns["Nutricionista"].Visible = false;
+        }
+
+        private void CargarPlanesHistoricos()
+        {
+            dgvPlanesHistoricos.DataSource = _planBLL.ObtenerPlanesSocio(_socioActual.ID_Socio);
+            if (dgvPlanesHistoricos.Columns["ID_Socio"] != null) dgvPlanesHistoricos.Columns["ID_Socio"].Visible = false;
+            if (dgvPlanesHistoricos.Columns["ID_Nutricionista"] != null) dgvPlanesHistoricos.Columns["ID_Nutricionista"].Visible = false;
+            if (dgvPlanesHistoricos.Columns["DVH"] != null) dgvPlanesHistoricos.Columns["DVH"].Visible = false;
+            if (dgvPlanesHistoricos.Columns["Socio"] != null) dgvPlanesHistoricos.Columns["Socio"].Visible = false;
+            if (dgvPlanesHistoricos.Columns["Nutricionista"] != null) dgvPlanesHistoricos.Columns["Nutricionista"].Visible = false;
         }
 
         private void btnBuscarSocio_Click(object sender, EventArgs e)
@@ -59,7 +74,7 @@ namespace GUI
                 if (string.IsNullOrWhiteSpace(txtDNISocio.Text)) throw new Exception("Ingrese el DNI.");
                 _socioActual = _socioBLL.ConsultarSocio(txtDNISocio.Text);
                 if (_socioActual == null) throw new Exception("Socio no encontrado.");
-                dgvPlanesHistoricos.DataSource = _planBLL.ObtenerPlanesSocio(_socioActual.ID_Socio);
+                CargarPlanesHistoricos();
                 MessageBox.Show($"Socio encontrado: {_socioActual.Nombre} {_socioActual.Apellido}", "Socio Seleccionado", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 BloquearCamposPlan(false);
             }
@@ -87,7 +102,7 @@ namespace GUI
                 MessageBox.Show("Plan nutricional confeccionado y guardado correctamente.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 txtAntropometria.Clear();
                 txtHabitos.Clear();
-                dgvPlanesHistoricos.DataSource = _planBLL.ObtenerPlanesSocio(_socioActual.ID_Socio);
+                CargarPlanesHistoricos();
             }
             catch (Exception ex)
             {

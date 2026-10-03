@@ -40,8 +40,10 @@ namespace GUI
         {
             List<UsuarioBE> todosLosUsuarios = _usuarioBLL.ListarTodos();
             List<UsuarioBE> nutricionistas = new List<UsuarioBE>();
+            PermisoBLL permisoBLL = new PermisoBLL();
             foreach (var usu in todosLosUsuarios)
             {
+                permisoBLL.LlenarPermisosDeUsuario(usu);
                 if (usu.TienePermiso("ASIGNAR_PLAN_NUTRICIONAL"))
                 {
                     nutricionistas.Add(usu);
@@ -56,6 +58,11 @@ namespace GUI
         {
             dgvAgenda.DataSource = null;
             dgvAgenda.DataSource = _turnoBLL.ObtenerAgenda(fecha);
+            if (dgvAgenda.Columns["ID_Socio"] != null) dgvAgenda.Columns["ID_Socio"].Visible = false;
+            if (dgvAgenda.Columns["ID_Nutricionista"] != null) dgvAgenda.Columns["ID_Nutricionista"].Visible = false;
+            if (dgvAgenda.Columns["DVH"] != null) dgvAgenda.Columns["DVH"].Visible = false;
+            if (dgvAgenda.Columns["Socio"] != null) dgvAgenda.Columns["Socio"].Visible = false;
+            if (dgvAgenda.Columns["Nutricionista"] != null) dgvAgenda.Columns["Nutricionista"].Visible = false;
         }
 
         private void dtpFechaAgenda_ValueChanged(object sender, EventArgs e)

@@ -89,7 +89,14 @@ namespace DAL
             using (SqlConnection cx = ConexionDAL.Instancia.ObtenerConexion())
             {
                 cx.Open();
-                string sql = "SELECT * FROM Turno WHERE CAST(FechaHora AS DATE) = CAST(@fecha AS DATE) ORDER BY FechaHora ASC";
+                string sql = @"SELECT t.NroTurno, t.FechaHora, t.Estado, t.ID_Socio, t.ID_Nutricionista, t.DVH, 
+                                      s.DNI, s.Nombre as SocioNombre, s.Apellido as SocioApellido,
+                                      u.Nombre as NutriNombre
+                               FROM Turno t
+                               INNER JOIN Socio s ON t.ID_Socio = s.ID_Socio
+                               INNER JOIN Usuario u ON t.ID_Nutricionista = u.ID
+                               WHERE CAST(t.FechaHora AS DATE) = CAST(@fecha AS DATE) 
+                               ORDER BY t.FechaHora ASC";
                 using (SqlCommand cmd = new SqlCommand(sql, cx))
                 {
                     cmd.Parameters.AddWithValue("@fecha", fecha);
@@ -104,7 +111,19 @@ namespace DAL
                                 Estado = dr["Estado"].ToString(),
                                 ID_Socio = Convert.ToInt32(dr["ID_Socio"]),
                                 ID_Nutricionista = Convert.ToInt32(dr["ID_Nutricionista"]),
-                                DVH = dr["DVH"].ToString()
+                                DVH = dr["DVH"] != DBNull.Value ? dr["DVH"].ToString() : null,
+                                Socio = new SocioBE
+                                {
+                                    ID_Socio = Convert.ToInt32(dr["ID_Socio"]),
+                                    DNI = dr["DNI"].ToString(),
+                                    Nombre = dr["SocioNombre"].ToString(),
+                                    Apellido = dr["SocioApellido"].ToString()
+                                },
+                                Nutricionista = new UsuarioBE
+                                {
+                                    ID = Convert.ToInt32(dr["ID_Nutricionista"]),
+                                    Nombre = dr["NutriNombre"].ToString()
+                                }
                             };
                             turnos.Add(turno);
                         }

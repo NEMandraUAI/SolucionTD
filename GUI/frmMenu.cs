@@ -8,6 +8,7 @@ using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Linq;
+using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -16,6 +17,7 @@ namespace GUI
 {
     public partial class frmMenu : Form, IObserverIdioma
     {
+        private MdiClient mdiClient;
         private Dictionary<string, string> _traducciones = new Dictionary<string, string>();
         private string T(string clave, string textoPorDefecto)
         {
@@ -26,6 +28,9 @@ namespace GUI
             InitializeComponent();
             this.KeyPreview = true;
             this.KeyDown += FrmMenu_KeyDown;
+            this.IsMdiContainer = true;
+            this.WindowState = FormWindowState.Maximized;
+            SessionManager.Instancia.PermisosActualizados += SessionManager_PermisosActualizados;
             GestorIdioma.Instancia.Suscribir(this);
         }
         private void FrmMenu_KeyDown(object sender, KeyEventArgs e)
@@ -222,6 +227,44 @@ namespace GUI
             btnNuevoIdioma.Visible = false;
             btnNuevoIdioma.Text = T("btnNuevoIdioma", "Gestionar Idiomas");
             btnNuevoIdioma.Click += AbrirPanelAdministrador_Click;
+            foreach (Control control in this.Controls)
+            {
+                if (control is MdiClient client)
+                {
+                    mdiClient = client;
+                    AjustarFondo();
+                }
+            }
+        }
+        private void AjustarFondo()
+        {
+            if (mdiClient == null || Properties.Resources.fondo == null)
+                return;
+            Bitmap fondoRedimensionado = new Bitmap(
+                mdiClient.ClientSize.Width,
+                mdiClient.ClientSize.Height
+            );
+            using (Graphics g = Graphics.FromImage(fondoRedimensionado))
+            {
+                g.InterpolationMode =
+                    System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+                g.DrawImage(
+                    Properties.Resources.fondo,
+                    new Rectangle(
+                        0,
+                        0,
+                        mdiClient.ClientSize.Width,
+                        mdiClient.ClientSize.Height
+                    )
+                );
+            }
+            Image fondoAnterior = mdiClient.BackgroundImage;
+            mdiClient.BackgroundImage = fondoRedimensionado;
+            if (fondoAnterior != null &&
+                fondoAnterior != Properties.Resources.fondo)
+            {
+                fondoAnterior.Dispose();
+            }
         }
         public void ActualizarIdioma(IdiomaBE idioma)
         {
@@ -372,6 +415,17 @@ namespace GUI
             frmGestionNutricion frm = new frmGestionNutricion();
             frm.MdiParent = this;
             frm.Show();
+        }
+
+        private void frmMenu_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            SessionManager.Instancia.PermisosActualizados -= SessionManager_PermisosActualizados;
+        }
+
+        private void SessionManager_PermisosActualizados(object sender, EventArgs e)
+        {
+            AplicarPermisosUI();
+            EvaluarPermisosIdioma();
         }
     }
 }

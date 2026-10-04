@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace BE
 {
-    public class UsuarioBE
+    public class UsuarioBE : IEntidadVerificable
     {
         [DigitoVerificador(1)] public int ID { get; set; }
         [DigitoVerificador(2)] public string Nombre { get; set; }
@@ -21,6 +21,12 @@ namespace BE
         {
             return new UsuarioMemento(this.Nombre, this.Clave, this.IntentosFallidos, this.Bloqueado, this.NivelJerarquia);
         }
+
+        public string ObtenerID()
+        {
+            return ID.ToString();
+        }
+
         public void RestaurarMemento(UsuarioMemento memento)
         {
             this.Nombre = memento.Nombre;

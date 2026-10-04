@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace BE
 {
-    public class TurnoBE
+    public class TurnoBE : IEntidadVerificable
     {
         [DigitoVerificador(1)]
         public int NroTurno { get; set; }
@@ -30,5 +30,10 @@ namespace BE
         public string DNISocio { get { return Socio != null ? Socio.DNI : ""; } }
         public string NombreSocio { get { return Socio != null ? Socio.Nombre + " " + Socio.Apellido : ""; } }
         public string NombreNutricionista { get { return Nutricionista != null ? Nutricionista.Nombre : ""; } }
+
+        public string ObtenerID()
+        {
+            return NroTurno.ToString();
+        }
     }
 }

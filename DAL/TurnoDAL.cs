@@ -180,5 +180,29 @@ namespace DAL
             }
             return listaPendientes;
         }
+        public List<TurnoBE> LeerTodos()
+        {
+            List<TurnoBE> turnos = new List<TurnoBE>();
+            using (SqlConnection cx = ConexionDAL.Instancia.ObtenerConexion())
+            {
+                cx.Open();
+                string query = "SELECT NroTurno, FechaHora, Estado, ID_Socio, ID_Nutricionista, DVH FROM Turno";
+                SqlCommand cmd = new SqlCommand(query, cx);
+                SqlDataReader reader = cmd.ExecuteReader();
+                while (reader.Read())
+                {
+                    TurnoBE turno = new TurnoBE();
+                    turno.NroTurno = Convert.ToInt32(reader["NroTurno"]);
+                    turno.FechaHora = Convert.ToDateTime(reader["FechaHora"]);
+                    turno.Estado = reader["Estado"].ToString();
+                    turno.ID_Socio = int.Parse(reader["ID_Socio"].ToString());
+                    turno.ID_Nutricionista = int.Parse(reader["ID_Nutricionista"].ToString());
+                    turno.DVH = reader["DVH"].ToString();
+                    turnos.Add(turno);
+                }
+                reader.Close();
+            }
+            return turnos;
+        }
     }
 }

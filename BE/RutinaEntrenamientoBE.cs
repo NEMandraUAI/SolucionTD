@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace BE
 {
-    public class RutinaEntrenamientoBE
+    public class RutinaEntrenamientoBE : IEntidadVerificable
     {
         [DigitoVerificador(1)]
         public int CodigoRutina { get; set; }
@@ -34,5 +34,10 @@ namespace BE
         public int ID_UsuarioParaDVH { get { return Entrenador != null ? Entrenador.ID : 0; } }
 
         public string DVH { get; set; }
+
+        public string ObtenerID()
+        {
+            return CodigoRutina.ToString();
+        }
     }
 }

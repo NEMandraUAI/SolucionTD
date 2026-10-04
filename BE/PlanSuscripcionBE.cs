@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace BE
 {
-    public class PlanSuscripcionBE
+    public class PlanSuscripcionBE : IEntidadVerificable
     {
         [DigitoVerificador(1)]
         public int CodigoPlan { get; set; }
@@ -21,5 +21,10 @@ namespace BE
         public int DuracionDias { get; set; }
 
         public string DVH { get; set; }
+
+        public string ObtenerID()
+        {
+            return CodigoPlan.ToString();
+        }
     }
 }

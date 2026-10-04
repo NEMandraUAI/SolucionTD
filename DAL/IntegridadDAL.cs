@@ -76,5 +76,34 @@ namespace DAL
                 }
             }
         }
+        public void ActualizarDVHRegistro(string nombreTabla, int id, string nuevoDVH)
+        {
+            string columnaPK = ObtenerNombrePK(nombreTabla);
+            string query = $"UPDATE {nombreTabla} SET DVH = @DVH WHERE {columnaPK} = @ID";
+            using (SqlConnection cx = ConexionDAL.Instancia.ObtenerConexion())
+            {
+                using (SqlCommand cmd = new SqlCommand(query, cx))
+                {
+                    cmd.Parameters.AddWithValue("@DVH", nuevoDVH);
+                    cmd.Parameters.AddWithValue("@ID", id);
+                    cx.Open();
+                    cmd.ExecuteNonQuery();
+                }
+            }
+        }
+        private string ObtenerNombrePK(string tabla)
+        {
+            switch (tabla)
+            {
+                case "Usuario": return "ID";
+                case "Socio": return "ID_Socio";
+                case "Turno": return "NroTurno";
+                case "ComprobantePago": return "NroComprobante";
+                case "PlanNutricional": return "CodigoPlan";
+                case "PlanSuscripcion": return "CodigoPlan";
+                case "RutinaEntrenamiento": return "CodigoRutina";
+                default: throw new Exception("Tabla no configurada para DVH.");
+            }
+        }
     }
 }

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace BE
 {
-    public class PlanNutricionalBE
+    public class PlanNutricionalBE : IEntidadVerificable
     {
         [DigitoVerificador(1)]
         public int CodigoPlan { get; set; }
@@ -32,5 +32,10 @@ namespace BE
         public UsuarioBE Nutricionista { get; set; }
         public string NombreSocio { get { return Socio != null ? Socio.Nombre + " " + Socio.Apellido : ""; } }
         public string NombreNutricionista { get { return Nutricionista != null ? Nutricionista.Nombre : ""; } }
+
+        public string ObtenerID()
+        {
+            return CodigoPlan.ToString();
+        }
     }
 }

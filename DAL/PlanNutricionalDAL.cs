@@ -119,5 +119,47 @@ namespace DAL
             }
             return planes;
         }
+        public List<PlanNutricionalBE> LeerTodos()
+        {
+            List<PlanNutricionalBE> planes = new List<PlanNutricionalBE>();
+            using (SqlConnection cx = ConexionDAL.Instancia.ObtenerConexion())
+            {
+                cx.Open();
+                string sql = @"SELECT CodigoPlan, FechaCreacion, EvaluacionAntropometrica, DetalleHabitos, ID_Socio, ID_Nutricionista, DVH FROM PlanNutricional";
+                using (SqlCommand cmd = new SqlCommand(sql, cx))
+                {
+                    using (SqlDataReader dr = cmd.ExecuteReader())
+                    {
+                        while (dr.Read())
+                        {
+                            PlanNutricionalBE plan = new PlanNutricionalBE
+                            {
+                                CodigoPlan = Convert.ToInt32(dr["CodigoPlan"]),
+                                FechaCreacion = Convert.ToDateTime(dr["FechaCreacion"]),
+                                EvaluacionAntropometrica = dr["EvaluacionAntropometrica"].ToString(),
+                                DetalleHabitos = dr["DetalleHabitos"].ToString(),
+                                ID_Socio = Convert.ToInt32(dr["ID_Socio"]),
+                                ID_Nutricionista = Convert.ToInt32(dr["ID_Nutricionista"]),
+                                DVH = dr["DVH"] != DBNull.Value ? dr["DVH"].ToString() : null,
+                                Socio = new SocioBE
+                                {
+                                    ID_Socio = Convert.ToInt32(dr["ID_Socio"]),
+                                    DNI = dr["DNI"].ToString(),
+                                    Nombre = dr["SocioNombre"].ToString(),
+                                    Apellido = dr["SocioApellido"].ToString()
+                                },
+                                Nutricionista = new UsuarioBE
+                                {
+                                    ID = Convert.ToInt32(dr["ID_Nutricionista"]),
+                                    Nombre = dr["NutriNombre"].ToString()
+                                }
+                            };
+                            planes.Add(plan);
+                        }
+                    }
+                }
+            }
+            return planes;
+        }
     }
 }

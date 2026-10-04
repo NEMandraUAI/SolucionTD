@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -9,22 +10,21 @@ namespace Seguridad
 {
     public class DVManager
     {
-        public static string CalcularDVH<T>(T entidad)
+        public static string CalcularDVH(object entidad)
         {
-            var tipo = typeof(T);
-            var propiedades = tipo.GetProperties()
-                .Where(p => p.GetCustomAttributes(typeof(DigitoVerificadorAttribute), false).Any())
-                .Select(p => new
-                {
-                    Propiedad = p,
-                    Orden = ((DigitoVerificadorAttribute)p.GetCustomAttributes(typeof(DigitoVerificadorAttribute), false).First()).Orden
-                })
-                .OrderBy(x => x.Orden);
             StringBuilder sb = new StringBuilder();
-            foreach (var item in propiedades)
+            Type tipo = entidad.GetType();
+            PropertyInfo[] propiedades = tipo.GetProperties();
+            foreach (var prop in propiedades)
             {
-                var valor = item.Propiedad.GetValue(entidad);
-                sb.Append(valor != null ? valor.ToString() : "");
+                if (Attribute.IsDefined(prop, typeof(DigitoVerificadorAttribute)))
+                {
+                    var valor = prop.GetValue(entidad);
+                    if (valor != null)
+                    {
+                        sb.Append(valor.ToString());
+                    }
+                }
             }
             return CryptoManager.GenerarHash(sb.ToString());
         }

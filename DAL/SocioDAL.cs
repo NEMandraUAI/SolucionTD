@@ -91,5 +91,39 @@ namespace DAL
             }
             return lista;
         }
+        public List<SocioBE> LeerTodos()
+        {
+            List<SocioBE> lista = new List<SocioBE>();
+            string query = "SELECT ID_Socio, DNI, Nombre, Apellido, Telefono, Email, EstadoActivo, CodigoPlan, DVH FROM Socio";
+            using (SqlConnection cx = ConexionDAL.Instancia.ObtenerConexion())
+            {
+                using (SqlCommand cmd = new SqlCommand(query, cx))
+                {
+                    cx.Open();
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            SocioBE socio = new SocioBE();
+                            socio.ID_Socio = Convert.ToInt32(reader["ID_Socio"]);
+                            socio.DNI = reader["DNI"].ToString();
+                            socio.Nombre = reader["Nombre"].ToString();
+                            socio.Apellido = reader["Apellido"].ToString();
+                            socio.Telefono = reader["Telefono"].ToString();
+                            socio.Email = reader["Email"] != DBNull.Value ? reader["Email"].ToString() : null;
+                            socio.EstadoActivo = Convert.ToBoolean(reader["EstadoActivo"]);
+                            if (reader["CodigoPlan"] != DBNull.Value)
+                            {
+                                socio.PlanAsociado = new PlanSuscripcionBE { CodigoPlan = Convert.ToInt32(reader["CodigoPlan"]) };
+                            }
+                            socio.EstadoActivo = Convert.ToBoolean(reader["EstadoActivo"]);
+                            socio.DVH = reader["DVH"] != DBNull.Value ? reader["DVH"].ToString() : null;
+                            lista.Add(socio);
+                        }
+                    }
+                }
+            }
+            return lista;
+        }
     }
 }

@@ -102,5 +102,33 @@ namespace DAL
                 cmd.ExecuteNonQuery();
             }
         }
+
+        public List<RutinaEntrenamientoBE> LeerTodos()
+        {
+            List<RutinaEntrenamientoBE> lista = new List<RutinaEntrenamientoBE>();
+            using (SqlConnection cx = ConexionDAL.Instancia.ObtenerConexion())
+            {
+                cx.Open();
+                string sql = @"SELECT CodigoRutina, FechaCreacion, ObjetivoFisico, FrecuenciaSemanal, DetalleEjercicios, ID_Socio, ID_Usuario, DVH FROM RutinaEntrenamiento";
+                SqlCommand cmd = new SqlCommand(sql, cx);
+                using (SqlDataReader dr = cmd.ExecuteReader())
+                {
+                    while (dr.Read())
+                    {
+                        RutinaEntrenamientoBE rut = new RutinaEntrenamientoBE();
+                        rut.CodigoRutina = Convert.ToInt32(dr["CodigoRutina"]);
+                        rut.FechaCreacion = Convert.ToDateTime(dr["FechaCreacion"]);
+                        rut.ObjetivoFisico = dr["ObjetivoFisico"].ToString();
+                        rut.FrecuenciaSemanal = Convert.ToInt32(dr["FrecuenciaSemanal"]);
+                        rut.DetalleEjercicios = dr["DetalleEjercicios"].ToString();
+                        rut.DVH = dr["DVH"] != DBNull.Value ? dr["DVH"].ToString() : null;
+                        rut.Socio = new SocioBE { ID_Socio = Convert.ToInt32(dr["ID_Socio"]), DNI = dr["DNI"].ToString() };
+                        rut.Entrenador = new UsuarioBE { ID = Convert.ToInt32(dr["ID_Usuario"]) };
+                        lista.Add(rut);
+                    }
+                }
+            }
+            return lista;
+        }
     }
 }

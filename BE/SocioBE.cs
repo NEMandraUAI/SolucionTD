@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace BE
 {
-    public class SocioBE
+    public class SocioBE : IEntidadVerificable
     {
         [DigitoVerificador(1)]
         public int ID_Socio { get; set; }
@@ -38,5 +38,10 @@ namespace BE
         }
 
         public string DVH { get; set; }
+
+        public string ObtenerID()
+        {
+            return ID_Socio.ToString();
+        }
     }
 }

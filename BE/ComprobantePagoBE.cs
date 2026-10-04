@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace BE
 {
-    public class ComprobantePagoBE
+    public class ComprobantePagoBE : IEntidadVerificable
     {
         [DigitoVerificador(1)]
         public int NroComprobante { get; set; }
@@ -31,5 +31,10 @@ namespace BE
         public int ID_UsuarioParaDVH { get { return EmpleadoCobrador != null ? EmpleadoCobrador.ID : 0; } }
 
         public string DVH { get; set; }
+
+        public string ObtenerID()
+        {
+            return NroComprobante.ToString();
+        }
     }
 }

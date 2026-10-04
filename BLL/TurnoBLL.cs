@@ -46,5 +46,24 @@ namespace BLL
         {
             return _turnoDAL.ConsultarTurnosPorFecha(fecha);
         }
+
+        public void ValidarMargenDeTiempo(int idNutricionista, DateTime fechaHoraSolicitada)
+        {
+            TurnoDAL turnoDAL = new TurnoDAL();
+            List<TurnoBE> turnosDelDia = turnoDAL.ObtenerTurnosPorNutricionistaYFecha(idNutricionista, fechaHoraSolicitada);
+            foreach (TurnoBE turnoExistente in turnosDelDia)
+            {
+                double diferenciaMinutos = Math.Abs((turnoExistente.FechaHora - fechaHoraSolicitada).TotalMinutes);
+                if (diferenciaMinutos < 30)
+                {
+                    throw new Exception("El profesional ya tiene un turno asignado a las " + turnoExistente.FechaHora.ToString("HH:mm") + " hs. Debe dejar un margen mínimo de 30 minutos entre consultas.");
+                }
+            }
+        }
+
+        public List<TurnoBE> ObtenerTurnosPendientesPorSocio(int idSocio)
+        {
+            return _turnoDAL.ObtenerTurnosPendientesPorSocio(idSocio);
+        }
     }
 }

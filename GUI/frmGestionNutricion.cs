@@ -74,6 +74,7 @@ namespace GUI
                 if (string.IsNullOrWhiteSpace(txtDNISocio.Text)) throw new Exception("Ingrese el DNI.");
                 _socioActual = _socioBLL.ConsultarSocio(txtDNISocio.Text);
                 if (_socioActual == null) throw new Exception("Socio no encontrado.");
+                if (!_socioActual.EstadoActivo) throw new Exception("El socio se encuentra inactivo.");
                 CargarPlanesHistoricos();
                 MessageBox.Show($"Socio encontrado: {_socioActual.Nombre} {_socioActual.Apellido}", "Socio Seleccionado", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 BloquearCamposPlan(false);

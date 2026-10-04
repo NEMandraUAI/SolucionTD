@@ -74,15 +74,28 @@ namespace GUI
         {
             try
             {
+                string dniIngresado = txtDNI.Text.Trim();
+                int idNutricionistaElegido = Convert.ToInt32(cmbNutricionista.SelectedValue);
+                DateTime soloFecha = dtpFechaAgenda.Value.Date;
+                TimeSpan soloHora = dtpHoraTurno.Value.TimeOfDay;
+                DateTime fechaHoraSolicitada = soloFecha.Add(soloHora);
+                SocioBE socio = _socioBLL.ConsultarSocio(txtDNI.Text);
                 if (string.IsNullOrWhiteSpace(txtDNI.Text)) throw new Exception("Debe ingresar el DNI del socio.");
                 if (cmbNutricionista.SelectedItem == null) throw new Exception("Debe seleccionar un nutricionista.");
-                SocioBE socio = _socioBLL.ConsultarSocio(txtDNI.Text);
                 if (socio == null) throw new Exception("Socio no encontrado.");
                 if (!socio.EstadoActivo) throw new Exception("El socio se encuentra inactivo.");
-                DateTime fechaHoraTurno = dtpFechaAgenda.Value.Date + dtpHoraTurno.Value.TimeOfDay;
+                List<TurnoBE> pendientes = _turnoBLL.ObtenerTurnosPendientesPorSocio(socio.ID_Socio);
+                if (pendientes.Count > 0)
+                {
+                    MessageBox.Show("Este socio ya posee un turno en estado 'Pendiente'. No puede agendar uno nuevo hasta que asista o se cancele el actual.", "Reserva Denegada", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    dgvAgenda.DataSource = null;
+                    dgvAgenda.DataSource = pendientes;
+                    return;
+                }
+                _turnoBLL.ValidarMargenDeTiempo(idNutricionistaElegido, fechaHoraSolicitada);
                 TurnoBE nuevoTurno = new TurnoBE
                 {
-                    FechaHora = fechaHoraTurno,
+                    FechaHora = fechaHoraSolicitada,
                     ID_Socio = socio.ID_Socio,
                     ID_Nutricionista = (int)cmbNutricionista.SelectedValue
                 };

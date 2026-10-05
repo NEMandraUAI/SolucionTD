@@ -141,18 +141,8 @@ namespace DAL
                                 ID_Socio = Convert.ToInt32(dr["ID_Socio"]),
                                 ID_Nutricionista = Convert.ToInt32(dr["ID_Nutricionista"]),
                                 DVH = dr["DVH"] != DBNull.Value ? dr["DVH"].ToString() : null,
-                                Socio = new SocioBE
-                                {
-                                    ID_Socio = Convert.ToInt32(dr["ID_Socio"]),
-                                    DNI = dr["DNI"].ToString(),
-                                    Nombre = dr["SocioNombre"].ToString(),
-                                    Apellido = dr["SocioApellido"].ToString()
-                                },
-                                Nutricionista = new UsuarioBE
-                                {
-                                    ID = Convert.ToInt32(dr["ID_Nutricionista"]),
-                                    Nombre = dr["NutriNombre"].ToString()
-                                }
+                                Socio = new SocioBE { ID_Socio = Convert.ToInt32(dr["ID_Socio"]) },
+                                Nutricionista = new UsuarioBE { ID = Convert.ToInt32(dr["ID_Nutricionista"]) }
                             };
                             planes.Add(plan);
                         }

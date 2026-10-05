@@ -122,7 +122,7 @@ namespace DAL
                         rut.FrecuenciaSemanal = Convert.ToInt32(dr["FrecuenciaSemanal"]);
                         rut.DetalleEjercicios = dr["DetalleEjercicios"].ToString();
                         rut.DVH = dr["DVH"] != DBNull.Value ? dr["DVH"].ToString() : null;
-                        rut.Socio = new SocioBE { ID_Socio = Convert.ToInt32(dr["ID_Socio"]), DNI = dr["DNI"].ToString() };
+                        rut.Socio = new SocioBE { ID_Socio = Convert.ToInt32(dr["ID_Socio"]) };
                         rut.Entrenador = new UsuarioBE { ID = Convert.ToInt32(dr["ID_Usuario"]) };
                         lista.Add(rut);
                     }

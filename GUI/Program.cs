@@ -20,6 +20,8 @@ namespace GUI
                         throw new Exception("El instalador no proporcionó el string de conexión.");
                     }
                     InstaladorBLL.InicializarBaseDeDatos(serverConnectionString);
+                    IntegridadBLL integridad = new IntegridadBLL();
+                    integridad.ForzarRecalculoDeTodaLaBase();
                 }
                 catch (Exception ex)
                 {

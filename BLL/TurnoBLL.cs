@@ -49,8 +49,7 @@ namespace BLL
 
         public void ValidarMargenDeTiempo(int idNutricionista, DateTime fechaHoraSolicitada)
         {
-            TurnoDAL turnoDAL = new TurnoDAL();
-            List<TurnoBE> turnosDelDia = turnoDAL.ObtenerTurnosPorNutricionistaYFecha(idNutricionista, fechaHoraSolicitada);
+            List<TurnoBE> turnosDelDia = _turnoDAL.ObtenerTurnosPorNutricionistaYFecha(idNutricionista, fechaHoraSolicitada);
             foreach (TurnoBE turnoExistente in turnosDelDia)
             {
                 double diferenciaMinutos = Math.Abs((turnoExistente.FechaHora - fechaHoraSolicitada).TotalMinutes);

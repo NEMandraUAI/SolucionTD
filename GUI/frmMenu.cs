@@ -238,32 +238,14 @@ namespace GUI
         }
         private void AjustarFondo()
         {
-            if (mdiClient == null || Properties.Resources.fondo == null)
-                return;
-            Bitmap fondoRedimensionado = new Bitmap(
-                mdiClient.ClientSize.Width,
-                mdiClient.ClientSize.Height
-            );
-            using (Graphics g = Graphics.FromImage(fondoRedimensionado))
+            Color miAzulOscuro = Color.FromArgb(0, 10, 40);
+            foreach (Control ctl in this.Controls)
             {
-                g.InterpolationMode =
-                    System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
-                g.DrawImage(
-                    Properties.Resources.fondo,
-                    new Rectangle(
-                        0,
-                        0,
-                        mdiClient.ClientSize.Width,
-                        mdiClient.ClientSize.Height
-                    )
-                );
-            }
-            Image fondoAnterior = mdiClient.BackgroundImage;
-            mdiClient.BackgroundImage = fondoRedimensionado;
-            if (fondoAnterior != null &&
-                fondoAnterior != Properties.Resources.fondo)
-            {
-                fondoAnterior.Dispose();
+                if (ctl is MdiClient)
+                {
+                    ctl.BackColor = miAzulOscuro;
+                    break;
+                }
             }
         }
         public void ActualizarIdioma(IdiomaBE idioma)

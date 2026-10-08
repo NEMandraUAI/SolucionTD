@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(frmMenu));
             menuStrip1 = new MenuStrip();
             iniciarSesionToolStripMenuItem = new ToolStripMenuItem();
             iniciarSesiónToolStripMenuItem = new ToolStripMenuItem();
@@ -217,12 +218,13 @@
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            BackColor = Color.FromArgb(243, 246, 249);
+            BackColor = Color.SteelBlue;
             ClientSize = new Size(877, 459);
             Controls.Add(panelIdioma);
             Controls.Add(menuStrip1);
             Font = new Font("Segoe UI", 9F);
             ForeColor = Color.FromArgb(31, 41, 55);
+            Icon = (Icon)resources.GetObject("$this.Icon");
             IsMdiContainer = true;
             MainMenuStrip = menuStrip1;
             Name = "frmMenu";

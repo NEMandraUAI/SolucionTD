@@ -46,7 +46,8 @@
             // 
             lblDNI.AutoSize = true;
             lblDNI.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            lblDNI.Location = new Point(12, 19);
+            lblDNI.ForeColor = Color.FromArgb(31, 41, 55);
+            lblDNI.Location = new Point(32, 44);
             lblDNI.Name = "lblDNI";
             lblDNI.Size = new Size(29, 15);
             lblDNI.TabIndex = 12;
@@ -54,26 +55,38 @@
             // 
             // btnBuscar
             // 
-            btnBuscar.Location = new Point(12, 80);
+            btnBuscar.Anchor = AnchorStyles.Top | AnchorStyles.Left;
+            btnBuscar.BackColor = Color.FromArgb(71, 85, 105);
+            btnBuscar.FlatAppearance.BorderSize = 0;
+            btnBuscar.FlatStyle = FlatStyle.Flat;
+            btnBuscar.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point);
+            btnBuscar.ForeColor = Color.White;
+            btnBuscar.Location = new Point(272, 68);
             btnBuscar.Name = "btnBuscar";
-            btnBuscar.Size = new Size(158, 38);
+            btnBuscar.Size = new Size(132, 42);
             btnBuscar.TabIndex = 11;
             btnBuscar.Text = "Buscar";
-            btnBuscar.UseVisualStyleBackColor = true;
+            btnBuscar.UseVisualStyleBackColor = false;
             btnBuscar.Click += btnBuscar_Click;
             // 
             // txtDNI
             // 
-            txtDNI.Location = new Point(12, 37);
+            txtDNI.Anchor = AnchorStyles.Top | AnchorStyles.Left;
+            txtDNI.BackColor = Color.White;
+            txtDNI.BorderStyle = BorderStyle.FixedSingle;
+            txtDNI.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
+            txtDNI.ForeColor = Color.FromArgb(31, 41, 55);
+            txtDNI.Location = new Point(32, 70);
             txtDNI.Name = "txtDNI";
-            txtDNI.Size = new Size(158, 23);
+            txtDNI.Size = new Size(220, 23);
             txtDNI.TabIndex = 10;
             // 
             // lblInfoSocio
             // 
             lblInfoSocio.AutoSize = true;
             lblInfoSocio.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            lblInfoSocio.Location = new Point(176, 40);
+            lblInfoSocio.ForeColor = Color.FromArgb(31, 41, 55);
+            lblInfoSocio.Location = new Point(32, 126);
             lblInfoSocio.Name = "lblInfoSocio";
             lblInfoSocio.Size = new Size(12, 15);
             lblInfoSocio.TabIndex = 13;
@@ -83,7 +96,8 @@
             // 
             lblObjetivo.AutoSize = true;
             lblObjetivo.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            lblObjetivo.Location = new Point(12, 157);
+            lblObjetivo.ForeColor = Color.FromArgb(31, 41, 55);
+            lblObjetivo.Location = new Point(32, 184);
             lblObjetivo.Name = "lblObjetivo";
             lblObjetivo.Size = new Size(55, 15);
             lblObjetivo.TabIndex = 15;
@@ -91,18 +105,27 @@
             // 
             // txtObjetivo
             // 
-            txtObjetivo.Location = new Point(12, 175);
+            txtObjetivo.Anchor = AnchorStyles.Top | AnchorStyles.Left;
+            txtObjetivo.BackColor = Color.White;
+            txtObjetivo.BorderStyle = BorderStyle.FixedSingle;
+            txtObjetivo.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
+            txtObjetivo.ForeColor = Color.FromArgb(31, 41, 55);
+            txtObjetivo.Location = new Point(32, 210);
             txtObjetivo.Name = "txtObjetivo";
-            txtObjetivo.Size = new Size(158, 23);
+            txtObjetivo.Size = new Size(350, 23);
             txtObjetivo.TabIndex = 14;
             // 
             // numFrecuencia
             // 
-            numFrecuencia.Location = new Point(201, 175);
+            numFrecuencia.Anchor = AnchorStyles.Top | AnchorStyles.Left;
+            numFrecuencia.BackColor = Color.White;
+            numFrecuencia.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
+            numFrecuencia.ForeColor = Color.FromArgb(31, 41, 55);
+            numFrecuencia.Location = new Point(430, 210);
             numFrecuencia.Maximum = new decimal(new int[] { 7, 0, 0, 0 });
             numFrecuencia.Minimum = new decimal(new int[] { 1, 0, 0, 0 });
             numFrecuencia.Name = "numFrecuencia";
-            numFrecuencia.Size = new Size(158, 23);
+            numFrecuencia.Size = new Size(358, 23);
             numFrecuencia.TabIndex = 16;
             numFrecuencia.Value = new decimal(new int[] { 1, 0, 0, 0 });
             // 
@@ -110,7 +133,8 @@
             // 
             lblFrecuencia.AutoSize = true;
             lblFrecuencia.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            lblFrecuencia.Location = new Point(201, 157);
+            lblFrecuencia.ForeColor = Color.FromArgb(31, 41, 55);
+            lblFrecuencia.Location = new Point(430, 184);
             lblFrecuencia.Name = "lblFrecuencia";
             lblFrecuencia.Size = new Size(67, 15);
             lblFrecuencia.TabIndex = 17;
@@ -118,17 +142,23 @@
             // 
             // txtDetalle
             // 
-            txtDetalle.Location = new Point(12, 241);
+            txtDetalle.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            txtDetalle.BackColor = Color.White;
+            txtDetalle.BorderStyle = BorderStyle.FixedSingle;
+            txtDetalle.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
+            txtDetalle.ForeColor = Color.FromArgb(31, 41, 55);
+            txtDetalle.Location = new Point(32, 282);
             txtDetalle.Multiline = true;
             txtDetalle.Name = "txtDetalle";
-            txtDetalle.Size = new Size(347, 110);
+            txtDetalle.Size = new Size(756, 286);
             txtDetalle.TabIndex = 18;
             // 
             // lblDetalle
             // 
             lblDetalle.AutoSize = true;
             lblDetalle.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            lblDetalle.Location = new Point(12, 223);
+            lblDetalle.ForeColor = Color.FromArgb(31, 41, 55);
+            lblDetalle.Location = new Point(32, 256);
             lblDetalle.Name = "lblDetalle";
             lblDetalle.Size = new Size(47, 15);
             lblDetalle.TabIndex = 19;
@@ -136,19 +166,26 @@
             // 
             // btnAsignarRutina
             // 
-            btnAsignarRutina.Location = new Point(12, 357);
+            btnAsignarRutina.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            btnAsignarRutina.BackColor = Color.FromArgb(37, 99, 235);
+            btnAsignarRutina.FlatAppearance.BorderSize = 0;
+            btnAsignarRutina.FlatStyle = FlatStyle.Flat;
+            btnAsignarRutina.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point);
+            btnAsignarRutina.ForeColor = Color.White;
+            btnAsignarRutina.Location = new Point(32, 592);
             btnAsignarRutina.Name = "btnAsignarRutina";
-            btnAsignarRutina.Size = new Size(158, 38);
+            btnAsignarRutina.Size = new Size(756, 44);
             btnAsignarRutina.TabIndex = 20;
             btnAsignarRutina.Text = "Asignar Rutina";
-            btnAsignarRutina.UseVisualStyleBackColor = true;
+            btnAsignarRutina.UseVisualStyleBackColor = false;
             btnAsignarRutina.Click += btnAsignarRutina_Click;
             // 
             // frmEntrenamiento
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(374, 414);
+            BackColor = Color.FromArgb(243, 246, 249);
+            ClientSize = new Size(820, 660);
             Controls.Add(btnAsignarRutina);
             Controls.Add(lblDetalle);
             Controls.Add(txtDetalle);
@@ -160,6 +197,8 @@
             Controls.Add(lblDNI);
             Controls.Add(btnBuscar);
             Controls.Add(txtDNI);
+            Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
+            ForeColor = Color.FromArgb(31, 41, 55);
             Name = "frmEntrenamiento";
             Text = "frmEntrenamiento";
             FormClosing += frmEntrenamiento_FormClosing;

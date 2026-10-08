@@ -49,80 +49,128 @@
             // 
             // txtDNI
             // 
-            txtDNI.Location = new Point(12, 37);
+            txtDNI.Anchor = AnchorStyles.Top | AnchorStyles.Left;
+            txtDNI.BackColor = Color.White;
+            txtDNI.BorderStyle = BorderStyle.FixedSingle;
+            txtDNI.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
+            txtDNI.ForeColor = Color.FromArgb(31, 41, 55);
+            txtDNI.Location = new Point(28, 54);
             txtDNI.Name = "txtDNI";
-            txtDNI.Size = new Size(158, 23);
+            txtDNI.Size = new Size(360, 23);
             txtDNI.TabIndex = 0;
             // 
             // btnBuscar
             // 
-            btnBuscar.Location = new Point(12, 80);
+            btnBuscar.Anchor = AnchorStyles.Top | AnchorStyles.Left;
+            btnBuscar.BackColor = Color.FromArgb(71, 85, 105);
+            btnBuscar.FlatAppearance.BorderSize = 0;
+            btnBuscar.FlatStyle = FlatStyle.Flat;
+            btnBuscar.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point);
+            btnBuscar.ForeColor = Color.White;
+            btnBuscar.Location = new Point(420, 50);
             btnBuscar.Name = "btnBuscar";
-            btnBuscar.Size = new Size(158, 38);
+            btnBuscar.Size = new Size(160, 42);
             btnBuscar.TabIndex = 1;
             btnBuscar.Text = "Buscar";
-            btnBuscar.UseVisualStyleBackColor = true;
+            btnBuscar.UseVisualStyleBackColor = false;
             btnBuscar.Click += btnBuscar_Click;
             // 
             // txtNombre
             // 
-            txtNombre.Location = new Point(12, 197);
+            txtNombre.Anchor = AnchorStyles.Top | AnchorStyles.Left;
+            txtNombre.BackColor = Color.White;
+            txtNombre.BorderStyle = BorderStyle.FixedSingle;
+            txtNombre.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
+            txtNombre.ForeColor = Color.FromArgb(31, 41, 55);
+            txtNombre.Location = new Point(28, 148);
             txtNombre.Name = "txtNombre";
-            txtNombre.Size = new Size(158, 23);
+            txtNombre.Size = new Size(360, 23);
             txtNombre.TabIndex = 2;
             // 
             // txtApellido
             // 
-            txtApellido.Location = new Point(199, 197);
+            txtApellido.Anchor = AnchorStyles.Top | AnchorStyles.Left;
+            txtApellido.BackColor = Color.White;
+            txtApellido.BorderStyle = BorderStyle.FixedSingle;
+            txtApellido.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
+            txtApellido.ForeColor = Color.FromArgb(31, 41, 55);
+            txtApellido.Location = new Point(420, 148);
             txtApellido.Name = "txtApellido";
-            txtApellido.Size = new Size(158, 23);
+            txtApellido.Size = new Size(372, 23);
             txtApellido.TabIndex = 3;
             // 
             // txtEmail
             // 
-            txtEmail.Location = new Point(199, 259);
+            txtEmail.Anchor = AnchorStyles.Top | AnchorStyles.Left;
+            txtEmail.BackColor = Color.White;
+            txtEmail.BorderStyle = BorderStyle.FixedSingle;
+            txtEmail.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
+            txtEmail.ForeColor = Color.FromArgb(31, 41, 55);
+            txtEmail.Location = new Point(420, 244);
             txtEmail.Name = "txtEmail";
-            txtEmail.Size = new Size(158, 23);
+            txtEmail.Size = new Size(372, 23);
             txtEmail.TabIndex = 4;
             // 
             // txtTelefono
             // 
-            txtTelefono.Location = new Point(12, 259);
+            txtTelefono.Anchor = AnchorStyles.Top | AnchorStyles.Left;
+            txtTelefono.BackColor = Color.White;
+            txtTelefono.BorderStyle = BorderStyle.FixedSingle;
+            txtTelefono.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
+            txtTelefono.ForeColor = Color.FromArgb(31, 41, 55);
+            txtTelefono.Location = new Point(28, 244);
             txtTelefono.Name = "txtTelefono";
-            txtTelefono.Size = new Size(158, 23);
+            txtTelefono.Size = new Size(360, 23);
             txtTelefono.TabIndex = 5;
             // 
             // cmbPlanes
             // 
+            cmbPlanes.Anchor = AnchorStyles.Top | AnchorStyles.Left;
+            cmbPlanes.BackColor = Color.White;
+            cmbPlanes.FlatStyle = FlatStyle.Flat;
+            cmbPlanes.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
+            cmbPlanes.ForeColor = Color.FromArgb(31, 41, 55);
             cmbPlanes.FormattingEnabled = true;
-            cmbPlanes.Location = new Point(12, 321);
+            cmbPlanes.Location = new Point(28, 340);
             cmbPlanes.Name = "cmbPlanes";
-            cmbPlanes.Size = new Size(158, 23);
+            cmbPlanes.Size = new Size(360, 28);
             cmbPlanes.TabIndex = 6;
             // 
             // cmbMetodoPago
             // 
+            cmbMetodoPago.Anchor = AnchorStyles.Top | AnchorStyles.Left;
+            cmbMetodoPago.BackColor = Color.White;
+            cmbMetodoPago.FlatStyle = FlatStyle.Flat;
+            cmbMetodoPago.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
+            cmbMetodoPago.ForeColor = Color.FromArgb(31, 41, 55);
             cmbMetodoPago.FormattingEnabled = true;
-            cmbMetodoPago.Location = new Point(199, 321);
+            cmbMetodoPago.Location = new Point(420, 340);
             cmbMetodoPago.Name = "cmbMetodoPago";
-            cmbMetodoPago.Size = new Size(158, 23);
+            cmbMetodoPago.Size = new Size(372, 28);
             cmbMetodoPago.TabIndex = 7;
             // 
             // btnConfirmarVenta
             // 
-            btnConfirmarVenta.Location = new Point(199, 383);
+            btnConfirmarVenta.Anchor = AnchorStyles.Top | AnchorStyles.Left;
+            btnConfirmarVenta.BackColor = Color.FromArgb(37, 99, 235);
+            btnConfirmarVenta.FlatAppearance.BorderSize = 0;
+            btnConfirmarVenta.FlatStyle = FlatStyle.Flat;
+            btnConfirmarVenta.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point);
+            btnConfirmarVenta.ForeColor = Color.White;
+            btnConfirmarVenta.Location = new Point(420, 408);
             btnConfirmarVenta.Name = "btnConfirmarVenta";
-            btnConfirmarVenta.Size = new Size(158, 38);
+            btnConfirmarVenta.Size = new Size(372, 46);
             btnConfirmarVenta.TabIndex = 8;
             btnConfirmarVenta.Text = "Confirmar Venta";
-            btnConfirmarVenta.UseVisualStyleBackColor = true;
+            btnConfirmarVenta.UseVisualStyleBackColor = false;
             btnConfirmarVenta.Click += btnConfirmarVenta_Click;
             // 
             // lblDNI
             // 
             lblDNI.AutoSize = true;
             lblDNI.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            lblDNI.Location = new Point(12, 19);
+            lblDNI.ForeColor = Color.FromArgb(31, 41, 55);
+            lblDNI.Location = new Point(28, 28);
             lblDNI.Name = "lblDNI";
             lblDNI.Size = new Size(29, 15);
             lblDNI.TabIndex = 9;
@@ -132,7 +180,8 @@
             // 
             lblNombre.AutoSize = true;
             lblNombre.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            lblNombre.Location = new Point(12, 179);
+            lblNombre.ForeColor = Color.FromArgb(31, 41, 55);
+            lblNombre.Location = new Point(28, 122);
             lblNombre.Name = "lblNombre";
             lblNombre.Size = new Size(53, 15);
             lblNombre.TabIndex = 10;
@@ -142,7 +191,8 @@
             // 
             lblApellido.AutoSize = true;
             lblApellido.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            lblApellido.Location = new Point(199, 179);
+            lblApellido.ForeColor = Color.FromArgb(31, 41, 55);
+            lblApellido.Location = new Point(420, 122);
             lblApellido.Name = "lblApellido";
             lblApellido.Size = new Size(52, 15);
             lblApellido.TabIndex = 11;
@@ -152,7 +202,8 @@
             // 
             lblTelefono.AutoSize = true;
             lblTelefono.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            lblTelefono.Location = new Point(12, 241);
+            lblTelefono.ForeColor = Color.FromArgb(31, 41, 55);
+            lblTelefono.Location = new Point(28, 218);
             lblTelefono.Name = "lblTelefono";
             lblTelefono.Size = new Size(56, 15);
             lblTelefono.TabIndex = 12;
@@ -162,7 +213,8 @@
             // 
             lblEmail.AutoSize = true;
             lblEmail.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            lblEmail.Location = new Point(199, 241);
+            lblEmail.ForeColor = Color.FromArgb(31, 41, 55);
+            lblEmail.Location = new Point(420, 218);
             lblEmail.Name = "lblEmail";
             lblEmail.Size = new Size(41, 15);
             lblEmail.TabIndex = 13;
@@ -172,7 +224,8 @@
             // 
             lblPlan.AutoSize = true;
             lblPlan.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            lblPlan.Location = new Point(12, 303);
+            lblPlan.ForeColor = Color.FromArgb(31, 41, 55);
+            lblPlan.Location = new Point(28, 314);
             lblPlan.Name = "lblPlan";
             lblPlan.Size = new Size(125, 15);
             lblPlan.TabIndex = 14;
@@ -182,7 +235,8 @@
             // 
             lblMetodoPago.AutoSize = true;
             lblMetodoPago.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            lblMetodoPago.Location = new Point(199, 303);
+            lblMetodoPago.ForeColor = Color.FromArgb(31, 41, 55);
+            lblMetodoPago.Location = new Point(420, 314);
             lblMetodoPago.Name = "lblMetodoPago";
             lblMetodoPago.Size = new Size(103, 15);
             lblMetodoPago.TabIndex = 15;
@@ -190,19 +244,26 @@
             // 
             // btnConsultarPlanes
             // 
-            btnConsultarPlanes.Location = new Point(12, 383);
+            btnConsultarPlanes.Anchor = AnchorStyles.Top | AnchorStyles.Left;
+            btnConsultarPlanes.BackColor = Color.FromArgb(71, 85, 105);
+            btnConsultarPlanes.FlatAppearance.BorderSize = 0;
+            btnConsultarPlanes.FlatStyle = FlatStyle.Flat;
+            btnConsultarPlanes.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point);
+            btnConsultarPlanes.ForeColor = Color.White;
+            btnConsultarPlanes.Location = new Point(28, 408);
             btnConsultarPlanes.Name = "btnConsultarPlanes";
-            btnConsultarPlanes.Size = new Size(158, 38);
+            btnConsultarPlanes.Size = new Size(360, 46);
             btnConsultarPlanes.TabIndex = 16;
             btnConsultarPlanes.Text = "Consultar Planes";
-            btnConsultarPlanes.UseVisualStyleBackColor = true;
+            btnConsultarPlanes.UseVisualStyleBackColor = false;
             btnConsultarPlanes.Click += btnConsultarPlanes_Click;
             // 
             // frmRecepcion
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(384, 450);
+            BackColor = Color.FromArgb(243, 246, 249);
+            ClientSize = new Size(820, 500);
             Controls.Add(btnConsultarPlanes);
             Controls.Add(lblMetodoPago);
             Controls.Add(lblPlan);
@@ -220,6 +281,8 @@
             Controls.Add(txtNombre);
             Controls.Add(btnBuscar);
             Controls.Add(txtDNI);
+            Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
+            ForeColor = Color.FromArgb(31, 41, 55);
             Name = "frmRecepcion";
             Text = "frmRecepcion";
             FormClosing += frmRecepcion_FormClosing;

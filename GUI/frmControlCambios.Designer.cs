@@ -38,10 +38,15 @@
             // 
             // cmbUsuarios
             // 
+            cmbUsuarios.Anchor = AnchorStyles.Top | AnchorStyles.Left;
+            cmbUsuarios.BackColor = Color.White;
+            cmbUsuarios.FlatStyle = FlatStyle.Flat;
+            cmbUsuarios.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
+            cmbUsuarios.ForeColor = Color.FromArgb(31, 41, 55);
             cmbUsuarios.FormattingEnabled = true;
-            cmbUsuarios.Location = new Point(32, 62);
+            cmbUsuarios.Location = new Point(28, 48);
             cmbUsuarios.Name = "cmbUsuarios";
-            cmbUsuarios.Size = new Size(187, 23);
+            cmbUsuarios.Size = new Size(280, 28);
             cmbUsuarios.TabIndex = 0;
             cmbUsuarios.SelectedIndexChanged += cmbUsuarios_SelectedIndexChanged;
             // 
@@ -49,53 +54,87 @@
             // 
             dgvHistorial.AllowUserToAddRows = false;
             dgvHistorial.AllowUserToDeleteRows = false;
+            dgvHistorial.AlternatingRowsDefaultCellStyle = new DataGridViewCellStyle { BackColor = Color.FromArgb(248, 250, 252) };
+            dgvHistorial.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            dgvHistorial.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+            dgvHistorial.BackgroundColor = Color.White;
+            dgvHistorial.BorderStyle = BorderStyle.None;
+            dgvHistorial.CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal;
+            dgvHistorial.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.None;
+            dgvHistorial.ColumnHeadersDefaultCellStyle = new DataGridViewCellStyle { Alignment = DataGridViewContentAlignment.MiddleLeft, BackColor = Color.FromArgb(31, 41, 55), Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point), ForeColor = Color.White, SelectionBackColor = Color.FromArgb(31, 41, 55), SelectionForeColor = Color.White, WrapMode = DataGridViewTriState.False };
             dgvHistorial.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            dgvHistorial.Location = new Point(32, 117);
+            dgvHistorial.DefaultCellStyle = new DataGridViewCellStyle { BackColor = Color.White, Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point), ForeColor = Color.FromArgb(31, 41, 55), SelectionBackColor = Color.FromArgb(219, 234, 254), SelectionForeColor = Color.FromArgb(31, 41, 55), Padding = new Padding(8, 4, 8, 4) };
+            dgvHistorial.EnableHeadersVisualStyles = false;
+            dgvHistorial.GridColor = Color.FromArgb(226, 232, 240);
+            dgvHistorial.Location = new Point(28, 100);
             dgvHistorial.Name = "dgvHistorial";
             dgvHistorial.ReadOnly = true;
-            dgvHistorial.Size = new Size(736, 310);
+            dgvHistorial.RowHeadersVisible = false;
+            dgvHistorial.RowTemplate.Height = 36;
+            dgvHistorial.Size = new Size(1144, 544);
             dgvHistorial.TabIndex = 1;
             // 
             // btnRestaurar
             // 
-            btnRestaurar.Location = new Point(248, 55);
+            btnRestaurar.Anchor = AnchorStyles.Top | AnchorStyles.Left;
+            btnRestaurar.BackColor = Color.FromArgb(37, 99, 235);
+            btnRestaurar.FlatAppearance.BorderSize = 0;
+            btnRestaurar.FlatStyle = FlatStyle.Flat;
+            btnRestaurar.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point);
+            btnRestaurar.ForeColor = Color.White;
+            btnRestaurar.Location = new Point(340, 44);
             btnRestaurar.Name = "btnRestaurar";
-            btnRestaurar.Size = new Size(141, 34);
+            btnRestaurar.Size = new Size(170, 42);
             btnRestaurar.TabIndex = 2;
             btnRestaurar.Text = "Restaurar";
-            btnRestaurar.UseVisualStyleBackColor = true;
+            btnRestaurar.UseVisualStyleBackColor = false;
             btnRestaurar.Click += btnRestaurar_Click;
             // 
             // btnVolver
             // 
-            btnVolver.Location = new Point(579, 433);
+            btnVolver.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
+            btnVolver.BackColor = Color.FromArgb(71, 85, 105);
+            btnVolver.FlatAppearance.BorderSize = 0;
+            btnVolver.FlatStyle = FlatStyle.Flat;
+            btnVolver.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point);
+            btnVolver.ForeColor = Color.White;
+            btnVolver.Location = new Point(1032, 660);
             btnVolver.Name = "btnVolver";
-            btnVolver.Size = new Size(189, 39);
+            btnVolver.Size = new Size(140, 42);
             btnVolver.TabIndex = 5;
             btnVolver.Text = "Volver";
-            btnVolver.UseVisualStyleBackColor = true;
+            btnVolver.UseVisualStyleBackColor = false;
             btnVolver.Click += btnVolver_Click;
             // 
             // btnModificarJerarquia
             // 
-            btnModificarJerarquia.Location = new Point(410, 55);
+            btnModificarJerarquia.Anchor = AnchorStyles.Top | AnchorStyles.Left;
+            btnModificarJerarquia.BackColor = Color.FromArgb(71, 85, 105);
+            btnModificarJerarquia.FlatAppearance.BorderSize = 0;
+            btnModificarJerarquia.FlatStyle = FlatStyle.Flat;
+            btnModificarJerarquia.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point);
+            btnModificarJerarquia.ForeColor = Color.White;
+            btnModificarJerarquia.Location = new Point(530, 44);
             btnModificarJerarquia.Name = "btnModificarJerarquia";
-            btnModificarJerarquia.Size = new Size(141, 34);
+            btnModificarJerarquia.Size = new Size(190, 42);
             btnModificarJerarquia.TabIndex = 6;
             btnModificarJerarquia.Text = "Modificar Jerarquía";
-            btnModificarJerarquia.UseVisualStyleBackColor = true;
+            btnModificarJerarquia.UseVisualStyleBackColor = false;
             btnModificarJerarquia.Click += btnModificarJerarquia_Click;
             // 
             // frmControlCambios
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(800, 480);
+            BackColor = Color.FromArgb(243, 246, 249);
+            ClientSize = new Size(1200, 720);
             Controls.Add(btnModificarJerarquia);
             Controls.Add(btnVolver);
             Controls.Add(btnRestaurar);
             Controls.Add(dgvHistorial);
             Controls.Add(cmbUsuarios);
+            Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
+            ForeColor = Color.FromArgb(31, 41, 55);
             Name = "frmControlCambios";
             Text = "Control de Cambios";
             FormClosing += frmControlCambios_FormClosing;

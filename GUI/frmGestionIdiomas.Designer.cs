@@ -34,7 +34,10 @@
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
+            BackColor = Color.FromArgb(243, 246, 249);
             ClientSize = new Size(800, 450);
+            Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
+            ForeColor = Color.FromArgb(31, 41, 55);
             Name = "frmGestionIdiomas";
             Text = "frmGestionIdiomas";
             Load += frmGestionIdiomas_Load;

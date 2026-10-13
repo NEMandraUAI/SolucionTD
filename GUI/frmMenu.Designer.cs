@@ -29,149 +29,296 @@
         private void InitializeComponent()
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(frmMenu));
-            menuStrip1 = new MenuStrip();
-            iniciarSesionToolStripMenuItem = new ToolStripMenuItem();
-            iniciarSesiónToolStripMenuItem = new ToolStripMenuItem();
-            registrarseToolStripMenuItem = new ToolStripMenuItem();
-            recepcionToolStripMenuItem = new ToolStripMenuItem();
-            venderPlanToolStripMenuItem = new ToolStripMenuItem();
-            consultarComprobantesToolStripMenuItem = new ToolStripMenuItem();
-            agendarTurnoNutricionalToolStripMenuItem = new ToolStripMenuItem();
-            entrenamientoToolStripMenuItem = new ToolStripMenuItem();
-            asignarRutinaToolStripMenuItem = new ToolStripMenuItem();
-            gestionRutinasToolStripMenuItem = new ToolStripMenuItem();
-            nutriciónToolStripMenuItem = new ToolStripMenuItem();
-            salirToolStripMenuItem = new ToolStripMenuItem();
+            pnlLateral = new Panel();
+            btnMenuCerrarSesion = new Button();
+            btnMenuSalir = new Button();
+            btnMenuNutricion = new Button();
+            btnMenuEntrenamiento = new Button();
+            btnMenuRecepcion = new Button();
+            btnMenuRegistrarse = new Button();
+            btnMenuIniciarSesion = new Button();
+            pnlCabecera = new Panel();
+            pnlSubNutricion = new Panel();
+            pnlSubEntrenamiento = new Panel();
+            btnSubGestionRutinas = new Button();
+            btnSubAsignarRutina = new Button();
+            pnlSubRecepcion = new Panel();
+            btnSubAgendarTurno = new Button();
+            btnSubConsultarComprobantes = new Button();
+            btnSubVenderPlan = new Button();
+            panelIdioma = new Panel();
             cmbIdiomas = new ComboBox();
             btnNuevoIdioma = new Button();
-            panelIdioma = new Panel();
-            menuStrip1.SuspendLayout();
+            pnlContenedor = new Panel();
+            btnMenuInicio = new Button();
+            pnlLateral.SuspendLayout();
+            pnlCabecera.SuspendLayout();
+            pnlSubEntrenamiento.SuspendLayout();
+            pnlSubRecepcion.SuspendLayout();
             panelIdioma.SuspendLayout();
             SuspendLayout();
             // 
-            // menuStrip1
+            // pnlLateral
             // 
-            menuStrip1.BackColor = Color.FromArgb(31, 41, 55);
-            menuStrip1.Font = new Font("Segoe UI", 10F);
-            menuStrip1.ForeColor = Color.White;
-            menuStrip1.Items.AddRange(new ToolStripItem[] { iniciarSesionToolStripMenuItem, recepcionToolStripMenuItem, entrenamientoToolStripMenuItem, nutriciónToolStripMenuItem, salirToolStripMenuItem });
-            menuStrip1.Location = new Point(0, 0);
-            menuStrip1.Name = "menuStrip1";
-            menuStrip1.Padding = new Padding(12, 5, 12, 5);
-            menuStrip1.Size = new Size(877, 43);
-            menuStrip1.TabIndex = 0;
-            menuStrip1.Text = "menuStrip1";
+            pnlLateral.Controls.Add(btnMenuCerrarSesion);
+            pnlLateral.Controls.Add(btnMenuSalir);
+            pnlLateral.Controls.Add(btnMenuNutricion);
+            pnlLateral.Controls.Add(btnMenuEntrenamiento);
+            pnlLateral.Controls.Add(btnMenuRecepcion);
+            pnlLateral.Controls.Add(btnMenuInicio);
+            pnlLateral.Controls.Add(btnMenuRegistrarse);
+            pnlLateral.Controls.Add(btnMenuIniciarSesion);
+            pnlLateral.Dock = DockStyle.Left;
+            pnlLateral.Location = new Point(0, 0);
+            pnlLateral.Name = "pnlLateral";
+            pnlLateral.Size = new Size(250, 459);
+            pnlLateral.TabIndex = 7;
             // 
-            // iniciarSesionToolStripMenuItem
+            // btnMenuCerrarSesion
             // 
-            iniciarSesionToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { iniciarSesiónToolStripMenuItem, registrarseToolStripMenuItem });
-            iniciarSesionToolStripMenuItem.ForeColor = Color.White;
-            iniciarSesionToolStripMenuItem.Name = "iniciarSesionToolStripMenuItem";
-            iniciarSesionToolStripMenuItem.Padding = new Padding(10, 5, 10, 5);
-            iniciarSesionToolStripMenuItem.Size = new Size(72, 33);
-            iniciarSesionToolStripMenuItem.Text = "Sesión";
+            btnMenuCerrarSesion.BackColor = Color.FromArgb(37, 99, 235);
+            btnMenuCerrarSesion.Dock = DockStyle.Bottom;
+            btnMenuCerrarSesion.FlatAppearance.BorderSize = 0;
+            btnMenuCerrarSesion.FlatStyle = FlatStyle.Flat;
+            btnMenuCerrarSesion.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            btnMenuCerrarSesion.ForeColor = Color.White;
+            btnMenuCerrarSesion.Location = new Point(0, 369);
+            btnMenuCerrarSesion.Name = "btnMenuCerrarSesion";
+            btnMenuCerrarSesion.Size = new Size(250, 45);
+            btnMenuCerrarSesion.TabIndex = 7;
+            btnMenuCerrarSesion.Text = "Cerrar Sesión";
+            btnMenuCerrarSesion.UseVisualStyleBackColor = false;
+            btnMenuCerrarSesion.Click += btnMenuCerrarSesion_Click;
             // 
-            // iniciarSesiónToolStripMenuItem
+            // btnMenuSalir
             // 
-            iniciarSesiónToolStripMenuItem.ForeColor = Color.FromArgb(31, 41, 55);
-            iniciarSesiónToolStripMenuItem.Name = "iniciarSesiónToolStripMenuItem";
-            iniciarSesiónToolStripMenuItem.Padding = new Padding(10, 6, 10, 6);
-            iniciarSesiónToolStripMenuItem.Size = new Size(177, 34);
-            iniciarSesiónToolStripMenuItem.Text = "Iniciar Sesión";
-            iniciarSesiónToolStripMenuItem.Click += iniciarSesiónToolStripMenuItem_Click;
+            btnMenuSalir.BackColor = Color.FromArgb(37, 99, 235);
+            btnMenuSalir.Dock = DockStyle.Bottom;
+            btnMenuSalir.FlatAppearance.BorderSize = 0;
+            btnMenuSalir.FlatStyle = FlatStyle.Flat;
+            btnMenuSalir.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            btnMenuSalir.ForeColor = Color.White;
+            btnMenuSalir.Location = new Point(0, 414);
+            btnMenuSalir.Name = "btnMenuSalir";
+            btnMenuSalir.Size = new Size(250, 45);
+            btnMenuSalir.TabIndex = 6;
+            btnMenuSalir.Text = "Salir";
+            btnMenuSalir.UseVisualStyleBackColor = false;
+            btnMenuSalir.Click += btnSalir_Click;
             // 
-            // registrarseToolStripMenuItem
+            // btnMenuNutricion
             // 
-            registrarseToolStripMenuItem.ForeColor = Color.FromArgb(31, 41, 55);
-            registrarseToolStripMenuItem.Name = "registrarseToolStripMenuItem";
-            registrarseToolStripMenuItem.Padding = new Padding(10, 6, 10, 6);
-            registrarseToolStripMenuItem.Size = new Size(177, 34);
-            registrarseToolStripMenuItem.Text = "Registrarse";
-            registrarseToolStripMenuItem.Click += registrarseToolStripMenuItem_Click;
+            btnMenuNutricion.BackColor = Color.FromArgb(37, 99, 235);
+            btnMenuNutricion.Dock = DockStyle.Top;
+            btnMenuNutricion.FlatAppearance.BorderSize = 0;
+            btnMenuNutricion.FlatStyle = FlatStyle.Flat;
+            btnMenuNutricion.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            btnMenuNutricion.ForeColor = Color.White;
+            btnMenuNutricion.Location = new Point(0, 225);
+            btnMenuNutricion.Name = "btnMenuNutricion";
+            btnMenuNutricion.Size = new Size(250, 45);
+            btnMenuNutricion.TabIndex = 5;
+            btnMenuNutricion.Text = "Nutrición";
+            btnMenuNutricion.UseVisualStyleBackColor = false;
+            btnMenuNutricion.Click += btnMenuNutricion_Click;
             // 
-            // recepcionToolStripMenuItem
+            // btnMenuEntrenamiento
             // 
-            recepcionToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { venderPlanToolStripMenuItem, consultarComprobantesToolStripMenuItem, agendarTurnoNutricionalToolStripMenuItem });
-            recepcionToolStripMenuItem.ForeColor = Color.White;
-            recepcionToolStripMenuItem.Name = "recepcionToolStripMenuItem";
-            recepcionToolStripMenuItem.Padding = new Padding(10, 5, 10, 5);
-            recepcionToolStripMenuItem.Size = new Size(94, 33);
-            recepcionToolStripMenuItem.Text = "Recepción";
-            recepcionToolStripMenuItem.Visible = false;
+            btnMenuEntrenamiento.BackColor = Color.FromArgb(37, 99, 235);
+            btnMenuEntrenamiento.Dock = DockStyle.Top;
+            btnMenuEntrenamiento.FlatAppearance.BorderSize = 0;
+            btnMenuEntrenamiento.FlatStyle = FlatStyle.Flat;
+            btnMenuEntrenamiento.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            btnMenuEntrenamiento.ForeColor = Color.White;
+            btnMenuEntrenamiento.Location = new Point(0, 180);
+            btnMenuEntrenamiento.Name = "btnMenuEntrenamiento";
+            btnMenuEntrenamiento.Size = new Size(250, 45);
+            btnMenuEntrenamiento.TabIndex = 4;
+            btnMenuEntrenamiento.Text = "Entrenamiento";
+            btnMenuEntrenamiento.UseVisualStyleBackColor = false;
+            btnMenuEntrenamiento.Click += btnMenuEntrenamiento_Click;
             // 
-            // venderPlanToolStripMenuItem
+            // btnMenuRecepcion
             // 
-            venderPlanToolStripMenuItem.ForeColor = Color.FromArgb(31, 41, 55);
-            venderPlanToolStripMenuItem.Name = "venderPlanToolStripMenuItem";
-            venderPlanToolStripMenuItem.Padding = new Padding(10, 6, 10, 6);
-            venderPlanToolStripMenuItem.Size = new Size(260, 34);
-            venderPlanToolStripMenuItem.Text = "Vender Plan";
-            venderPlanToolStripMenuItem.Click += venderPlanToolStripMenuItem_Click;
+            btnMenuRecepcion.BackColor = Color.FromArgb(37, 99, 235);
+            btnMenuRecepcion.Dock = DockStyle.Top;
+            btnMenuRecepcion.FlatAppearance.BorderSize = 0;
+            btnMenuRecepcion.FlatStyle = FlatStyle.Flat;
+            btnMenuRecepcion.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            btnMenuRecepcion.ForeColor = Color.White;
+            btnMenuRecepcion.Location = new Point(0, 135);
+            btnMenuRecepcion.Name = "btnMenuRecepcion";
+            btnMenuRecepcion.Size = new Size(250, 45);
+            btnMenuRecepcion.TabIndex = 3;
+            btnMenuRecepcion.Text = "Recepción";
+            btnMenuRecepcion.UseVisualStyleBackColor = false;
+            btnMenuRecepcion.Click += btnMenuRecepcion_Click;
             // 
-            // consultarComprobantesToolStripMenuItem
+            // btnMenuRegistrarse
             // 
-            consultarComprobantesToolStripMenuItem.ForeColor = Color.FromArgb(31, 41, 55);
-            consultarComprobantesToolStripMenuItem.Name = "consultarComprobantesToolStripMenuItem";
-            consultarComprobantesToolStripMenuItem.Padding = new Padding(10, 6, 10, 6);
-            consultarComprobantesToolStripMenuItem.Size = new Size(260, 34);
-            consultarComprobantesToolStripMenuItem.Text = "Consultar Comprobantes";
-            consultarComprobantesToolStripMenuItem.Click += consultarComprobantesToolStripMenuItem_Click;
+            btnMenuRegistrarse.BackColor = Color.FromArgb(37, 99, 235);
+            btnMenuRegistrarse.Dock = DockStyle.Top;
+            btnMenuRegistrarse.FlatAppearance.BorderSize = 0;
+            btnMenuRegistrarse.FlatStyle = FlatStyle.Flat;
+            btnMenuRegistrarse.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            btnMenuRegistrarse.ForeColor = Color.White;
+            btnMenuRegistrarse.Location = new Point(0, 45);
+            btnMenuRegistrarse.Name = "btnMenuRegistrarse";
+            btnMenuRegistrarse.Size = new Size(250, 45);
+            btnMenuRegistrarse.TabIndex = 2;
+            btnMenuRegistrarse.Text = "Registrarse";
+            btnMenuRegistrarse.UseVisualStyleBackColor = false;
+            btnMenuRegistrarse.Click += btnRegistrarse_Click;
             // 
-            // agendarTurnoNutricionalToolStripMenuItem
+            // btnMenuIniciarSesion
             // 
-            agendarTurnoNutricionalToolStripMenuItem.ForeColor = Color.FromArgb(31, 41, 55);
-            agendarTurnoNutricionalToolStripMenuItem.Name = "agendarTurnoNutricionalToolStripMenuItem";
-            agendarTurnoNutricionalToolStripMenuItem.Padding = new Padding(10, 6, 10, 6);
-            agendarTurnoNutricionalToolStripMenuItem.Size = new Size(260, 34);
-            agendarTurnoNutricionalToolStripMenuItem.Text = "Agendar Turno Nutricional";
-            agendarTurnoNutricionalToolStripMenuItem.Click += agendarTurnoNutricionalToolStripMenuItem_Click;
+            btnMenuIniciarSesion.BackColor = Color.FromArgb(37, 99, 235);
+            btnMenuIniciarSesion.Dock = DockStyle.Top;
+            btnMenuIniciarSesion.FlatAppearance.BorderSize = 0;
+            btnMenuIniciarSesion.FlatStyle = FlatStyle.Flat;
+            btnMenuIniciarSesion.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            btnMenuIniciarSesion.ForeColor = Color.White;
+            btnMenuIniciarSesion.Location = new Point(0, 0);
+            btnMenuIniciarSesion.Name = "btnMenuIniciarSesion";
+            btnMenuIniciarSesion.Size = new Size(250, 45);
+            btnMenuIniciarSesion.TabIndex = 1;
+            btnMenuIniciarSesion.Text = "Iniciar Sesión";
+            btnMenuIniciarSesion.UseVisualStyleBackColor = false;
+            btnMenuIniciarSesion.Click += btnIniciarSesion_Click;
             // 
-            // entrenamientoToolStripMenuItem
+            // pnlCabecera
             // 
-            entrenamientoToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { asignarRutinaToolStripMenuItem, gestionRutinasToolStripMenuItem });
-            entrenamientoToolStripMenuItem.ForeColor = Color.White;
-            entrenamientoToolStripMenuItem.Name = "entrenamientoToolStripMenuItem";
-            entrenamientoToolStripMenuItem.Padding = new Padding(10, 5, 10, 5);
-            entrenamientoToolStripMenuItem.Size = new Size(123, 33);
-            entrenamientoToolStripMenuItem.Text = "Entrenamiento";
-            entrenamientoToolStripMenuItem.Visible = false;
+            pnlCabecera.Controls.Add(pnlSubNutricion);
+            pnlCabecera.Controls.Add(pnlSubEntrenamiento);
+            pnlCabecera.Controls.Add(pnlSubRecepcion);
+            pnlCabecera.Controls.Add(panelIdioma);
+            pnlCabecera.Dock = DockStyle.Top;
+            pnlCabecera.Location = new Point(250, 0);
+            pnlCabecera.Name = "pnlCabecera";
+            pnlCabecera.Size = new Size(627, 60);
+            pnlCabecera.TabIndex = 8;
             // 
-            // asignarRutinaToolStripMenuItem
+            // pnlSubNutricion
             // 
-            asignarRutinaToolStripMenuItem.ForeColor = Color.FromArgb(31, 41, 55);
-            asignarRutinaToolStripMenuItem.Name = "asignarRutinaToolStripMenuItem";
-            asignarRutinaToolStripMenuItem.Padding = new Padding(10, 6, 10, 6);
-            asignarRutinaToolStripMenuItem.Size = new Size(213, 34);
-            asignarRutinaToolStripMenuItem.Text = "Asignar Rutina";
-            asignarRutinaToolStripMenuItem.Click += asignarRutinaToolStripMenuItem_Click;
+            pnlSubNutricion.Dock = DockStyle.Fill;
+            pnlSubNutricion.Location = new Point(0, 0);
+            pnlSubNutricion.Name = "pnlSubNutricion";
+            pnlSubNutricion.Size = new Size(277, 60);
+            pnlSubNutricion.TabIndex = 10;
             // 
-            // gestionRutinasToolStripMenuItem
+            // pnlSubEntrenamiento
             // 
-            gestionRutinasToolStripMenuItem.ForeColor = Color.FromArgb(31, 41, 55);
-            gestionRutinasToolStripMenuItem.Name = "gestionRutinasToolStripMenuItem";
-            gestionRutinasToolStripMenuItem.Padding = new Padding(10, 6, 10, 6);
-            gestionRutinasToolStripMenuItem.Size = new Size(213, 34);
-            gestionRutinasToolStripMenuItem.Text = "Gestión de Rutinas";
-            gestionRutinasToolStripMenuItem.Click += gestionRutinasToolStripMenuItem_Click;
+            pnlSubEntrenamiento.Controls.Add(btnSubGestionRutinas);
+            pnlSubEntrenamiento.Controls.Add(btnSubAsignarRutina);
+            pnlSubEntrenamiento.Dock = DockStyle.Fill;
+            pnlSubEntrenamiento.Location = new Point(0, 0);
+            pnlSubEntrenamiento.Name = "pnlSubEntrenamiento";
+            pnlSubEntrenamiento.Size = new Size(277, 60);
+            pnlSubEntrenamiento.TabIndex = 9;
             // 
-            // nutriciónToolStripMenuItem
+            // btnSubGestionRutinas
             // 
-            nutriciónToolStripMenuItem.ForeColor = Color.White;
-            nutriciónToolStripMenuItem.Name = "nutriciónToolStripMenuItem";
-            nutriciónToolStripMenuItem.Padding = new Padding(10, 5, 10, 5);
-            nutriciónToolStripMenuItem.Size = new Size(89, 33);
-            nutriciónToolStripMenuItem.Text = "Nutrición";
-            nutriciónToolStripMenuItem.Visible = false;
-            nutriciónToolStripMenuItem.Click += nutriciónToolStripMenuItem_Click;
+            btnSubGestionRutinas.BackColor = Color.FromArgb(37, 99, 235);
+            btnSubGestionRutinas.Dock = DockStyle.Left;
+            btnSubGestionRutinas.FlatAppearance.BorderSize = 0;
+            btnSubGestionRutinas.FlatStyle = FlatStyle.Flat;
+            btnSubGestionRutinas.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            btnSubGestionRutinas.ForeColor = Color.White;
+            btnSubGestionRutinas.Location = new Point(180, 0);
+            btnSubGestionRutinas.Name = "btnSubGestionRutinas";
+            btnSubGestionRutinas.Size = new Size(180, 60);
+            btnSubGestionRutinas.TabIndex = 1;
+            btnSubGestionRutinas.Text = "button2";
+            btnSubGestionRutinas.UseVisualStyleBackColor = false;
+            btnSubGestionRutinas.Click += btnSubGestionRutinas_Click;
             // 
-            // salirToolStripMenuItem
+            // btnSubAsignarRutina
             // 
-            salirToolStripMenuItem.ForeColor = Color.White;
-            salirToolStripMenuItem.Name = "salirToolStripMenuItem";
-            salirToolStripMenuItem.Padding = new Padding(10, 5, 10, 5);
-            salirToolStripMenuItem.Size = new Size(58, 33);
-            salirToolStripMenuItem.Text = "Salir";
-            salirToolStripMenuItem.Click += salirToolStripMenuItem_Click;
+            btnSubAsignarRutina.BackColor = Color.FromArgb(37, 99, 235);
+            btnSubAsignarRutina.Dock = DockStyle.Left;
+            btnSubAsignarRutina.FlatAppearance.BorderSize = 0;
+            btnSubAsignarRutina.FlatStyle = FlatStyle.Flat;
+            btnSubAsignarRutina.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            btnSubAsignarRutina.ForeColor = Color.White;
+            btnSubAsignarRutina.Location = new Point(0, 0);
+            btnSubAsignarRutina.Name = "btnSubAsignarRutina";
+            btnSubAsignarRutina.Size = new Size(180, 60);
+            btnSubAsignarRutina.TabIndex = 0;
+            btnSubAsignarRutina.Text = "button1";
+            btnSubAsignarRutina.UseVisualStyleBackColor = false;
+            btnSubAsignarRutina.Click += btnSubAsignarRutina_Click;
+            // 
+            // pnlSubRecepcion
+            // 
+            pnlSubRecepcion.Controls.Add(btnSubAgendarTurno);
+            pnlSubRecepcion.Controls.Add(btnSubConsultarComprobantes);
+            pnlSubRecepcion.Controls.Add(btnSubVenderPlan);
+            pnlSubRecepcion.Dock = DockStyle.Fill;
+            pnlSubRecepcion.Location = new Point(0, 0);
+            pnlSubRecepcion.Name = "pnlSubRecepcion";
+            pnlSubRecepcion.Size = new Size(277, 60);
+            pnlSubRecepcion.TabIndex = 8;
+            // 
+            // btnSubAgendarTurno
+            // 
+            btnSubAgendarTurno.BackColor = Color.FromArgb(37, 99, 235);
+            btnSubAgendarTurno.Dock = DockStyle.Left;
+            btnSubAgendarTurno.FlatAppearance.BorderSize = 0;
+            btnSubAgendarTurno.FlatStyle = FlatStyle.Flat;
+            btnSubAgendarTurno.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            btnSubAgendarTurno.ForeColor = Color.White;
+            btnSubAgendarTurno.Location = new Point(360, 0);
+            btnSubAgendarTurno.Name = "btnSubAgendarTurno";
+            btnSubAgendarTurno.Size = new Size(180, 60);
+            btnSubAgendarTurno.TabIndex = 2;
+            btnSubAgendarTurno.Text = "button3";
+            btnSubAgendarTurno.UseVisualStyleBackColor = false;
+            btnSubAgendarTurno.Click += btnSubAgendarTurno_Click;
+            // 
+            // btnSubConsultarComprobantes
+            // 
+            btnSubConsultarComprobantes.BackColor = Color.FromArgb(37, 99, 235);
+            btnSubConsultarComprobantes.Dock = DockStyle.Left;
+            btnSubConsultarComprobantes.FlatAppearance.BorderSize = 0;
+            btnSubConsultarComprobantes.FlatStyle = FlatStyle.Flat;
+            btnSubConsultarComprobantes.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            btnSubConsultarComprobantes.ForeColor = Color.White;
+            btnSubConsultarComprobantes.Location = new Point(180, 0);
+            btnSubConsultarComprobantes.Name = "btnSubConsultarComprobantes";
+            btnSubConsultarComprobantes.Size = new Size(180, 60);
+            btnSubConsultarComprobantes.TabIndex = 1;
+            btnSubConsultarComprobantes.Text = "button2";
+            btnSubConsultarComprobantes.UseVisualStyleBackColor = false;
+            btnSubConsultarComprobantes.Click += btnSubConsultarComprobantes_Click;
+            // 
+            // btnSubVenderPlan
+            // 
+            btnSubVenderPlan.BackColor = Color.FromArgb(37, 99, 235);
+            btnSubVenderPlan.Dock = DockStyle.Left;
+            btnSubVenderPlan.FlatAppearance.BorderSize = 0;
+            btnSubVenderPlan.FlatStyle = FlatStyle.Flat;
+            btnSubVenderPlan.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            btnSubVenderPlan.ForeColor = Color.White;
+            btnSubVenderPlan.Location = new Point(0, 0);
+            btnSubVenderPlan.Name = "btnSubVenderPlan";
+            btnSubVenderPlan.Size = new Size(180, 60);
+            btnSubVenderPlan.TabIndex = 0;
+            btnSubVenderPlan.Text = "button1";
+            btnSubVenderPlan.UseVisualStyleBackColor = false;
+            btnSubVenderPlan.Click += btnSubVenderPlan_Click;
+            // 
+            // panelIdioma
+            // 
+            panelIdioma.BackColor = Color.Transparent;
+            panelIdioma.BorderStyle = BorderStyle.FixedSingle;
+            panelIdioma.Controls.Add(cmbIdiomas);
+            panelIdioma.Controls.Add(btnNuevoIdioma);
+            panelIdioma.Dock = DockStyle.Right;
+            panelIdioma.Location = new Point(277, 0);
+            panelIdioma.Name = "panelIdioma";
+            panelIdioma.Padding = new Padding(10);
+            panelIdioma.Size = new Size(350, 60);
+            panelIdioma.TabIndex = 7;
             // 
             // cmbIdiomas
             // 
@@ -181,11 +328,10 @@
             cmbIdiomas.Font = new Font("Segoe UI", 9F);
             cmbIdiomas.ForeColor = Color.FromArgb(31, 41, 55);
             cmbIdiomas.FormattingEnabled = true;
-            cmbIdiomas.Location = new Point(12, 12);
+            cmbIdiomas.Location = new Point(143, 16);
             cmbIdiomas.Name = "cmbIdiomas";
             cmbIdiomas.Size = new Size(194, 23);
             cmbIdiomas.TabIndex = 2;
-            cmbIdiomas.SelectedIndexChanged += cmbIdiomas_SelectedIndexChanged;
             // 
             // btnNuevoIdioma
             // 
@@ -194,25 +340,37 @@
             btnNuevoIdioma.FlatStyle = FlatStyle.Flat;
             btnNuevoIdioma.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
             btnNuevoIdioma.ForeColor = Color.White;
-            btnNuevoIdioma.Location = new Point(12, 52);
+            btnNuevoIdioma.Location = new Point(11, 10);
             btnNuevoIdioma.Name = "btnNuevoIdioma";
-            btnNuevoIdioma.Size = new Size(194, 34);
+            btnNuevoIdioma.Size = new Size(124, 34);
             btnNuevoIdioma.TabIndex = 4;
             btnNuevoIdioma.Text = "Gestionar Idiomas";
             btnNuevoIdioma.UseVisualStyleBackColor = false;
+            btnNuevoIdioma.Click += btnNuevoIdioma_Click;
             // 
-            // panelIdioma
+            // pnlContenedor
             // 
-            panelIdioma.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            panelIdioma.BackColor = Color.White;
-            panelIdioma.BorderStyle = BorderStyle.FixedSingle;
-            panelIdioma.Controls.Add(cmbIdiomas);
-            panelIdioma.Controls.Add(btnNuevoIdioma);
-            panelIdioma.Location = new Point(645, 48);
-            panelIdioma.Name = "panelIdioma";
-            panelIdioma.Padding = new Padding(10);
-            panelIdioma.Size = new Size(220, 100);
-            panelIdioma.TabIndex = 6;
+            pnlContenedor.Dock = DockStyle.Fill;
+            pnlContenedor.Location = new Point(250, 60);
+            pnlContenedor.Name = "pnlContenedor";
+            pnlContenedor.Size = new Size(627, 399);
+            pnlContenedor.TabIndex = 8;
+            // 
+            // btnMenuInicio
+            // 
+            btnMenuInicio.BackColor = Color.FromArgb(37, 99, 235);
+            btnMenuInicio.Dock = DockStyle.Top;
+            btnMenuInicio.FlatAppearance.BorderSize = 0;
+            btnMenuInicio.FlatStyle = FlatStyle.Flat;
+            btnMenuInicio.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            btnMenuInicio.ForeColor = Color.White;
+            btnMenuInicio.Location = new Point(0, 90);
+            btnMenuInicio.Name = "btnMenuInicio";
+            btnMenuInicio.Size = new Size(250, 45);
+            btnMenuInicio.TabIndex = 8;
+            btnMenuInicio.Text = "Menú";
+            btnMenuInicio.UseVisualStyleBackColor = false;
+            btnMenuInicio.Click += btnMenuInicio_Click;
             // 
             // frmMenu
             // 
@@ -220,41 +378,46 @@
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.SteelBlue;
             ClientSize = new Size(877, 459);
-            Controls.Add(panelIdioma);
-            Controls.Add(menuStrip1);
+            Controls.Add(pnlContenedor);
+            Controls.Add(pnlCabecera);
+            Controls.Add(pnlLateral);
             Font = new Font("Segoe UI", 9F);
             ForeColor = Color.FromArgb(31, 41, 55);
             Icon = (Icon)resources.GetObject("$this.Icon");
-            IsMdiContainer = true;
-            MainMenuStrip = menuStrip1;
             Name = "frmMenu";
             Text = "Menu";
             FormClosing += frmMenu_FormClosing;
             Load += frmMenu_Load;
-            menuStrip1.ResumeLayout(false);
-            menuStrip1.PerformLayout();
+            pnlLateral.ResumeLayout(false);
+            pnlCabecera.ResumeLayout(false);
+            pnlSubEntrenamiento.ResumeLayout(false);
+            pnlSubRecepcion.ResumeLayout(false);
             panelIdioma.ResumeLayout(false);
             ResumeLayout(false);
-            PerformLayout();
         }
 
         #endregion
-
-        private MenuStrip menuStrip1;
-        private ToolStripMenuItem iniciarSesionToolStripMenuItem;
-        private ToolStripMenuItem iniciarSesiónToolStripMenuItem;
-        private ToolStripMenuItem salirToolStripMenuItem;
-        private ToolStripMenuItem registrarseToolStripMenuItem;
+        private Panel pnlLateral;
+        private Panel pnlCabecera;
+        private Panel pnlContenedor;
+        private Panel panelIdioma;
         private ComboBox cmbIdiomas;
         private Button btnNuevoIdioma;
-        private Panel panelIdioma;
-        private ToolStripMenuItem recepcionToolStripMenuItem;
-        private ToolStripMenuItem venderPlanToolStripMenuItem;
-        private ToolStripMenuItem entrenamientoToolStripMenuItem;
-        private ToolStripMenuItem asignarRutinaToolStripMenuItem;
-        private ToolStripMenuItem consultarComprobantesToolStripMenuItem;
-        private ToolStripMenuItem gestionRutinasToolStripMenuItem;
-        private ToolStripMenuItem nutriciónToolStripMenuItem;
-        private ToolStripMenuItem agendarTurnoNutricionalToolStripMenuItem;
+        private Button btnMenuIniciarSesion;
+        private Button btnMenuSalir;
+        private Button btnMenuNutricion;
+        private Button btnMenuEntrenamiento;
+        private Button btnMenuRecepcion;
+        private Button btnMenuRegistrarse;
+        private Panel pnlSubRecepcion;
+        private Button btnSubAgendarTurno;
+        private Button btnSubConsultarComprobantes;
+        private Button btnSubVenderPlan;
+        private Panel pnlSubEntrenamiento;
+        private Button btnSubGestionRutinas;
+        private Button btnSubAsignarRutina;
+        private Panel pnlSubNutricion;
+        private Button btnMenuCerrarSesion;
+        private Button btnMenuInicio;
     }
 }

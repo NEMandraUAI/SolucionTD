@@ -19,10 +19,13 @@ namespace GUI
     {
         private MdiClient mdiClient;
         private Dictionary<string, string> _traducciones = new Dictionary<string, string>();
+        private Form formularioActivo = null;
+
         private string T(string clave, string textoPorDefecto)
         {
             return _traducciones != null && _traducciones.ContainsKey(clave) ? _traducciones[clave] : textoPorDefecto;
         }
+
         public frmMenu()
         {
             InitializeComponent();
@@ -33,6 +36,23 @@ namespace GUI
             SessionManager.Instancia.PermisosActualizados += SessionManager_PermisosActualizados;
             GestorIdioma.Instancia.Suscribir(this);
         }
+
+        private void AbrirFormularioHijo(Form formHijo)
+        {
+            if (formularioActivo != null)
+            {
+                formularioActivo.Close();
+            }
+            formularioActivo = formHijo;
+            formHijo.TopLevel = false;
+            formHijo.FormBorderStyle = FormBorderStyle.None;
+            formHijo.Dock = DockStyle.Fill;
+            pnlContenedor.Controls.Add(formHijo);
+            pnlContenedor.Tag = formHijo;
+            formHijo.BringToFront();
+            formHijo.Show();
+        }
+
         private void FrmMenu_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.Control && e.Alt && e.KeyCode == Keys.R)
@@ -43,10 +63,7 @@ namespace GUI
                     integridadBLL.VerificarIntegridadSistema();
                     return;
                 }
-                catch
-                {
-                    // Si cae aca, es porque la BD está corrupta. Permitimos que el flujo continúe.
-                }
+                catch { }
                 string claveIngresada = SolicitarClaveEmergencia();
                 if (!string.IsNullOrEmpty(claveIngresada))
                 {
@@ -98,97 +115,23 @@ namespace GUI
                 }
             }
         }
-        private void iniciarSesiónToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            IntegridadBLL integridadBLL = new IntegridadBLL();
-            // integridadBLL.ForzarRecalculoDeTodaLaBase(); 
-            // MessageBox.Show("Base de datos sincronizada correctamente.");
-            // return;
-            try
-            {
-                integridadBLL.VerificarIntegridadSistema();
-                if (SessionManager.Instancia.UsuarioActual != null)
-                {
-                    MessageBox.Show(T("msgSesionActiva", "Ya existe una sesión activa. Debe cerrarla antes de ingresar con otra cuenta."), T("titSesionActiva", "Sesión Activa"), MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                    return;
-                }
-                AbrirLogin();
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(T(ex.Message, ex.Message) + T("msgCorrupcion", "\nEl sistema se bloqueará por seguridad. Contacte al administrador."), T("titCorrupcion", "Corrupción de Datos"), MessageBoxButtons.OK, MessageBoxIcon.Error);
-                foreach (Form f in this.MdiChildren)
-                {
-                    f.Close();
-                }
-            }
-        }
+
         private void AbrirLogin()
         {
             frmLogIn login = new frmLogIn();
-            login.MdiParent = this;
             login.LoginExitoso += OnLoginExitoso;
-            login.Show();
+            AbrirFormularioHijo(login);
         }
+
         private void OnLoginExitoso(object sender, LogInEventArgs e)
         {
-            foreach (Form f in this.MdiChildren)
-            {
-                f.Close();
-            }
-            AbrirSesion(e.Usuario);
+            CerrarTodosLosFormularios();
+            frmSesion bienvenida = new frmSesion(e.Usuario);
+            AbrirFormularioHijo(bienvenida);
             EvaluarPermisosIdioma();
             AplicarPermisosUI();
         }
-        private void AbrirSesion(UsuarioBE pUsuario)
-        {
-            frmSesion bienvenida = new frmSesion(pUsuario);
-            bienvenida.MdiParent = this;
-            bienvenida.CerrarSesion += OnCerrarSesion;
-            bienvenida.Show();
-        }
-        private void OnCerrarSesion(object sender, EventArgs e)
-        {
-            BLL.IntegridadBLL integridadBLL = new BLL.IntegridadBLL();
-            try
-            {
-                EvaluarPermisosIdioma();
-                AplicarPermisosUI();
-                integridadBLL.VerificarIntegridadSistema();
-                AbrirLogin();
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(T(ex.Message, ex.Message) + T("msgCorrupcion", "\nEl sistema se bloqueará por seguridad. Contacte al administrador."), T("titCorrupcion", "Corrupción de Datos"), MessageBoxButtons.OK, MessageBoxIcon.Error);
-                foreach (Form f in this.MdiChildren)
-                {
-                    f.Close();
-                }
-            }
-        }
-        private void salirToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            Application.Exit();
-        }
-        private void registrarseToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            IntegridadBLL integridadBLL = new IntegridadBLL();
-            try
-            {
-                integridadBLL.VerificarIntegridadSistema();
-                frmRegistro registro = new frmRegistro();
-                registro.MdiParent = this;
-                registro.Show();
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(T(ex.Message, ex.Message) + T("msgCorrupcion", "\nEl sistema se bloqueará por seguridad. Contacte al administrador."), T("titCorrupcion", "Corrupción de Datos"), MessageBoxButtons.OK, MessageBoxIcon.Error);
-                foreach (Form f in this.MdiChildren)
-                {
-                    f.Close();
-                }
-            }
-        }
+
         private string SolicitarClaveEmergencia()
         {
             Form prompt = new Form()
@@ -214,6 +157,7 @@ namespace GUI
             }
             return "";
         }
+
         private void frmMenu_Load(object sender, EventArgs e)
         {
             IdiomaBLL idiomaBLL = new IdiomaBLL();
@@ -226,28 +170,14 @@ namespace GUI
             ActualizarIdioma(GestorIdioma.Instancia.IdiomaActual);
             btnNuevoIdioma.Visible = false;
             btnNuevoIdioma.Text = T("btnNuevoIdioma", "Gestionar Idiomas");
-            btnNuevoIdioma.Click += AbrirPanelAdministrador_Click;
-            foreach (Control control in this.Controls)
+            OcultarSubMenus();
+            AplicarPermisosUI();
+            if (SessionManager.Instancia.UsuarioActual == null)
             {
-                if (control is MdiClient client)
-                {
-                    mdiClient = client;
-                    AjustarFondo();
-                }
+                AbrirLogin();
             }
         }
-        private void AjustarFondo()
-        {
-            Color miAzulOscuro = Color.FromArgb(0, 10, 40);
-            foreach (Control ctl in this.Controls)
-            {
-                if (ctl is MdiClient)
-                {
-                    ctl.BackColor = miAzulOscuro;
-                    break;
-                }
-            }
-        }
+
         public void ActualizarIdioma(IdiomaBE idioma)
         {
             IdiomaBLL idiomaBLL = new IdiomaBLL();
@@ -259,6 +189,7 @@ namespace GUI
             cmbIdiomas.SelectedValue = idioma.ID;
             cmbIdiomas.SelectedIndexChanged += cmbIdiomas_SelectedIndexChanged;
         }
+
         private void TraducirControlesRecursivo(Control.ControlCollection controles, Dictionary<string, string> traducciones)
         {
             foreach (Control control in controles)
@@ -266,13 +197,6 @@ namespace GUI
                 if (traducciones.ContainsKey(control.Name))
                 {
                     control.Text = traducciones[control.Name];
-                }
-                if (control is MenuStrip menuStrip)
-                {
-                    foreach (ToolStripItem item in menuStrip.Items)
-                    {
-                        TraducirItemMenu(item, traducciones);
-                    }
                 }
                 if (control.HasChildren)
                 {
@@ -290,20 +214,7 @@ namespace GUI
                 }
             }
         }
-        private void TraducirItemMenu(ToolStripItem item, Dictionary<string, string> traducciones)
-        {
-            if (traducciones.ContainsKey(item.Name))
-            {
-                item.Text = traducciones[item.Name];
-            }
-            if (item is ToolStripMenuItem menuItem)
-            {
-                foreach (ToolStripItem subItem in menuItem.DropDownItems)
-                {
-                    TraducirItemMenu(subItem, traducciones);
-                }
-            }
-        }
+
         private void cmbIdiomas_SelectedIndexChanged(object sender, EventArgs e)
         {
             if (cmbIdiomas.SelectedItem is IdiomaBE idiomaSeleccionado)
@@ -322,15 +233,109 @@ namespace GUI
                 }
             }
         }
+
         public void EvaluarPermisosIdioma()
         {
             var u = SessionManager.Instancia.UsuarioActual;
             btnNuevoIdioma.Visible = (u != null && u.TienePermiso("GESTION_IDIOMAS"));
         }
-        private void AbrirPanelAdministrador_Click(object sender, EventArgs e)
+
+        private void CerrarTodosLosFormularios()
+        {
+            foreach (Control c in pnlContenedor.Controls.OfType<Form>().ToList())
+            {
+                ((Form)c).Close();
+            }
+            formularioActivo = null;
+            pnlContenedor.Controls.Clear();
+        }
+
+        public void AplicarPermisosUI()
+        {
+            bool haySesion = SessionManager.Instancia.UsuarioActual != null;
+            btnMenuIniciarSesion.Visible = !haySesion;
+            btnMenuRegistrarse.Visible = !haySesion;
+            btnMenuCerrarSesion.Visible = haySesion;
+            btnMenuInicio.Visible = haySesion;
+            if (haySesion)
+            {
+                btnMenuRecepcion.Visible = SessionManager.Instancia.UsuarioActual.TienePermiso("VENDER_PLAN");
+                btnMenuEntrenamiento.Visible = SessionManager.Instancia.UsuarioActual.TienePermiso("ASIGNAR_RUTINA");
+                btnMenuNutricion.Visible = SessionManager.Instancia.UsuarioActual.TienePermiso("ASIGNAR_PLAN_NUTRICIONAL");
+            }
+            else
+            {
+                btnMenuRecepcion.Visible = false;
+                btnMenuEntrenamiento.Visible = false;
+                btnMenuNutricion.Visible = false;
+            }
+            OcultarSubMenus();
+        }
+
+        private void frmMenu_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            GestorIdioma.Instancia.Desuscribir(this);
+            SessionManager.Instancia.PermisosActualizados -= SessionManager_PermisosActualizados;
+            if (SessionManager.Instancia.UsuarioActual != null)
+            {
+                MessageBox.Show(T("msgSesionCerrada", "La sesión se cerró correctamente."), T("titSesionCerrada", "Sesión Cerrada"), MessageBoxButtons.OK, MessageBoxIcon.Information);
+                SessionManager.Instancia.Cerrar();
+            }
+        }
+
+        private void SessionManager_PermisosActualizados(object sender, EventArgs e)
+        {
+            AplicarPermisosUI();
+            EvaluarPermisosIdioma();
+        }
+
+        private void btnIniciarSesion_Click(object sender, EventArgs e)
+        {
+            IntegridadBLL integridadBLL = new IntegridadBLL();
+            try
+            {
+                integridadBLL.VerificarIntegridadSistema();
+
+                if (SessionManager.Instancia.UsuarioActual != null)
+                {
+                    MessageBox.Show(T("msgSesionActiva", "Ya existe una sesión activa. Debe cerrarla antes de ingresar con otra cuenta."), T("titSesionActiva", "Sesión Activa"), MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+                OcultarSubMenus();
+                AbrirLogin();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(T(ex.Message, ex.Message) + T("msgCorrupcion", "\nEl sistema se bloqueará por seguridad. Contacte al administrador."), T("titCorrupcion", "Corrupción de Datos"), MessageBoxButtons.OK, MessageBoxIcon.Error);
+                CerrarTodosLosFormularios();
+            }
+        }
+
+        private void btnSalir_Click(object sender, EventArgs e)
+        {
+            Application.Exit();
+        }
+
+        private void btnRegistrarse_Click(object sender, EventArgs e)
+        {
+            IntegridadBLL integridadBLL = new IntegridadBLL();
+            try
+            {
+                integridadBLL.VerificarIntegridadSistema();
+                OcultarSubMenus();
+                frmRegistro registro = new frmRegistro();
+                AbrirFormularioHijo(registro);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(T(ex.Message, ex.Message) + T("msgCorrupcion", "\nEl sistema se bloqueará por seguridad. Contacte al administrador."), T("titCorrupcion", "Corrupción de Datos"), MessageBoxButtons.OK, MessageBoxIcon.Error);
+                CerrarTodosLosFormularios();
+            }
+        }
+
+        private void btnNuevoIdioma_Click(object sender, EventArgs e)
         {
             frmGestionIdiomas frm = new frmGestionIdiomas();
-            frm.MdiParent = this;
             frm.FormClosed += (s, args) =>
             {
                 IdiomaBLL idiomaBLL = new IdiomaBLL();
@@ -339,75 +344,102 @@ namespace GUI
                 cmbIdiomas.SelectedValue = GestorIdioma.Instancia.IdiomaActual.ID;
                 cmbIdiomas.SelectedIndexChanged += cmbIdiomas_SelectedIndexChanged;
             };
-            frm.Show();
+            OcultarSubMenus();
+            AbrirFormularioHijo(frm);
         }
-        public void AplicarPermisosUI()
+
+        private void OcultarSubMenus()
+        {
+            pnlSubRecepcion.Visible = false;
+            pnlSubEntrenamiento.Visible = false;
+            pnlSubNutricion.Visible = false;
+        }
+
+        private void btnMenuRecepcion_Click(object sender, EventArgs e)
+        {
+            OcultarSubMenus();
+            pnlSubRecepcion.Visible = true;
+            pnlSubRecepcion.BringToFront();
+        }
+
+        private void btnMenuEntrenamiento_Click(object sender, EventArgs e)
+        {
+            OcultarSubMenus();
+            pnlSubEntrenamiento.Visible = true;
+            pnlSubEntrenamiento.BringToFront();
+        }
+
+        private void btnMenuNutricion_Click(object sender, EventArgs e)
+        {
+            OcultarSubMenus();
+            frmGestionNutricion frm = new frmGestionNutricion();
+            AbrirFormularioHijo(frm);
+        }
+
+        private void btnMenuCerrarSesion_Click(object sender, EventArgs e)
+        {
+            CerrarSesionGlobal();
+        }
+
+        private void CerrarSesionGlobal()
         {
             if (SessionManager.Instancia.UsuarioActual != null)
             {
-                recepcionToolStripMenuItem.Visible = SessionManager.Instancia.UsuarioActual.TienePermiso("VENDER_PLAN");
-                entrenamientoToolStripMenuItem.Visible = SessionManager.Instancia.UsuarioActual.TienePermiso("ASIGNAR_RUTINA");
-                nutriciónToolStripMenuItem.Visible = SessionManager.Instancia.UsuarioActual.TienePermiso("ASIGNAR_PLAN_NUTRICIONAL");
+                BLL.IntegridadBLL integridadBLL = new BLL.IntegridadBLL();
+                try
+                {
+                    integridadBLL.VerificarIntegridadSistema();
+                    SessionManager.Instancia.Cerrar();
+                    CerrarTodosLosFormularios();
+                    AplicarPermisosUI();
+                    EvaluarPermisosIdioma();
+                    MessageBox.Show(T("msgSesionCerrada", "La sesión se cerró correctamente."), T("titSesionCerrada", "Sesión Cerrada"), MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    AbrirLogin();
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(T(ex.Message, ex.Message) + T("msgCorrupcion", "\nEl sistema se bloqueará por seguridad. Contacte al administrador."), T("titCorrupcion", "Corrupción de Datos"), MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    SessionManager.Instancia.Cerrar();
+                    CerrarTodosLosFormularios();
+                    AplicarPermisosUI();
+                    AbrirLogin();
+                }
             }
-            else
+        }
+
+        private void btnSubAsignarRutina_Click(object sender, EventArgs e)
+        {
+            AbrirFormularioHijo(new frmEntrenamiento());
+        }
+
+        private void btnSubGestionRutinas_Click(object sender, EventArgs e)
+        {
+            AbrirFormularioHijo(new frmGestionRutinas());
+        }
+
+        private void btnSubVenderPlan_Click(object sender, EventArgs e)
+        {
+            AbrirFormularioHijo(new frmRecepcion());
+        }
+
+        private void btnSubConsultarComprobantes_Click(object sender, EventArgs e)
+        {
+            AbrirFormularioHijo(new frmConsultarComprobantes());
+        }
+
+        private void btnSubAgendarTurno_Click(object sender, EventArgs e)
+        {
+            AbrirFormularioHijo(new frmAgendaRecepcion());
+        }
+
+        private void btnMenuInicio_Click(object sender, EventArgs e)
+        {
+            OcultarSubMenus();
+            if (SessionManager.Instancia.UsuarioActual != null)
             {
-                recepcionToolStripMenuItem.Visible = false;
-                entrenamientoToolStripMenuItem.Visible = false;
-                nutriciónToolStripMenuItem.Visible = false;
+                frmSesion inicio = new frmSesion(SessionManager.Instancia.UsuarioActual);
+                AbrirFormularioHijo(inicio);
             }
-        }
-
-        private void venderPlanToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            frmRecepcion formRecepcion = new frmRecepcion();
-            formRecepcion.MdiParent = this;
-            formRecepcion.Show();
-        }
-
-        private void asignarRutinaToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            frmEntrenamiento formEntrenamiento = new frmEntrenamiento();
-            formEntrenamiento.MdiParent = this;
-            formEntrenamiento.Show();
-        }
-
-        private void consultarComprobantesToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            frmConsultarComprobantes formConsultar = new frmConsultarComprobantes();
-            formConsultar.MdiParent = this;
-            formConsultar.Show();
-        }
-
-        private void gestionRutinasToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            frmGestionRutinas formGestion = new frmGestionRutinas();
-            formGestion.MdiParent = this;
-            formGestion.Show();
-        }
-
-        private void agendarTurnoNutricionalToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            frmAgendaRecepcion frm = new frmAgendaRecepcion();
-            frm.MdiParent = this;
-            frm.Show();
-        }
-
-        private void nutriciónToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            frmGestionNutricion frm = new frmGestionNutricion();
-            frm.MdiParent = this;
-            frm.Show();
-        }
-
-        private void frmMenu_FormClosing(object sender, FormClosingEventArgs e)
-        {
-            SessionManager.Instancia.PermisosActualizados -= SessionManager_PermisosActualizados;
-        }
-
-        private void SessionManager_PermisosActualizados(object sender, EventArgs e)
-        {
-            AplicarPermisosUI();
-            EvaluarPermisosIdioma();
         }
     }
 }

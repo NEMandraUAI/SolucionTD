@@ -268,13 +268,7 @@ namespace GUI
         }
         private void frmSesion_FormClosing(object sender, FormClosingEventArgs e)
         {
-            if (SessionManager.Instancia.UsuarioActual != null)
-            {
-                SessionManager.Instancia.PermisosActualizados -= SessionManager_PermisosActualizados;
-                usuarioBLL.CerrarSesion();
-                MessageBox.Show(T("msgSesionCerrada", "La sesión se cerró correctamente."), T("titSesionCerrada", "Sesión Cerrada"), MessageBoxButtons.OK, MessageBoxIcon.Information);
-                CerrarSesion?.Invoke(this, EventArgs.Empty);
-            }
+            GestorIdioma.Instancia.Desuscribir(this);
         }
     }
 }

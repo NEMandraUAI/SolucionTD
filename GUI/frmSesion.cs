@@ -122,6 +122,7 @@ namespace GUI
         private void SessionManager_PermisosActualizados(object sender, EventArgs e)
         {
             usuarioActual = SessionManager.Instancia.UsuarioActual;
+            if (usuarioActual == null) return;
             AplicarPermisosVisuales();
             lblBienvenida_Base.Text = T("lblBienvenida_Base", "Sesión activa - Bienvenido, ") + usuarioActual.Nombre;
         }
@@ -182,7 +183,14 @@ namespace GUI
         }
         private void btnCerrarSesion_Click(object sender, EventArgs e)
         {
-            this.Close();
+            if (CerrarSesion != null)
+            {
+                CerrarSesion.Invoke(this, EventArgs.Empty);
+            }
+            else
+            {
+                this.Close();
+            }
         }
         private void btnFiltrar_Click(object sender, EventArgs e)
         {
@@ -269,6 +277,7 @@ namespace GUI
         private void frmSesion_FormClosing(object sender, FormClosingEventArgs e)
         {
             GestorIdioma.Instancia.Desuscribir(this);
+            SessionManager.Instancia.PermisosActualizados -= SessionManager_PermisosActualizados;
         }
     }
 }

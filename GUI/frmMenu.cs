@@ -82,6 +82,10 @@ namespace GUI
                                 IntegridadBLL integridadBLL = new IntegridadBLL();
                                 integridadBLL.ForzarRecalculoDeTodaLaBase();
                                 MessageBox.Show(T("msgRecuperacionExito", "Integridad restaurada exitosamente. Los dígitos verificadores han sido recalculados."), T("titRecuperacionExito", "Recuperación Exitosa"), MessageBoxButtons.OK, MessageBoxIcon.Information);
+                                if (SessionManager.Instancia.UsuarioActual == null)
+                                {
+                                    AbrirLogin();
+                                }
                             }
                             catch (Exception ex)
                             {
@@ -100,6 +104,10 @@ namespace GUI
                                     BackupBLL backupBLL = new BackupBLL();
                                     backupBLL.RestaurarBackup(ofd.FileName);
                                     MessageBox.Show(T("msgRestauracionExito", "El sistema se ha restaurado correctamente al punto en el tiempo seleccionado. Por favor, inicie sesión nuevamente."), T("titRestauracionExito", "Restauración Exitosa"), MessageBoxButtons.OK, MessageBoxIcon.Information);
+                                    if (SessionManager.Instancia.UsuarioActual == null)
+                                    {
+                                        AbrirLogin();
+                                    }
                                 }
                                 catch (Exception ex)
                                 {
@@ -118,15 +126,26 @@ namespace GUI
 
         private void AbrirLogin()
         {
-            frmLogIn login = new frmLogIn();
-            login.LoginExitoso += OnLoginExitoso;
-            AbrirFormularioHijo(login);
+            IntegridadBLL integridadBLL = new IntegridadBLL();
+            try
+            {
+                integridadBLL.VerificarIntegridadSistema();
+                frmLogIn login = new frmLogIn();
+                login.LoginExitoso += OnLoginExitoso;
+                AbrirFormularioHijo(login);
+            }
+            catch (Exception ex)
+            {
+                CerrarTodosLosFormularios();
+                MessageBox.Show(T(ex.Message, ex.Message) + T("msgCorrupcion", "\nEl sistema se bloqueará por seguridad. Contacte al administrador."), T("titCorrupcion", "Corrupción de Datos"), MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         private void OnLoginExitoso(object sender, LogInEventArgs e)
         {
             CerrarTodosLosFormularios();
             frmSesion bienvenida = new frmSesion(e.Usuario);
+            bienvenida.CerrarSesion += (s, args) => CerrarSesionGlobal();
             AbrirFormularioHijo(bienvenida);
             EvaluarPermisosIdioma();
             AplicarPermisosUI();
@@ -278,8 +297,9 @@ namespace GUI
             SessionManager.Instancia.PermisosActualizados -= SessionManager_PermisosActualizados;
             if (SessionManager.Instancia.UsuarioActual != null)
             {
+                UsuarioBLL usuarioBLL = new UsuarioBLL();
+                usuarioBLL.CerrarSesion();
                 MessageBox.Show(T("msgSesionCerrada", "La sesión se cerró correctamente."), T("titSesionCerrada", "Sesión Cerrada"), MessageBoxButtons.OK, MessageBoxIcon.Information);
-                SessionManager.Instancia.Cerrar();
             }
         }
 
@@ -295,7 +315,6 @@ namespace GUI
             try
             {
                 integridadBLL.VerificarIntegridadSistema();
-
                 if (SessionManager.Instancia.UsuarioActual != null)
                 {
                     MessageBox.Show(T("msgSesionActiva", "Ya existe una sesión activa. Debe cerrarla antes de ingresar con otra cuenta."), T("titSesionActiva", "Sesión Activa"), MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -385,24 +404,22 @@ namespace GUI
         {
             if (SessionManager.Instancia.UsuarioActual != null)
             {
+                UsuarioBLL usuarioBLL = new UsuarioBLL();
+                usuarioBLL.CerrarSesion();
+                CerrarTodosLosFormularios();
+                AplicarPermisosUI();
+                EvaluarPermisosIdioma();
                 BLL.IntegridadBLL integridadBLL = new BLL.IntegridadBLL();
                 try
                 {
                     integridadBLL.VerificarIntegridadSistema();
-                    SessionManager.Instancia.Cerrar();
-                    CerrarTodosLosFormularios();
-                    AplicarPermisosUI();
-                    EvaluarPermisosIdioma();
                     MessageBox.Show(T("msgSesionCerrada", "La sesión se cerró correctamente."), T("titSesionCerrada", "Sesión Cerrada"), MessageBoxButtons.OK, MessageBoxIcon.Information);
                     AbrirLogin();
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show(T(ex.Message, ex.Message) + T("msgCorrupcion", "\nEl sistema se bloqueará por seguridad. Contacte al administrador."), T("titCorrupcion", "Corrupción de Datos"), MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    SessionManager.Instancia.Cerrar();
                     CerrarTodosLosFormularios();
-                    AplicarPermisosUI();
-                    AbrirLogin();
+                    MessageBox.Show(T(ex.Message, ex.Message) + T("msgCorrupcion", "\nEl sistema se bloqueará por seguridad. Contacte al administrador."), T("titCorrupcion", "Corrupción de Datos"), MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
         }
@@ -438,6 +455,7 @@ namespace GUI
             if (SessionManager.Instancia.UsuarioActual != null)
             {
                 frmSesion inicio = new frmSesion(SessionManager.Instancia.UsuarioActual);
+                inicio.CerrarSesion += (s, args) => CerrarSesionGlobal();
                 AbrirFormularioHijo(inicio);
             }
         }

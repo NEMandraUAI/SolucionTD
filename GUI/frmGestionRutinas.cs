@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.Linq;
 using System.Windows.Forms;
 using BE;
 using BLL;
@@ -12,6 +14,8 @@ namespace GUI
         RutinaEntrenamientoBLL rutinaBLL = new RutinaEntrenamientoBLL();
         IdiomaBLL idiomaBLL = new IdiomaBLL();
         RutinaEntrenamientoBE rutinaSeleccionada = null;
+        BindingList<EjercicioBE> _ejerciciosBinding = new BindingList<EjercicioBE>();
+        int _varianteSugerencia = 0;
 
         public frmGestionRutinas()
         {
@@ -21,8 +25,75 @@ namespace GUI
 
         private void frmGestionRutinas_Load(object sender, EventArgs e)
         {
+            cmbObjetivo.Items.Clear();
+            foreach (var obj in rutinaBLL.ObtenerObjetivosDisponibles())
+            {
+                cmbObjetivo.Items.Add(obj);
+            }
+            ConfigurarGrillaEjercicios();
             ActualizarIdioma(GestorIdioma.Instancia.IdiomaActual);
             ActivarControlesEdicion(false);
+        }
+
+        private void ConfigurarGrillaEjercicios()
+        {
+            dgvEjercicios.AutoGenerateColumns = false;
+            dgvEjercicios.Columns.Clear();
+            dgvEjercicios.Columns.Add(new DataGridViewTextBoxColumn
+            {
+                Name = "Nombre",
+                DataPropertyName = "Nombre",
+                HeaderText = "Ejercicio",
+                FillWeight = 30
+            });
+            var colGrupo = new DataGridViewComboBoxColumn
+            {
+                Name = "GrupoMuscular",
+                DataPropertyName = "GrupoMuscular",
+                HeaderText = "Grupo Muscular",
+                DataSource = rutinaBLL.ObtenerGruposMusculares(),
+                FlatStyle = FlatStyle.Flat,
+                FillWeight = 20
+            };
+            dgvEjercicios.Columns.Add(colGrupo);
+            dgvEjercicios.Columns.Add(new DataGridViewTextBoxColumn
+            {
+                Name = "Series",
+                DataPropertyName = "Series",
+                HeaderText = "Series",
+                FillWeight = 10
+            });
+            dgvEjercicios.Columns.Add(new DataGridViewTextBoxColumn
+            {
+                Name = "Repeticiones",
+                DataPropertyName = "Repeticiones",
+                HeaderText = "Repeticiones",
+                FillWeight = 14
+            });
+            dgvEjercicios.Columns.Add(new DataGridViewTextBoxColumn
+            {
+                Name = "TiempoDescansoSegundos",
+                DataPropertyName = "TiempoDescansoSegundos",
+                HeaderText = "Descanso (seg)",
+                FillWeight = 13
+            });
+            dgvEjercicios.Columns.Add(new DataGridViewTextBoxColumn
+            {
+                Name = "CargaSugeridaKg",
+                DataPropertyName = "CargaSugeridaKg",
+                HeaderText = "Carga Sug. (Kg)",
+                FillWeight = 13
+            });
+            dgvEjercicios.DataError += (s, ev) => { ev.ThrowException = false; };
+            dgvEjercicios.DefaultValuesNeeded += (s, ev) =>
+            {
+                ev.Row.Cells["GrupoMuscular"].Value = "Pecho";
+                ev.Row.Cells["Series"].Value = 4;
+                ev.Row.Cells["Repeticiones"].Value = "10-12";
+                ev.Row.Cells["TiempoDescansoSegundos"].Value = 90;
+                ev.Row.Cells["CargaSugeridaKg"].Value = 20m;
+            };
+            dgvEjercicios.DataSource = _ejerciciosBinding;
         }
 
         public void ActualizarIdioma(IdiomaBE idioma)
@@ -44,15 +115,17 @@ namespace GUI
 
         private void ActivarControlesEdicion(bool activo)
         {
-            txtObjetivo.Enabled = activo;
+            cmbObjetivo.Enabled = activo;
             numFrecuencia.Enabled = activo;
-            txtDetalle.Enabled = activo;
+            dgvEjercicios.Enabled = activo;
+            btnSugerirPlantilla.Enabled = activo;
+            btnQuitarEjercicio.Enabled = activo;
             btnModificar.Enabled = activo;
             btnEliminar.Enabled = activo;
             if (!activo)
             {
-                txtObjetivo.Clear();
-                txtDetalle.Clear();
+                cmbObjetivo.Text = string.Empty;
+                _ejerciciosBinding.Clear();
                 numFrecuencia.Value = 1;
             }
         }
@@ -90,10 +163,43 @@ namespace GUI
             if (e.RowIndex >= 0)
             {
                 rutinaSeleccionada = (RutinaEntrenamientoBE)dgvRutinas.Rows[e.RowIndex].DataBoundItem;
-                txtObjetivo.Text = rutinaSeleccionada.ObjetivoFisico;
+                cmbObjetivo.Text = rutinaSeleccionada.ObjetivoFisico;
                 numFrecuencia.Value = rutinaSeleccionada.FrecuenciaSemanal;
-                txtDetalle.Text = rutinaSeleccionada.DetalleEjercicios;
+                var copiaEjercicios = rutinaSeleccionada.Ejercicios
+                    .Select(ej => new EjercicioBE
+                    {
+                        Nombre = ej.Nombre,
+                        GrupoMuscular = ej.GrupoMuscular,
+                        Series = ej.Series,
+                        Repeticiones = ej.Repeticiones,
+                        TiempoDescansoSegundos = ej.TiempoDescansoSegundos,
+                        CargaSugeridaKg = ej.CargaSugeridaKg
+                    }).ToList();
+                _ejerciciosBinding = new BindingList<EjercicioBE>(copiaEjercicios);
+                dgvEjercicios.DataSource = _ejerciciosBinding;
                 ActivarControlesEdicion(true);
+            }
+        }
+
+        private void btnSugerirPlantilla_Click(object sender, EventArgs e)
+        {
+            _varianteSugerencia = (_varianteSugerencia + 1) % 3;
+            string objetivo = !string.IsNullOrWhiteSpace(cmbObjetivo.Text) ? cmbObjetivo.Text : "Hipertrofia";
+            int frecuencia = (int)numFrecuencia.Value;
+            dgvEjercicios.CancelEdit();
+            dgvEjercicios.EndEdit();
+            var sugeridos = rutinaBLL.GenerarRutinaSugerida(objetivo, frecuencia, _varianteSugerencia);
+            _ejerciciosBinding = new BindingList<EjercicioBE>(sugeridos);
+            dgvEjercicios.DataSource = null;
+            dgvEjercicios.DataSource = _ejerciciosBinding;
+            dgvEjercicios.Refresh();
+        }
+
+        private void btnQuitarEjercicio_Click(object sender, EventArgs e)
+        {
+            if (dgvEjercicios.CurrentRow != null && !dgvEjercicios.CurrentRow.IsNewRow)
+            {
+                dgvEjercicios.Rows.Remove(dgvEjercicios.CurrentRow);
             }
         }
 
@@ -102,9 +208,12 @@ namespace GUI
             try
             {
                 if (rutinaSeleccionada == null) return;
-                rutinaSeleccionada.ObjetivoFisico = txtObjetivo.Text;
+                dgvEjercicios.EndEdit();
+                rutinaSeleccionada.ObjetivoFisico = cmbObjetivo.Text;
                 rutinaSeleccionada.FrecuenciaSemanal = (int)numFrecuencia.Value;
-                rutinaSeleccionada.DetalleEjercicios = txtDetalle.Text;
+                rutinaSeleccionada.Ejercicios = _ejerciciosBinding
+                    .Where(ej => ej != null && !string.IsNullOrWhiteSpace(ej.Nombre))
+                    .ToList();
                 rutinaBLL.ModificarRutina(rutinaSeleccionada);
                 MessageBox.Show("Rutina modificada exitosamente.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 BuscarRutinas();

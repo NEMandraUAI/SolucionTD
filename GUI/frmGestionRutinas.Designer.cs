@@ -32,16 +32,19 @@
             txtDNI = new TextBox();
             btnBuscar = new Button();
             dgvRutinas = new DataGridView();
-            txtObjetivo = new TextBox();
+            cmbObjetivo = new ComboBox();
             lblObjetivo = new Label();
             numFrecuencia = new NumericUpDown();
             lblFrecuencia = new Label();
+            btnSugerirPlantilla = new Button();
+            btnQuitarEjercicio = new Button();
             lblDetalle = new Label();
-            txtDetalle = new TextBox();
+            dgvEjercicios = new DataGridView();
             btnModificar = new Button();
             btnEliminar = new Button();
             ((System.ComponentModel.ISupportInitialize)dgvRutinas).BeginInit();
             ((System.ComponentModel.ISupportInitialize)numFrecuencia).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)dgvEjercicios).BeginInit();
             SuspendLayout();
             // 
             // lblDNI
@@ -49,7 +52,7 @@
             lblDNI.AutoSize = true;
             lblDNI.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
             lblDNI.ForeColor = Color.FromArgb(31, 41, 55);
-            lblDNI.Location = new Point(28, 28);
+            lblDNI.Location = new Point(28, 22);
             lblDNI.Name = "lblDNI";
             lblDNI.Size = new Size(29, 15);
             lblDNI.TabIndex = 0;
@@ -62,7 +65,7 @@
             txtDNI.BorderStyle = BorderStyle.FixedSingle;
             txtDNI.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
             txtDNI.ForeColor = Color.FromArgb(31, 41, 55);
-            txtDNI.Location = new Point(28, 54);
+            txtDNI.Location = new Point(28, 46);
             txtDNI.Name = "txtDNI";
             txtDNI.Size = new Size(280, 23);
             txtDNI.TabIndex = 1;
@@ -75,9 +78,9 @@
             btnBuscar.FlatStyle = FlatStyle.Flat;
             btnBuscar.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point);
             btnBuscar.ForeColor = Color.White;
-            btnBuscar.Location = new Point(324, 50);
+            btnBuscar.Location = new Point(324, 40);
             btnBuscar.Name = "btnBuscar";
-            btnBuscar.Size = new Size(140, 42);
+            btnBuscar.Size = new Size(140, 38);
             btnBuscar.TabIndex = 2;
             btnBuscar.Text = "Buscar";
             btnBuscar.UseVisualStyleBackColor = false;
@@ -99,38 +102,50 @@
             dgvRutinas.DefaultCellStyle = new DataGridViewCellStyle { BackColor = Color.White, Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point), ForeColor = Color.FromArgb(31, 41, 55), SelectionBackColor = Color.FromArgb(219, 234, 254), SelectionForeColor = Color.FromArgb(31, 41, 55), Padding = new Padding(8, 4, 8, 4) };
             dgvRutinas.EnableHeadersVisualStyles = false;
             dgvRutinas.GridColor = Color.FromArgb(226, 232, 240);
-            dgvRutinas.Location = new Point(28, 112);
+            dgvRutinas.Location = new Point(28, 92);
             dgvRutinas.Name = "dgvRutinas";
             dgvRutinas.ReadOnly = true;
             dgvRutinas.RowHeadersVisible = false;
-            dgvRutinas.RowTemplate.Height = 36;
+            dgvRutinas.RowTemplate.Height = 34;
             dgvRutinas.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-            dgvRutinas.Size = new Size(1144, 330);
+            dgvRutinas.Size = new Size(1144, 240);
             dgvRutinas.TabIndex = 3;
             dgvRutinas.CellClick += dgvRutinas_CellClick;
-            // 
-            // txtObjetivo
-            // 
-            txtObjetivo.Anchor = AnchorStyles.Top | AnchorStyles.Left;
-            txtObjetivo.BackColor = Color.White;
-            txtObjetivo.BorderStyle = BorderStyle.FixedSingle;
-            txtObjetivo.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
-            txtObjetivo.ForeColor = Color.FromArgb(31, 41, 55);
-            txtObjetivo.Location = new Point(28, 478);
-            txtObjetivo.Name = "txtObjetivo";
-            txtObjetivo.Size = new Size(430, 23);
-            txtObjetivo.TabIndex = 5;
             // 
             // lblObjetivo
             // 
             lblObjetivo.AutoSize = true;
             lblObjetivo.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
             lblObjetivo.ForeColor = Color.FromArgb(31, 41, 55);
-            lblObjetivo.Location = new Point(28, 452);
+            lblObjetivo.Location = new Point(28, 350);
             lblObjetivo.Name = "lblObjetivo";
             lblObjetivo.Size = new Size(55, 15);
             lblObjetivo.TabIndex = 4;
             lblObjetivo.Text = "Objetivo";
+            // 
+            // cmbObjetivo
+            // 
+            cmbObjetivo.Anchor = AnchorStyles.Top | AnchorStyles.Left;
+            cmbObjetivo.BackColor = Color.White;
+            cmbObjetivo.DropDownStyle = ComboBoxStyle.DropDown;
+            cmbObjetivo.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
+            cmbObjetivo.ForeColor = Color.FromArgb(31, 41, 55);
+            cmbObjetivo.FormattingEnabled = true;
+            cmbObjetivo.Location = new Point(28, 374);
+            cmbObjetivo.Name = "cmbObjetivo";
+            cmbObjetivo.Size = new Size(340, 23);
+            cmbObjetivo.TabIndex = 5;
+            // 
+            // lblFrecuencia
+            // 
+            lblFrecuencia.AutoSize = true;
+            lblFrecuencia.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            lblFrecuencia.ForeColor = Color.FromArgb(31, 41, 55);
+            lblFrecuencia.Location = new Point(392, 350);
+            lblFrecuencia.Name = "lblFrecuencia";
+            lblFrecuencia.Size = new Size(67, 15);
+            lblFrecuencia.TabIndex = 7;
+            lblFrecuencia.Text = "Frecuencia";
             // 
             // numFrecuencia
             // 
@@ -138,48 +153,98 @@
             numFrecuencia.BackColor = Color.White;
             numFrecuencia.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
             numFrecuencia.ForeColor = Color.FromArgb(31, 41, 55);
-            numFrecuencia.Location = new Point(490, 478);
+            numFrecuencia.Location = new Point(392, 374);
             numFrecuencia.Maximum = new decimal(new int[] { 7, 0, 0, 0 });
             numFrecuencia.Minimum = new decimal(new int[] { 1, 0, 0, 0 });
             numFrecuencia.Name = "numFrecuencia";
-            numFrecuencia.Size = new Size(220, 23);
+            numFrecuencia.Size = new Size(160, 23);
             numFrecuencia.TabIndex = 6;
             numFrecuencia.Value = new decimal(new int[] { 1, 0, 0, 0 });
             // 
-            // lblFrecuencia
+            // btnSugerirPlantilla
             // 
-            lblFrecuencia.AutoSize = true;
-            lblFrecuencia.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            lblFrecuencia.ForeColor = Color.FromArgb(31, 41, 55);
-            lblFrecuencia.Location = new Point(490, 452);
-            lblFrecuencia.Name = "lblFrecuencia";
-            lblFrecuencia.Size = new Size(67, 15);
-            lblFrecuencia.TabIndex = 7;
-            lblFrecuencia.Text = "Frecuencia";
+            btnSugerirPlantilla.Anchor = AnchorStyles.Top | AnchorStyles.Left;
+            btnSugerirPlantilla.BackColor = Color.FromArgb(16, 185, 129);
+            btnSugerirPlantilla.FlatAppearance.BorderSize = 0;
+            btnSugerirPlantilla.FlatStyle = FlatStyle.Flat;
+            btnSugerirPlantilla.Font = new Font("Segoe UI", 8.5F, FontStyle.Bold, GraphicsUnit.Point);
+            btnSugerirPlantilla.ForeColor = Color.White;
+            btnSugerirPlantilla.Location = new Point(576, 368);
+            btnSugerirPlantilla.Name = "btnSugerirPlantilla";
+            btnSugerirPlantilla.Size = new Size(150, 34);
+            btnSugerirPlantilla.TabIndex = 12;
+            btnSugerirPlantilla.Text = "Sugerir según Objetivo";
+            btnSugerirPlantilla.UseVisualStyleBackColor = false;
+            btnSugerirPlantilla.Click += btnSugerirPlantilla_Click;
+            // 
+            // btnQuitarEjercicio
+            // 
+            btnQuitarEjercicio.Anchor = AnchorStyles.Top | AnchorStyles.Left;
+            btnQuitarEjercicio.BackColor = Color.FromArgb(100, 116, 139);
+            btnQuitarEjercicio.FlatAppearance.BorderSize = 0;
+            btnQuitarEjercicio.FlatStyle = FlatStyle.Flat;
+            btnQuitarEjercicio.Font = new Font("Segoe UI", 8.5F, FontStyle.Bold, GraphicsUnit.Point);
+            btnQuitarEjercicio.ForeColor = Color.White;
+            btnQuitarEjercicio.Location = new Point(738, 368);
+            btnQuitarEjercicio.Name = "btnQuitarEjercicio";
+            btnQuitarEjercicio.Size = new Size(134, 34);
+            btnQuitarEjercicio.TabIndex = 13;
+            btnQuitarEjercicio.Text = "Quitar Ejercicio";
+            btnQuitarEjercicio.UseVisualStyleBackColor = false;
+            btnQuitarEjercicio.Click += btnQuitarEjercicio_Click;
             // 
             // lblDetalle
             // 
             lblDetalle.AutoSize = true;
             lblDetalle.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
             lblDetalle.ForeColor = Color.FromArgb(31, 41, 55);
-            lblDetalle.Location = new Point(28, 530);
+            lblDetalle.Location = new Point(28, 412);
             lblDetalle.Name = "lblDetalle";
             lblDetalle.Size = new Size(47, 15);
             lblDetalle.TabIndex = 8;
             lblDetalle.Text = "Detalle";
             // 
-            // txtDetalle
+            // dgvEjercicios
             // 
-            txtDetalle.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-            txtDetalle.BackColor = Color.White;
-            txtDetalle.BorderStyle = BorderStyle.FixedSingle;
-            txtDetalle.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
-            txtDetalle.ForeColor = Color.FromArgb(31, 41, 55);
-            txtDetalle.Location = new Point(28, 556);
-            txtDetalle.Multiline = true;
-            txtDetalle.Name = "txtDetalle";
-            txtDetalle.Size = new Size(844, 140);
-            txtDetalle.TabIndex = 9;
+            dgvEjercicios.AllowUserToAddRows = true;
+            dgvEjercicios.AllowUserToDeleteRows = true;
+            dgvEjercicios.AlternatingRowsDefaultCellStyle = new DataGridViewCellStyle { BackColor = Color.FromArgb(248, 250, 252) };
+            dgvEjercicios.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            dgvEjercicios.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+            dgvEjercicios.BackgroundColor = Color.White;
+            dgvEjercicios.BorderStyle = BorderStyle.FixedSingle;
+            dgvEjercicios.CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal;
+            dgvEjercicios.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.None;
+            dgvEjercicios.ColumnHeadersDefaultCellStyle = new DataGridViewCellStyle
+            {
+                Alignment = DataGridViewContentAlignment.MiddleLeft,
+                BackColor = Color.FromArgb(31, 41, 55),
+                Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point),
+                ForeColor = Color.White,
+                SelectionBackColor = Color.FromArgb(31, 41, 55),
+                SelectionForeColor = Color.White,
+                WrapMode = DataGridViewTriState.False
+            };
+            dgvEjercicios.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            dgvEjercicios.DefaultCellStyle = new DataGridViewCellStyle
+            {
+                BackColor = Color.White,
+                Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point),
+                ForeColor = Color.FromArgb(31, 41, 55),
+                SelectionBackColor = Color.FromArgb(219, 234, 254),
+                SelectionForeColor = Color.FromArgb(31, 41, 55),
+                Padding = new Padding(4, 2, 4, 2)
+            };
+            dgvEjercicios.EnableHeadersVisualStyles = false;
+            dgvEjercicios.GridColor = Color.FromArgb(226, 232, 240);
+            dgvEjercicios.Location = new Point(28, 434);
+            dgvEjercicios.Name = "dgvEjercicios";
+            dgvEjercicios.RowHeadersVisible = true;
+            dgvEjercicios.RowHeadersWidth = 28;
+            dgvEjercicios.RowTemplate.Height = 32;
+            dgvEjercicios.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            dgvEjercicios.Size = new Size(844, 296);
+            dgvEjercicios.TabIndex = 9;
             // 
             // btnModificar
             // 
@@ -219,13 +284,15 @@
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.FromArgb(243, 246, 249);
             ClientSize = new Size(1200, 760);
+            Controls.Add(btnQuitarEjercicio);
+            Controls.Add(btnSugerirPlantilla);
             Controls.Add(btnEliminar);
             Controls.Add(btnModificar);
-            Controls.Add(txtDetalle);
+            Controls.Add(dgvEjercicios);
             Controls.Add(lblDetalle);
             Controls.Add(lblFrecuencia);
             Controls.Add(numFrecuencia);
-            Controls.Add(txtObjetivo);
+            Controls.Add(cmbObjetivo);
             Controls.Add(lblObjetivo);
             Controls.Add(dgvRutinas);
             Controls.Add(btnBuscar);
@@ -239,6 +306,7 @@
             Load += frmGestionRutinas_Load;
             ((System.ComponentModel.ISupportInitialize)dgvRutinas).EndInit();
             ((System.ComponentModel.ISupportInitialize)numFrecuencia).EndInit();
+            ((System.ComponentModel.ISupportInitialize)dgvEjercicios).EndInit();
             ResumeLayout(false);
             PerformLayout();
         }
@@ -249,12 +317,14 @@
         private TextBox txtDNI;
         private Button btnBuscar;
         private DataGridView dgvRutinas;
-        private TextBox txtObjetivo;
+        private ComboBox cmbObjetivo;
         private Label lblObjetivo;
         private NumericUpDown numFrecuencia;
         private Label lblFrecuencia;
+        private Button btnSugerirPlantilla;
+        private Button btnQuitarEjercicio;
         private Label lblDetalle;
-        private TextBox txtDetalle;
+        private DataGridView dgvEjercicios;
         private Button btnModificar;
         private Button btnEliminar;
     }

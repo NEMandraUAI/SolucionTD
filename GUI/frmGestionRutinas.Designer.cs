@@ -31,7 +31,9 @@
             lblDNI = new Label();
             txtDNI = new TextBox();
             btnBuscar = new Button();
+            lblAlertaNutricional = new Label();
             dgvRutinas = new DataGridView();
+            pnlGraficoFuerza = new Panel();
             cmbObjetivo = new ComboBox();
             lblObjetivo = new Label();
             numFrecuencia = new NumericUpDown();
@@ -40,6 +42,8 @@
             btnQuitarEjercicio = new Button();
             lblDetalle = new Label();
             dgvEjercicios = new DataGridView();
+            lblTituloMapa = new Label();
+            pnlMapaCalor = new Panel();
             btnModificar = new Button();
             btnEliminar = new Button();
             ((System.ComponentModel.ISupportInitialize)dgvRutinas).BeginInit();
@@ -86,12 +90,27 @@
             btnBuscar.UseVisualStyleBackColor = false;
             btnBuscar.Click += btnBuscar_Click;
             // 
+            // lblAlertaNutricional
+            // 
+            lblAlertaNutricional.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            lblAlertaNutricional.BackColor = Color.FromArgb(241, 245, 249);
+            lblAlertaNutricional.BorderStyle = BorderStyle.FixedSingle;
+            lblAlertaNutricional.Font = new Font("Segoe UI", 8.5F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            lblAlertaNutricional.ForeColor = Color.FromArgb(71, 85, 105);
+            lblAlertaNutricional.Location = new Point(484, 16);
+            lblAlertaNutricional.Name = "lblAlertaNutricional";
+            lblAlertaNutricional.Padding = new Padding(10, 4, 10, 4);
+            lblAlertaNutricional.Size = new Size(688, 66);
+            lblAlertaNutricional.TabIndex = 16;
+            lblAlertaNutricional.Text = "ℹ️ SINERGIA INTER-ÁREAS: Busque las rutinas de un socio para consultar su estado clínico-nutricional.";
+            lblAlertaNutricional.TextAlign = ContentAlignment.MiddleLeft;
+            // 
             // dgvRutinas
             // 
             dgvRutinas.AllowUserToAddRows = false;
             dgvRutinas.AllowUserToDeleteRows = false;
             dgvRutinas.AlternatingRowsDefaultCellStyle = new DataGridViewCellStyle { BackColor = Color.FromArgb(248, 250, 252) };
-            dgvRutinas.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            dgvRutinas.Anchor = AnchorStyles.Top | AnchorStyles.Left;
             dgvRutinas.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
             dgvRutinas.BackgroundColor = Color.White;
             dgvRutinas.BorderStyle = BorderStyle.None;
@@ -108,16 +127,27 @@
             dgvRutinas.RowHeadersVisible = false;
             dgvRutinas.RowTemplate.Height = 34;
             dgvRutinas.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-            dgvRutinas.Size = new Size(1144, 240);
+            dgvRutinas.Size = new Size(680, 210);
             dgvRutinas.TabIndex = 3;
             dgvRutinas.CellClick += dgvRutinas_CellClick;
+            // 
+            // pnlGraficoFuerza
+            // 
+            pnlGraficoFuerza.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            pnlGraficoFuerza.BackColor = Color.White;
+            pnlGraficoFuerza.BorderStyle = BorderStyle.FixedSingle;
+            pnlGraficoFuerza.Location = new Point(724, 92);
+            pnlGraficoFuerza.Name = "pnlGraficoFuerza";
+            pnlGraficoFuerza.Size = new Size(448, 210);
+            pnlGraficoFuerza.TabIndex = 17;
+            pnlGraficoFuerza.Paint += pnlGraficoFuerza_Paint;
             // 
             // lblObjetivo
             // 
             lblObjetivo.AutoSize = true;
             lblObjetivo.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
             lblObjetivo.ForeColor = Color.FromArgb(31, 41, 55);
-            lblObjetivo.Location = new Point(28, 350);
+            lblObjetivo.Location = new Point(28, 316);
             lblObjetivo.Name = "lblObjetivo";
             lblObjetivo.Size = new Size(55, 15);
             lblObjetivo.TabIndex = 4;
@@ -131,17 +161,19 @@
             cmbObjetivo.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
             cmbObjetivo.ForeColor = Color.FromArgb(31, 41, 55);
             cmbObjetivo.FormattingEnabled = true;
-            cmbObjetivo.Location = new Point(28, 374);
+            cmbObjetivo.Location = new Point(28, 340);
             cmbObjetivo.Name = "cmbObjetivo";
-            cmbObjetivo.Size = new Size(340, 23);
+            cmbObjetivo.Size = new Size(270, 23);
             cmbObjetivo.TabIndex = 5;
+            cmbObjetivo.SelectedIndexChanged += cmbObjetivo_Changed;
+            cmbObjetivo.TextChanged += cmbObjetivo_Changed;
             // 
             // lblFrecuencia
             // 
             lblFrecuencia.AutoSize = true;
             lblFrecuencia.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
             lblFrecuencia.ForeColor = Color.FromArgb(31, 41, 55);
-            lblFrecuencia.Location = new Point(392, 350);
+            lblFrecuencia.Location = new Point(314, 316);
             lblFrecuencia.Name = "lblFrecuencia";
             lblFrecuencia.Size = new Size(67, 15);
             lblFrecuencia.TabIndex = 7;
@@ -153,13 +185,14 @@
             numFrecuencia.BackColor = Color.White;
             numFrecuencia.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
             numFrecuencia.ForeColor = Color.FromArgb(31, 41, 55);
-            numFrecuencia.Location = new Point(392, 374);
+            numFrecuencia.Location = new Point(314, 340);
             numFrecuencia.Maximum = new decimal(new int[] { 7, 0, 0, 0 });
             numFrecuencia.Minimum = new decimal(new int[] { 1, 0, 0, 0 });
             numFrecuencia.Name = "numFrecuencia";
-            numFrecuencia.Size = new Size(160, 23);
+            numFrecuencia.Size = new Size(110, 23);
             numFrecuencia.TabIndex = 6;
             numFrecuencia.Value = new decimal(new int[] { 1, 0, 0, 0 });
+            numFrecuencia.ValueChanged += numFrecuencia_ValueChanged;
             // 
             // btnSugerirPlantilla
             // 
@@ -169,7 +202,7 @@
             btnSugerirPlantilla.FlatStyle = FlatStyle.Flat;
             btnSugerirPlantilla.Font = new Font("Segoe UI", 8.5F, FontStyle.Bold, GraphicsUnit.Point);
             btnSugerirPlantilla.ForeColor = Color.White;
-            btnSugerirPlantilla.Location = new Point(576, 368);
+            btnSugerirPlantilla.Location = new Point(440, 334);
             btnSugerirPlantilla.Name = "btnSugerirPlantilla";
             btnSugerirPlantilla.Size = new Size(150, 34);
             btnSugerirPlantilla.TabIndex = 12;
@@ -185,9 +218,9 @@
             btnQuitarEjercicio.FlatStyle = FlatStyle.Flat;
             btnQuitarEjercicio.Font = new Font("Segoe UI", 8.5F, FontStyle.Bold, GraphicsUnit.Point);
             btnQuitarEjercicio.ForeColor = Color.White;
-            btnQuitarEjercicio.Location = new Point(738, 368);
+            btnQuitarEjercicio.Location = new Point(458, 376);
             btnQuitarEjercicio.Name = "btnQuitarEjercicio";
-            btnQuitarEjercicio.Size = new Size(134, 34);
+            btnQuitarEjercicio.Size = new Size(132, 30);
             btnQuitarEjercicio.TabIndex = 13;
             btnQuitarEjercicio.Text = "Quitar Ejercicio";
             btnQuitarEjercicio.UseVisualStyleBackColor = false;
@@ -198,7 +231,7 @@
             lblDetalle.AutoSize = true;
             lblDetalle.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
             lblDetalle.ForeColor = Color.FromArgb(31, 41, 55);
-            lblDetalle.Location = new Point(28, 412);
+            lblDetalle.Location = new Point(28, 386);
             lblDetalle.Name = "lblDetalle";
             lblDetalle.Size = new Size(47, 15);
             lblDetalle.TabIndex = 8;
@@ -237,14 +270,37 @@
             };
             dgvEjercicios.EnableHeadersVisualStyles = false;
             dgvEjercicios.GridColor = Color.FromArgb(226, 232, 240);
-            dgvEjercicios.Location = new Point(28, 434);
+            dgvEjercicios.Location = new Point(28, 410);
             dgvEjercicios.Name = "dgvEjercicios";
             dgvEjercicios.RowHeadersVisible = true;
             dgvEjercicios.RowHeadersWidth = 28;
             dgvEjercicios.RowTemplate.Height = 32;
             dgvEjercicios.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-            dgvEjercicios.Size = new Size(844, 296);
+            dgvEjercicios.Size = new Size(562, 326);
             dgvEjercicios.TabIndex = 9;
+            // 
+            // lblTituloMapa
+            // 
+            lblTituloMapa.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            lblTituloMapa.AutoSize = true;
+            lblTituloMapa.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            lblTituloMapa.ForeColor = Color.FromArgb(31, 41, 55);
+            lblTituloMapa.Location = new Point(604, 386);
+            lblTituloMapa.Name = "lblTituloMapa";
+            lblTituloMapa.Size = new Size(195, 15);
+            lblTituloMapa.TabIndex = 14;
+            lblTituloMapa.Text = "Mapa de Calor Muscular (Volumen)";
+            // 
+            // pnlMapaCalor
+            // 
+            pnlMapaCalor.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Right;
+            pnlMapaCalor.BackColor = Color.White;
+            pnlMapaCalor.BorderStyle = BorderStyle.FixedSingle;
+            pnlMapaCalor.Location = new Point(604, 410);
+            pnlMapaCalor.Name = "pnlMapaCalor";
+            pnlMapaCalor.Size = new Size(306, 326);
+            pnlMapaCalor.TabIndex = 15;
+            pnlMapaCalor.Paint += pnlMapaCalor_Paint;
             // 
             // btnModificar
             // 
@@ -254,9 +310,9 @@
             btnModificar.FlatStyle = FlatStyle.Flat;
             btnModificar.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point);
             btnModificar.ForeColor = Color.White;
-            btnModificar.Location = new Point(900, 556);
+            btnModificar.Location = new Point(924, 556);
             btnModificar.Name = "btnModificar";
-            btnModificar.Size = new Size(272, 56);
+            btnModificar.Size = new Size(248, 56);
             btnModificar.TabIndex = 10;
             btnModificar.Text = "Modificar";
             btnModificar.UseVisualStyleBackColor = false;
@@ -270,9 +326,9 @@
             btnEliminar.FlatStyle = FlatStyle.Flat;
             btnEliminar.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point);
             btnEliminar.ForeColor = Color.White;
-            btnEliminar.Location = new Point(900, 628);
+            btnEliminar.Location = new Point(924, 628);
             btnEliminar.Name = "btnEliminar";
-            btnEliminar.Size = new Size(272, 56);
+            btnEliminar.Size = new Size(248, 56);
             btnEliminar.TabIndex = 11;
             btnEliminar.Text = "Eliminar";
             btnEliminar.UseVisualStyleBackColor = false;
@@ -284,6 +340,9 @@
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.FromArgb(243, 246, 249);
             ClientSize = new Size(1200, 760);
+            Controls.Add(lblAlertaNutricional);
+            Controls.Add(pnlMapaCalor);
+            Controls.Add(lblTituloMapa);
             Controls.Add(btnQuitarEjercicio);
             Controls.Add(btnSugerirPlantilla);
             Controls.Add(btnEliminar);
@@ -295,6 +354,7 @@
             Controls.Add(cmbObjetivo);
             Controls.Add(lblObjetivo);
             Controls.Add(dgvRutinas);
+            Controls.Add(pnlGraficoFuerza);
             Controls.Add(btnBuscar);
             Controls.Add(txtDNI);
             Controls.Add(lblDNI);
@@ -316,7 +376,9 @@
         private Label lblDNI;
         private TextBox txtDNI;
         private Button btnBuscar;
+        private Label lblAlertaNutricional;
         private DataGridView dgvRutinas;
+        private Panel pnlGraficoFuerza;
         private ComboBox cmbObjetivo;
         private Label lblObjetivo;
         private NumericUpDown numFrecuencia;
@@ -325,6 +387,8 @@
         private Button btnQuitarEjercicio;
         private Label lblDetalle;
         private DataGridView dgvEjercicios;
+        private Label lblTituloMapa;
+        private Panel pnlMapaCalor;
         private Button btnModificar;
         private Button btnEliminar;
     }

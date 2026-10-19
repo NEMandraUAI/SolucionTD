@@ -251,12 +251,19 @@ namespace GUI
         {
             try
             {
-                socioActual = socioBLL.ConsultarSocio(txtDNI.Text);
+                socioActual = socioBLL.ConsultarSocio(txtDNI.Text.Trim());
                 if (socioActual != null)
                 {
-                    if (!socioActual.EstadoActivo)
+                    bool planVigente = socioBLL.ObtenerEstadoVigenciaPlan(
+                        socioActual,
+                        out DateTime? fechaVenc,
+                        out string nomPlan,
+                        out int diasRest,
+                        out string msgVigencia);
+                    if (!planVigente)
                     {
-                        MessageBox.Show("El socio se encuentra inactivo. Derívelo a Recepción.", "Atención", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        MessageBox.Show($"No se puede asignar una nueva rutina al socio {socioActual.Nombre} {socioActual.Apellido}:\r\n{msgVigencia}\r\n\r\nDerívelo a Recepción para renovar su membresía.", "Suscripción Vencida / Inactiva", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        lblInfoSocio.Text = $"Socio: {socioActual.Nombre} {socioActual.Apellido} — [{msgVigencia}]";
                         BloquearControlesRutina(true);
                         _rutinasHistoricasSocio.Clear();
                         _ejerciciosBinding.Clear();
@@ -264,7 +271,7 @@ namespace GUI
                         RefrescarVisualizacionesEntrenamiento();
                         return;
                     }
-                    lblInfoSocio.Text = $"Socio Validado: {socioActual.Nombre} {socioActual.Apellido}";
+                    lblInfoSocio.Text = $"Socio Validado: {socioActual.Nombre} {socioActual.Apellido} ({msgVigencia})";
                     _rutinasHistoricasSocio = rutinaBLL.ConsultarRutinasPorDNI(socioActual.DNI);
                     BloquearControlesRutina(false);
                     _varianteSugerencia = 0;

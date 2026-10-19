@@ -218,9 +218,9 @@
             btnQuitarEjercicio.FlatStyle = FlatStyle.Flat;
             btnQuitarEjercicio.Font = new Font("Segoe UI", 8.5F, FontStyle.Bold, GraphicsUnit.Point);
             btnQuitarEjercicio.ForeColor = Color.White;
-            btnQuitarEjercicio.Location = new Point(458, 376);
+            btnQuitarEjercicio.Location = new Point(602, 334);
             btnQuitarEjercicio.Name = "btnQuitarEjercicio";
-            btnQuitarEjercicio.Size = new Size(132, 30);
+            btnQuitarEjercicio.Size = new Size(140, 34);
             btnQuitarEjercicio.TabIndex = 13;
             btnQuitarEjercicio.Text = "Quitar Ejercicio";
             btnQuitarEjercicio.UseVisualStyleBackColor = false;
@@ -340,6 +340,7 @@
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.FromArgb(243, 246, 249);
             ClientSize = new Size(1200, 760);
+            Controls.Add(pnlGraficoFuerza);
             Controls.Add(lblAlertaNutricional);
             Controls.Add(pnlMapaCalor);
             Controls.Add(lblTituloMapa);
@@ -354,7 +355,6 @@
             Controls.Add(cmbObjetivo);
             Controls.Add(lblObjetivo);
             Controls.Add(dgvRutinas);
-            Controls.Add(pnlGraficoFuerza);
             Controls.Add(btnBuscar);
             Controls.Add(txtDNI);
             Controls.Add(lblDNI);

@@ -227,7 +227,7 @@ namespace DAL
                     cmd.Parameters.AddWithValue("@Intentos", usuario.IntentosFallidos);
                     cmd.Parameters.AddWithValue("@Bloqueado", usuario.Bloqueado);
                     cmd.Parameters.AddWithValue("@DVH", (object)usuario.DVH ?? DBNull.Value);
-                    cmd.Parameters.AddWithValue("@ID_Idioma", usuario.Idioma.ID);
+                    cmd.Parameters.AddWithValue("@ID_Idioma", usuario.Idioma != null ? (object)usuario.Idioma.ID : DBNull.Value);
                     cmd.Parameters.AddWithValue("@NivelJerarquia", usuario.NivelJerarquia);
                     cmd.Parameters.AddWithValue("@ID", usuario.ID);
                     cmd.ExecuteNonQuery();

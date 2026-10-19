@@ -110,7 +110,8 @@ namespace DAL
                         comp.MetodoPago = dr["MetodoPago"].ToString();
                         comp.Socio = new SocioBE { ID_Socio = Convert.ToInt32(dr["ID_Socio"]) };
                         comp.EmpleadoCobrador = new UsuarioBE { ID = Convert.ToInt32(dr["ID_Usuario"]) };
-                        comp.DVH = dr["DVH"].ToString();
+                        comp.DVH = dr["DVH"] != DBNull.Value ? dr["DVH"].ToString() : null;
+                        lista.Add(comp);
                     }
                 }
             }

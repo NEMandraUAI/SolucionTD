@@ -39,10 +39,7 @@ namespace GUI
 
         private void AbrirFormularioHijo(Form formHijo)
         {
-            if (formularioActivo != null)
-            {
-                formularioActivo.Close();
-            }
+            CerrarTodosLosFormularios();
             formularioActivo = formHijo;
             formHijo.TopLevel = false;
             formHijo.FormBorderStyle = FormBorderStyle.None;

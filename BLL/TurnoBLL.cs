@@ -15,6 +15,8 @@ namespace BLL
         private TurnoDAL _turnoDAL = new TurnoDAL();
         private IntegridadDAL _integridadDAL = new IntegridadDAL();
         private RegistroBLL _registroBLL = new RegistroBLL();
+        private SocioDAL _socioDAL = new SocioDAL();
+        private SocioBLL _socioBLL = new SocioBLL();
 
         public void AsentarReserva(TurnoBE turno)
         {
@@ -22,6 +24,12 @@ namespace BLL
             turno.FechaHora = new DateTime(f.Year, f.Month, f.Day, f.Hour, f.Minute, 0);
             if (turno.FechaHora <= DateTime.Now)
                 throw new Exception("La fecha y hora del turno deben ser futuras.");
+            SocioBE socio = turno.Socio;
+            if (socio == null || string.IsNullOrWhiteSpace(socio.DNI))
+            {
+                socio = _socioDAL.LeerTodos().FirstOrDefault(s => s.ID_Socio == turno.ID_Socio);
+            }
+            _socioBLL.ValidarPlanVigenteParaFecha(socio, turno.FechaHora, "reservar turno nutricional");
             turno.Estado = "Pendiente";
             turno.NroTurno = _turnoDAL.InsertarTurno(turno);
             turno.DVH = DVManager.CalcularDVH(turno);
@@ -35,6 +43,11 @@ namespace BLL
 
         public void CambiarEstadoTurno(TurnoBE turno, string nuevoEstado)
         {
+            if (string.Equals(nuevoEstado, "Asistió", StringComparison.OrdinalIgnoreCase))
+            {
+                SocioBE socio = _socioDAL.LeerTodos().FirstOrDefault(s => s.ID_Socio == turno.ID_Socio);
+                _socioBLL.ValidarPlanVigenteAlDiaDeHoy(socio, "registrar asistencia a consulta nutricional");
+            }
             turno.Estado = nuevoEstado;
             turno.DVH = DVManager.CalcularDVH(turno);
             _turnoDAL.ActualizarEstado(turno.NroTurno, nuevoEstado, turno.DVH);

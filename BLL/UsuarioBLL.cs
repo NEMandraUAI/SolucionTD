@@ -101,6 +101,7 @@ namespace BLL
             nuevoUsuario.Clave = CryptoManager.GenerarHash(clavePlana);
             nuevoUsuario.IntentosFallidos = 0;
             nuevoUsuario.Bloqueado = false;
+            nuevoUsuario.NivelJerarquia = 1;
             int nuevoId = usuarioDAL.CrearUsuario(nuevoUsuario);
             nuevoUsuario.ID = nuevoId;
             PermisoBLL permisoBLL = new PermisoBLL();

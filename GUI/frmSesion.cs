@@ -22,28 +22,113 @@ namespace GUI
         }
         RegistroBLL registroBLL = new RegistroBLL();
         UsuarioBLL usuarioBLL = new UsuarioBLL();
+        SocioBLL socioBLL = new SocioBLL();
         UsuarioBE usuarioActual;
         public event EventHandler CerrarSesion;
+
         public frmSesion(UsuarioBE usuarioP)
         {
             InitializeComponent();
             usuarioActual = usuarioP;
             GestorIdioma.Instancia.Suscribir(this);
         }
+
         private void Sesion_Load(object sender, EventArgs e)
         {
             lblBienvenida_Base.Text = T("lblBienvenida_Base", "Sesión activa - Bienvenido, ") + usuarioActual.Nombre;
             dgvLogs.AutoGenerateColumns = false;
             ConfigurarGrilla();
+            ConfigurarGrillaAlertas();
             CargarComboUsuarios();
             CargarComboCriticidad();
             dtpDesde.Value = DateTime.Now.AddDays(-7);
             dtpHasta.Value = DateTime.Now;
             EjecutarFiltro();
+            CargarDashboardAlertas();
             SessionManager.Instancia.PermisosActualizados += SessionManager_PermisosActualizados;
             AplicarPermisosVisuales();
             ActualizarIdioma(GestorIdioma.Instancia.IdiomaActual);
         }
+
+        private void ConfigurarGrillaAlertas()
+        {
+            dgvAlertas.AutoGenerateColumns = false;
+            dgvAlertas.Columns.Clear();
+            dgvAlertas.Columns.Add(new DataGridViewTextBoxColumn
+            {
+                DataPropertyName = "Area",
+                HeaderText = "Área Operativa",
+                FillWeight = 13
+            });
+            dgvAlertas.Columns.Add(new DataGridViewTextBoxColumn
+            {
+                DataPropertyName = "Prioridad",
+                HeaderText = "Nivel",
+                FillWeight = 9
+            });
+            dgvAlertas.Columns.Add(new DataGridViewTextBoxColumn
+            {
+                DataPropertyName = "Titulo",
+                HeaderText = "Alerta Proactiva",
+                FillWeight = 32
+            });
+            dgvAlertas.Columns.Add(new DataGridViewTextBoxColumn
+            {
+                DataPropertyName = "Detalle",
+                HeaderText = "Detalle y Acción Sugerida",
+                FillWeight = 35
+            });
+            dgvAlertas.Columns.Add(new DataGridViewTextBoxColumn
+            {
+                DataPropertyName = "FechaReferencia",
+                HeaderText = "Referencia",
+                FillWeight = 11
+            });
+            dgvAlertas.CellFormatting += DgvAlertas_CellFormatting;
+        }
+
+        private void DgvAlertas_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
+        {
+            if (e.RowIndex >= 0 && dgvAlertas.Rows[e.RowIndex].DataBoundItem is AlertaDashboardBE alerta)
+            {
+                if (alerta.Prioridad == "ALTA")
+                {
+                    dgvAlertas.Rows[e.RowIndex].DefaultCellStyle.BackColor = Color.FromArgb(254, 226, 226);
+                    dgvAlertas.Rows[e.RowIndex].DefaultCellStyle.ForeColor = Color.FromArgb(153, 27, 27);
+                }
+                else if (alerta.Prioridad == "MEDIA")
+                {
+                    dgvAlertas.Rows[e.RowIndex].DefaultCellStyle.BackColor = Color.FromArgb(254, 243, 199);
+                    dgvAlertas.Rows[e.RowIndex].DefaultCellStyle.ForeColor = Color.FromArgb(146, 64, 14);
+                }
+                else
+                {
+                    dgvAlertas.Rows[e.RowIndex].DefaultCellStyle.BackColor = Color.FromArgb(240, 253, 244);
+                    dgvAlertas.Rows[e.RowIndex].DefaultCellStyle.ForeColor = Color.FromArgb(22, 101, 52);
+                }
+            }
+        }
+
+        private void CargarDashboardAlertas()
+        {
+            if (usuarioActual == null) return;
+            var alertas = socioBLL.ObtenerAlertasDashboard(
+                usuarioActual,
+                out int cantRec,
+                out int cantEnt,
+                out int cantNut);
+            dgvAlertas.DataSource = null;
+            dgvAlertas.DataSource = alertas;
+            lblKpiRecepcion.Text = $"Recepción: {cantRec} alerta(s)";
+            lblKpiEntrenamiento.Text = $"Entrenamiento: {cantEnt} alerta(s)";
+            lblKpiNutricion.Text = $"Nutrición: {cantNut} alerta(s)";
+        }
+
+        private void btnRefrescarAlertas_Click(object sender, EventArgs e)
+        {
+            CargarDashboardAlertas();
+        }
+
         public void ActualizarIdioma(IdiomaBE idioma)
         {
             IdiomaBLL idiomaBLL = new IdiomaBLL();
@@ -74,6 +159,7 @@ namespace GUI
                 }
             }
         }
+
         private void TraducirControlesRecursivo(Control.ControlCollection controles, Dictionary<string, string> traducciones)
         {
             foreach (Control control in controles)
@@ -105,6 +191,7 @@ namespace GUI
                 }
             }
         }
+
         private void TraducirItemMenu(ToolStripItem item, Dictionary<string, string> traducciones)
         {
             if (traducciones.ContainsKey(item.Name))
@@ -119,21 +206,44 @@ namespace GUI
                 }
             }
         }
+
         private void SessionManager_PermisosActualizados(object sender, EventArgs e)
         {
             usuarioActual = SessionManager.Instancia.UsuarioActual;
             if (usuarioActual == null) return;
             AplicarPermisosVisuales();
+            CargarDashboardAlertas();
             lblBienvenida_Base.Text = T("lblBienvenida_Base", "Sesión activa - Bienvenido, ") + usuarioActual.Nombre;
         }
+
         private void AplicarPermisosVisuales()
         {
+            bool veBitacora = usuarioActual.TienePermiso("CONTROL_BITACORA");
             btnGestionRoles.Visible = usuarioActual.TienePermiso("GESTION_ROLES");
-            btnControlCambios.Visible = usuarioActual.TienePermiso("CONTROL_BITACORA");
-            panel1.Visible = usuarioActual.TienePermiso("CONTROL_BITACORA");
-            dgvLogs.Visible = usuarioActual.TienePermiso("CONTROL_BITACORA");
+            btnControlCambios.Visible = veBitacora;
+            panel1.Visible = veBitacora;
+            dgvLogs.Visible = veBitacora;
             btnBackup.Visible = usuarioActual.TienePermiso("REALIZAR_BACKUP");
+            bool veRec = usuarioActual.TienePermiso("VENDER_PLAN") || usuarioActual.TienePermiso("ASENTAR_TURNO") || usuarioActual.TienePermiso("REVISAR_AGENDA") || usuarioActual.TienePermiso("GESTION_ROLES");
+            bool veEnt = usuarioActual.TienePermiso("ASIGNAR_RUTINA") || usuarioActual.TienePermiso("CONSULTAR_SOCIO") || usuarioActual.TienePermiso("GESTION_ROLES");
+            bool veNut = usuarioActual.TienePermiso("ASIGNAR_PLAN_NUTRICIONAL") || usuarioActual.TienePermiso("CONSULTAR_AGENDA") || usuarioActual.TienePermiso("CONSULTAR_PLANES_NUT") || usuarioActual.TienePermiso("GESTION_ROLES");
+            lblKpiRecepcion.Visible = veRec;
+            lblKpiEntrenamiento.Visible = veEnt;
+            lblKpiNutricion.Visible = veNut;
+            if (veBitacora)
+            {
+                pnlDashboardAlertas.Location = new Point(28, 68);
+                pnlDashboardAlertas.Height = 226;
+                dgvAlertas.Height = 174;
+            }
+            else
+            {
+                pnlDashboardAlertas.Location = new Point(28, 68);
+                pnlDashboardAlertas.Height = 656;
+                dgvAlertas.Height = 602;
+            }
         }
+
         private void ConfigurarGrilla()
         {
             dgvLogs.Columns.Clear();
@@ -143,6 +253,7 @@ namespace GUI
             dgvLogs.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "Evento", HeaderText = T("Evento", "Detalle del Evento"), AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill });
             dgvLogs.CellFormatting += DgvLogs_CellFormatting;
         }
+
         private void CargarComboUsuarios()
         {
             List<UsuarioBE> listaUsuarios = usuarioBLL.ListarTodos();
@@ -151,6 +262,7 @@ namespace GUI
             cmbUsuarios.DisplayMember = "Nombre";
             cmbUsuarios.ValueMember = "ID";
         }
+
         private void CargarComboCriticidad()
         {
             List<KeyValuePair<string, string>> itemsCriticidad = new List<KeyValuePair<string, string>>()
@@ -165,6 +277,7 @@ namespace GUI
             cmbCriticidad.DisplayMember = "Key";
             cmbCriticidad.ValueMember = "Value";
         }
+
         private void EjecutarFiltro()
         {
             int? idUsu = null;
@@ -181,6 +294,7 @@ namespace GUI
                 idUsu,
                 txtBuscar.Text);
         }
+
         private void btnCerrarSesion_Click(object sender, EventArgs e)
         {
             if (CerrarSesion != null)
@@ -192,10 +306,12 @@ namespace GUI
                 this.Close();
             }
         }
+
         private void btnFiltrar_Click(object sender, EventArgs e)
         {
             EjecutarFiltro();
         }
+
         private void btnLimpiar_Click(object sender, EventArgs e)
         {
             dtpDesde.Value = DateTime.Now.AddDays(-7);
@@ -205,6 +321,7 @@ namespace GUI
             txtBuscar.Text = "";
             EjecutarFiltro();
         }
+
         private void DgvLogs_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
         {
             if (dgvLogs.Rows[e.RowIndex].DataBoundItem is RegistroBE fila)
@@ -232,28 +349,17 @@ namespace GUI
                 }
             }
         }
+
         private void btnControlCambios_Click(object sender, EventArgs e)
         {
-            frmControlCambios frmCambios = new frmControlCambios();
-            frmCambios.MdiParent = this.MdiParent;
-            frmCambios.FormClosed += (s, args) =>
-            {
-                this.Show();
-            };
-            this.Hide();
-            frmCambios.Show();
+            AbrirSubFormularioEnContenedor(new frmControlCambios());
         }
+
         private void btnGestionRoles_Click(object sender, EventArgs e)
         {
-            frmGestionRoles frmGestion = new frmGestionRoles();
-            frmGestion.MdiParent = this.MdiParent;
-            frmGestion.FormClosed += (s, args) =>
-            {
-                this.Show();
-            };
-            this.Hide();
-            frmGestion.Show();
+            AbrirSubFormularioEnContenedor(new frmGestionRoles());
         }
+
         private void btnBackup_Click(object sender, EventArgs e)
         {
             SaveFileDialog sfd = new SaveFileDialog();
@@ -274,10 +380,38 @@ namespace GUI
                 }
             }
         }
+
         private void frmSesion_FormClosing(object sender, FormClosingEventArgs e)
         {
             GestorIdioma.Instancia.Desuscribir(this);
             SessionManager.Instancia.PermisosActualizados -= SessionManager_PermisosActualizados;
+        }
+
+        private void AbrirSubFormularioEnContenedor(Form subForm)
+        {
+            Control contenedor = this.Parent;
+            if (contenedor != null)
+            {
+                subForm.TopLevel = false;
+                subForm.FormBorderStyle = FormBorderStyle.None;
+                subForm.Dock = DockStyle.Fill;
+                contenedor.Controls.Add(subForm);
+                subForm.FormClosed += (s, args) =>
+                {
+                    if (!this.IsDisposed)
+                    {
+                        this.Show();
+                        this.BringToFront();
+                    }
+                };
+                this.Hide();
+                subForm.BringToFront();
+                subForm.Show();
+            }
+            else
+            {
+                subForm.ShowDialog();
+            }
         }
     }
 }

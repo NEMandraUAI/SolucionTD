@@ -308,12 +308,24 @@ namespace GUI
             try
             {
                 if (string.IsNullOrWhiteSpace(txtDNISocio.Text)) throw new Exception("Ingrese el DNI.");
-                _socioActual = _socioBLL.ConsultarSocio(txtDNISocio.Text);
+                _socioActual = _socioBLL.ConsultarSocio(txtDNISocio.Text.Trim());
                 if (_socioActual == null) throw new Exception("Socio no encontrado.");
-                if (!_socioActual.EstadoActivo) throw new Exception("El socio se encuentra inactivo.");
-                BloquearCamposPlan(false);
+                bool planVigente = _socioBLL.ObtenerEstadoVigenciaPlan(
+                    _socioActual,
+                    out DateTime? fechaVenc,
+                    out string nomPlan,
+                    out int diasRest,
+                    out string msgVigencia);
                 CargarPlanesHistoricos();
-                MessageBox.Show($"Socio encontrado: {_socioActual.Nombre} {_socioActual.Apellido}", "Socio Seleccionado", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                if (!planVigente)
+                {
+                    BloquearCamposPlan(true);
+                    btnExportarPDF.Enabled = true;
+                    MessageBox.Show($"Atención denegada para nueva consulta:\r\nSocio: {_socioActual.Nombre} {_socioActual.Apellido}\r\n{msgVigencia}\r\n\r\nSe habilita únicamente la visualización de su historial clínico. Derívelo a Recepción para renovar su cuota.", "Cuota Vencida", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+                BloquearCamposPlan(false);
+                MessageBox.Show($"Socio encontrado: {_socioActual.Nombre} {_socioActual.Apellido}\r\n{msgVigencia}", "Socio Habilitado", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
             {

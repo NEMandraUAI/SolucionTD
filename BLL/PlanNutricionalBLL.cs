@@ -14,6 +14,8 @@ namespace BLL
         private PlanNutricionalDAL _planDAL = new PlanNutricionalDAL();
         private IntegridadDAL _integridadDAL = new IntegridadDAL();
         private RegistroBLL _registroBLL = new RegistroBLL();
+        private SocioDAL _socioDAL = new SocioDAL();
+        private SocioBLL _socioBLL = new SocioBLL();
 
         public List<string> ObtenerGenerosDisponibles()
         {
@@ -136,6 +138,8 @@ namespace BLL
         {
             if (plan == null)
                 throw new Exception("El plan nutricional no puede ser nulo.");
+            SocioBE socio = _socioDAL.LeerTodos().FirstOrDefault(s => s.ID_Socio == plan.ID_Socio);
+            _socioBLL.ValidarPlanVigenteAlDiaDeHoy(socio, "confeccionar y asignar un nuevo Plan Nutricional");
             if (plan.DatosBiometricos != null && plan.DatosBiometricos.PesoKg > 0 && plan.DatosBiometricos.AlturaCm > 0)
             {
                 if (plan.DatosBiometricos.PesoKg < 25m || plan.DatosBiometricos.PesoKg > 300m)

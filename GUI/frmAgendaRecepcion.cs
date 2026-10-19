@@ -105,11 +105,17 @@ namespace GUI
                     lblSugerencia.Text = $"❌ Socio no encontrado con DNI {dni}. Verifique el número ingresado.";
                     return;
                 }
-                if (!socio.EstadoActivo)
+                bool planVigenteHoy = _socioBLL.ObtenerEstadoVigenciaPlan(
+                    socio,
+                    out DateTime? fechaVencimiento,
+                    out string nombrePlan,
+                    out int diasRestantes,
+                    out string msgVigencia);
+                if (!planVigenteHoy)
                 {
-                    pnlSugerencia.BackColor = Color.FromArgb(254, 243, 199);
-                    lblSugerencia.ForeColor = Color.FromArgb(146, 64, 14);
-                    lblSugerencia.Text = $"⚠️ Socio: {socio.Nombre} {socio.Apellido}\r\nEstado INACTIVO. Debe regularizar su suscripción antes de reservar turno.";
+                    pnlSugerencia.BackColor = Color.FromArgb(254, 226, 226);
+                    lblSugerencia.ForeColor = Color.FromArgb(153, 27, 27);
+                    lblSugerencia.Text = $"🚨 SOCIO CON CUOTA VENCIDA / INACTIVO:\r\n{socio.Nombre} {socio.Apellido}\r\n{msgVigencia}\r\nNo puede reservar turnos hasta renovar su plan.";
                     return;
                 }
                 List<TurnoBE> pendientes = _turnoBLL.ObtenerTurnosPendientesPorSocio(socio.ID_Socio);
@@ -118,22 +124,32 @@ namespace GUI
                     TurnoBE tPend = pendientes.First();
                     pnlSugerencia.BackColor = Color.FromArgb(254, 243, 199);
                     lblSugerencia.ForeColor = Color.FromArgb(146, 64, 14);
-                    lblSugerencia.Text = $"⚠️ Socio: {socio.Nombre} {socio.Apellido}\r\nYa posee un turno PENDIENTE para el {tPend.FechaHora:dd/MM/yyyy HH:mm} hs (Turno #{tPend.NroTurno}).";
+                    lblSugerencia.Text = $"⚠️ Socio: {socio.Nombre} {socio.Apellido} ({msgVigencia})\r\nYa posee un turno PENDIENTE para el {tPend.FechaHora:dd/MM/yyyy HH:mm} hs (Turno #{tPend.NroTurno}).";
                     return;
                 }
                 _sugerenciaActual = _turnoBLL.ObtenerSugerenciaPredictiva(socio.ID_Socio, _listaNutricionistas);
                 if (_sugerenciaActual != null && _sugerenciaActual.TieneSugerencia)
                 {
-                    pnlSugerencia.BackColor = Color.FromArgb(239, 246, 255);
-                    lblSugerencia.ForeColor = Color.FromArgb(30, 58, 138);
-                    lblSugerencia.Text = $"✓ Socio: {socio.Nombre} {socio.Apellido}\r\n{_sugerenciaActual.Mensaje}";
-                    btnAplicarSugerencia.Enabled = true;
+                    if (fechaVencimiento.HasValue && _sugerenciaActual.FechaHoraSugerida.Date > fechaVencimiento.Value.Date)
+                    {
+                        pnlSugerencia.BackColor = Color.FromArgb(254, 243, 199);
+                        lblSugerencia.ForeColor = Color.FromArgb(146, 64, 14);
+                        lblSugerencia.Text = $"⚠️ Socio: {socio.Nombre} {socio.Apellido}\r\n{msgVigencia}\r\nEl próximo turno habitual ({_sugerenciaActual.FechaHoraSugerida:dd/MM/yyyy}) supera el vencimiento del plan. Agende antes del {fechaVencimiento.Value:dd/MM/yyyy}.";
+                        btnAplicarSugerencia.Enabled = false;
+                    }
+                    else
+                    {
+                        pnlSugerencia.BackColor = Color.FromArgb(239, 246, 255);
+                        lblSugerencia.ForeColor = Color.FromArgb(30, 58, 138);
+                        lblSugerencia.Text = $"✓ {socio.Nombre} {socio.Apellido} (Vence: {fechaVencimiento:dd/MM/yyyy})\r\n{_sugerenciaActual.Mensaje}";
+                        btnAplicarSugerencia.Enabled = true;
+                    }
                 }
                 else
                 {
                     pnlSugerencia.BackColor = Color.FromArgb(241, 245, 249);
                     lblSugerencia.ForeColor = Color.FromArgb(71, 85, 105);
-                    lblSugerencia.Text = $"✓ Socio: {socio.Nombre} {socio.Apellido}\r\n{(_sugerenciaActual != null ? _sugerenciaActual.Mensaje : "Sin historial previo.")}";
+                    lblSugerencia.Text = $"✓ {socio.Nombre} {socio.Apellido} ({msgVigencia})\r\n{(_sugerenciaActual != null ? _sugerenciaActual.Mensaje : "Sin historial previo.")}";
                 }
             }
             catch

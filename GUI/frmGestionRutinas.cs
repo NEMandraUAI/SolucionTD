@@ -224,17 +224,34 @@ namespace GUI
 
         private void ConfigurarModoSegunVigencia(bool esRutinaVigente)
         {
+            bool cuotaAlDia = false;
+            string msgVigencia = string.Empty;
+            if (socioConsultado != null)
+            {
+                cuotaAlDia = socioBLL.ObtenerEstadoVigenciaPlan(
+                    socioConsultado,
+                    out _,
+                    out _,
+                    out _,
+                    out msgVigencia);
+            }
+            bool permitirEdicion = esRutinaVigente && cuotaAlDia;
             dgvEjercicios.Enabled = true;
-            dgvEjercicios.ReadOnly = !esRutinaVigente;
-            dgvEjercicios.AllowUserToAddRows = esRutinaVigente;
-            dgvEjercicios.AllowUserToDeleteRows = esRutinaVigente;
-            cmbObjetivo.Enabled = esRutinaVigente;
-            numFrecuencia.Enabled = esRutinaVigente;
-            btnSugerirPlantilla.Enabled = esRutinaVigente;
-            btnQuitarEjercicio.Enabled = esRutinaVigente;
-            btnModificar.Enabled = esRutinaVigente;
-            btnEliminar.Enabled = esRutinaVigente;
-            if (esRutinaVigente)
+            dgvEjercicios.ReadOnly = !permitirEdicion;
+            dgvEjercicios.AllowUserToAddRows = permitirEdicion;
+            dgvEjercicios.AllowUserToDeleteRows = permitirEdicion;
+            cmbObjetivo.Enabled = permitirEdicion;
+            numFrecuencia.Enabled = permitirEdicion;
+            btnSugerirPlantilla.Enabled = permitirEdicion;
+            btnQuitarEjercicio.Enabled = permitirEdicion;
+            btnModificar.Enabled = permitirEdicion;
+            btnEliminar.Enabled = permitirEdicion;
+            if (!cuotaAlDia && socioConsultado != null)
+            {
+                lblDetalle.Text = $"{_textoBaseDetalle} — [EDICIÓN BLOQUEADA: {msgVigencia}]";
+                lblDetalle.ForeColor = Color.FromArgb(185, 28, 28);
+            }
+            else if (esRutinaVigente)
             {
                 lblDetalle.Text = $"{_textoBaseDetalle} — [RUTINA VIGENTE: Edición Habilitada]";
                 lblDetalle.ForeColor = Color.FromArgb(22, 101, 52);

@@ -15,6 +15,8 @@ namespace BLL
         IntegridadDAL intDal = new IntegridadDAL();
         PlanNutricionalDAL planNutDAL = new PlanNutricionalDAL();
         RegistroBLL regBll = new RegistroBLL();
+        SocioDAL socioDAL = new SocioDAL();
+        SocioBLL socioBLL = new SocioBLL();
 
         public List<string> ObtenerObjetivosDisponibles()
         {
@@ -306,6 +308,8 @@ namespace BLL
                 throw new Exception("El detalle de los ejercicios no puede estar vacío.");
             if (rutina.Socio == null || rutina.Socio.ID_Socio == 0)
                 throw new Exception("La rutina debe estar asociada a un socio válido.");
+            SocioBE socioCompleto = !string.IsNullOrWhiteSpace(rutina.Socio.DNI) ? socioDAL.ObtenerPorDNI(rutina.Socio.DNI) : socioDAL.LeerTodos().FirstOrDefault(s => s.ID_Socio == rutina.Socio.ID_Socio);
+            socioBLL.ValidarPlanVigenteAlDiaDeHoy(socioCompleto, "asignar una nueva rutina de entrenamiento");
             DateTime f = rutina.FechaCreacion == default ? DateTime.Now : rutina.FechaCreacion;
             rutina.FechaCreacion = new DateTime(f.Year, f.Month, f.Day, f.Hour, f.Minute, f.Second);
             rutina.DVH = string.Empty;
@@ -338,6 +342,8 @@ namespace BLL
             if (rutina == null || rutina.CodigoRutina <= 0)
                 throw new Exception("Debe seleccionar una rutina válida.");
             int idSocio = rutina.Socio != null ? rutina.Socio.ID_Socio : 0;
+            SocioBE socioCompleto = socioDAL.LeerTodos().FirstOrDefault(s => s.ID_Socio == idSocio);
+            socioBLL.ValidarPlanVigenteAlDiaDeHoy(socioCompleto, $"{operacion} una rutina de entrenamiento");
             var todasLasRutinas = dal.LeerTodos()
                 .Where(r => r.Socio != null && r.Socio.ID_Socio == idSocio)
                 .OrderByDescending(r => r.FechaCreacion)

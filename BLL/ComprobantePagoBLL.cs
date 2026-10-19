@@ -23,8 +23,12 @@ namespace BLL
                 throw new Exception("Debe seleccionar un método de pago.");
             if (comprobante.Socio == null || comprobante.Socio.ID_Socio == 0)
                 throw new Exception("El comprobante debe estar asociado a un socio válido.");
-            comprobante.DVH = DVManager.CalcularDVH(comprobante);
+            DateTime f = comprobante.Fecha == default ? DateTime.Now : comprobante.Fecha;
+            comprobante.Fecha = new DateTime(f.Year, f.Month, f.Day, f.Hour, f.Minute, f.Second);
+            comprobante.DVH = string.Empty;
             dal.InsertarComprobante(comprobante);
+            comprobante.DVH = DVManager.CalcularDVH(comprobante);
+            intDal.ActualizarDVHRegistro("ComprobantePago", comprobante.NroComprobante, comprobante.DVH);
             List<string> listaDVH = dal.ObtenerTodosLosDVH();
             string nuevoDVV = DVManager.CalcularDVV(listaDVH);
             intDal.ActualizarDVV("ComprobantePago", nuevoDVV);

@@ -54,7 +54,7 @@
             lblDNI.AutoSize = true;
             lblDNI.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
             lblDNI.ForeColor = Color.FromArgb(31, 41, 55);
-            lblDNI.Location = new Point(32, 30);
+            lblDNI.Location = new Point(32, 18);
             lblDNI.Name = "lblDNI";
             lblDNI.Size = new Size(29, 15);
             lblDNI.TabIndex = 12;
@@ -67,7 +67,7 @@
             txtDNI.BorderStyle = BorderStyle.FixedSingle;
             txtDNI.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
             txtDNI.ForeColor = Color.FromArgb(31, 41, 55);
-            txtDNI.Location = new Point(32, 54);
+            txtDNI.Location = new Point(32, 42);
             txtDNI.Name = "txtDNI";
             txtDNI.Size = new Size(220, 23);
             txtDNI.TabIndex = 10;
@@ -80,24 +80,13 @@
             btnBuscar.FlatStyle = FlatStyle.Flat;
             btnBuscar.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point);
             btnBuscar.ForeColor = Color.White;
-            btnBuscar.Location = new Point(268, 46);
+            btnBuscar.Location = new Point(268, 36);
             btnBuscar.Name = "btnBuscar";
-            btnBuscar.Size = new Size(140, 38);
+            btnBuscar.Size = new Size(140, 36);
             btnBuscar.TabIndex = 11;
             btnBuscar.Text = "Buscar";
             btnBuscar.UseVisualStyleBackColor = false;
             btnBuscar.Click += btnBuscar_Click;
-            // 
-            // lblInfoSocio
-            // 
-            lblInfoSocio.AutoSize = true;
-            lblInfoSocio.Font = new Font("Segoe UI", 9.5F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            lblInfoSocio.ForeColor = Color.FromArgb(31, 41, 55);
-            lblInfoSocio.Location = new Point(32, 100);
-            lblInfoSocio.Name = "lblInfoSocio";
-            lblInfoSocio.Size = new Size(13, 17);
-            lblInfoSocio.TabIndex = 13;
-            lblInfoSocio.Text = "-";
             // 
             // lblAlertaNutricional
             // 
@@ -106,20 +95,35 @@
             lblAlertaNutricional.BorderStyle = BorderStyle.FixedSingle;
             lblAlertaNutricional.Font = new Font("Segoe UI", 8.5F, FontStyle.Bold, GraphicsUnit.Point, 0);
             lblAlertaNutricional.ForeColor = Color.FromArgb(71, 85, 105);
-            lblAlertaNutricional.Location = new Point(430, 34);
+            lblAlertaNutricional.Location = new Point(424, 18);
             lblAlertaNutricional.Name = "lblAlertaNutricional";
-            lblAlertaNutricional.Padding = new Padding(10, 6, 10, 6);
-            lblAlertaNutricional.Size = new Size(718, 84);
+            lblAlertaNutricional.Padding = new Padding(10, 4, 10, 4);
+            lblAlertaNutricional.Size = new Size(724, 68);
             lblAlertaNutricional.TabIndex = 25;
             lblAlertaNutricional.Text = "ℹ️ SINERGIA INTER-ÁREAS: Valide un socio para consultar su estado clínico-nutricional.";
             lblAlertaNutricional.TextAlign = ContentAlignment.MiddleLeft;
+            // 
+            // lblInfoSocio
+            // 
+            lblInfoSocio.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            lblInfoSocio.BackColor = Color.FromArgb(226, 232, 240);
+            lblInfoSocio.BorderStyle = BorderStyle.FixedSingle;
+            lblInfoSocio.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            lblInfoSocio.ForeColor = Color.FromArgb(31, 41, 55);
+            lblInfoSocio.Location = new Point(32, 96);
+            lblInfoSocio.Name = "lblInfoSocio";
+            lblInfoSocio.Padding = new Padding(8, 0, 8, 0);
+            lblInfoSocio.Size = new Size(1116, 28);
+            lblInfoSocio.TabIndex = 13;
+            lblInfoSocio.Text = "-";
+            lblInfoSocio.TextAlign = ContentAlignment.MiddleLeft;
             // 
             // lblObjetivo
             // 
             lblObjetivo.AutoSize = true;
             lblObjetivo.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
             lblObjetivo.ForeColor = Color.FromArgb(31, 41, 55);
-            lblObjetivo.Location = new Point(32, 140);
+            lblObjetivo.Location = new Point(32, 136);
             lblObjetivo.Name = "lblObjetivo";
             lblObjetivo.Size = new Size(55, 15);
             lblObjetivo.TabIndex = 15;
@@ -133,7 +137,7 @@
             cmbObjetivo.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
             cmbObjetivo.ForeColor = Color.FromArgb(31, 41, 55);
             cmbObjetivo.FormattingEnabled = true;
-            cmbObjetivo.Location = new Point(32, 164);
+            cmbObjetivo.Location = new Point(32, 158);
             cmbObjetivo.Name = "cmbObjetivo";
             cmbObjetivo.Size = new Size(310, 23);
             cmbObjetivo.TabIndex = 14;
@@ -144,7 +148,7 @@
             lblFrecuencia.AutoSize = true;
             lblFrecuencia.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
             lblFrecuencia.ForeColor = Color.FromArgb(31, 41, 55);
-            lblFrecuencia.Location = new Point(362, 140);
+            lblFrecuencia.Location = new Point(362, 136);
             lblFrecuencia.Name = "lblFrecuencia";
             lblFrecuencia.Size = new Size(67, 15);
             lblFrecuencia.TabIndex = 17;
@@ -156,7 +160,7 @@
             numFrecuencia.BackColor = Color.White;
             numFrecuencia.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
             numFrecuencia.ForeColor = Color.FromArgb(31, 41, 55);
-            numFrecuencia.Location = new Point(362, 164);
+            numFrecuencia.Location = new Point(362, 158);
             numFrecuencia.Maximum = new decimal(new int[] { 7, 0, 0, 0 });
             numFrecuencia.Minimum = new decimal(new int[] { 1, 0, 0, 0 });
             numFrecuencia.Name = "numFrecuencia";
@@ -173,7 +177,7 @@
             btnSugerirRutina.FlatStyle = FlatStyle.Flat;
             btnSugerirRutina.Font = new Font("Segoe UI", 8.5F, FontStyle.Bold, GraphicsUnit.Point);
             btnSugerirRutina.ForeColor = Color.White;
-            btnSugerirRutina.Location = new Point(512, 157);
+            btnSugerirRutina.Location = new Point(512, 152);
             btnSugerirRutina.Name = "btnSugerirRutina";
             btnSugerirRutina.Size = new Size(150, 34);
             btnSugerirRutina.TabIndex = 21;
@@ -189,7 +193,7 @@
             btnQuitarEjercicio.FlatStyle = FlatStyle.Flat;
             btnQuitarEjercicio.Font = new Font("Segoe UI", 8.5F, FontStyle.Bold, GraphicsUnit.Point);
             btnQuitarEjercicio.ForeColor = Color.White;
-            btnQuitarEjercicio.Location = new Point(678, 157);
+            btnQuitarEjercicio.Location = new Point(678, 152);
             btnQuitarEjercicio.Name = "btnQuitarEjercicio";
             btnQuitarEjercicio.Size = new Size(134, 34);
             btnQuitarEjercicio.TabIndex = 22;
@@ -202,7 +206,7 @@
             lblDetalle.AutoSize = true;
             lblDetalle.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
             lblDetalle.ForeColor = Color.FromArgb(31, 41, 55);
-            lblDetalle.Location = new Point(32, 210);
+            lblDetalle.Location = new Point(32, 206);
             lblDetalle.Name = "lblDetalle";
             lblDetalle.Size = new Size(47, 15);
             lblDetalle.TabIndex = 19;
@@ -241,13 +245,13 @@
             };
             dgvEjercicios.EnableHeadersVisualStyles = false;
             dgvEjercicios.GridColor = Color.FromArgb(226, 232, 240);
-            dgvEjercicios.Location = new Point(32, 234);
+            dgvEjercicios.Location = new Point(32, 230);
             dgvEjercicios.Name = "dgvEjercicios";
             dgvEjercicios.RowHeadersVisible = true;
             dgvEjercicios.RowHeadersWidth = 28;
             dgvEjercicios.RowTemplate.Height = 32;
             dgvEjercicios.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-            dgvEjercicios.Size = new Size(780, 224);
+            dgvEjercicios.Size = new Size(780, 228);
             dgvEjercicios.TabIndex = 18;
             // 
             // pnlGraficoFuerza
@@ -267,7 +271,7 @@
             lblTituloMapa.AutoSize = true;
             lblTituloMapa.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
             lblTituloMapa.ForeColor = Color.FromArgb(31, 41, 55);
-            lblTituloMapa.Location = new Point(828, 210);
+            lblTituloMapa.Location = new Point(828, 206);
             lblTituloMapa.Name = "lblTituloMapa";
             lblTituloMapa.Size = new Size(195, 15);
             lblTituloMapa.TabIndex = 23;
@@ -278,9 +282,9 @@
             pnlMapaCalor.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Right;
             pnlMapaCalor.BackColor = Color.White;
             pnlMapaCalor.BorderStyle = BorderStyle.FixedSingle;
-            pnlMapaCalor.Location = new Point(828, 234);
+            pnlMapaCalor.Location = new Point(828, 230);
             pnlMapaCalor.Name = "pnlMapaCalor";
-            pnlMapaCalor.Size = new Size(320, 398);
+            pnlMapaCalor.Size = new Size(320, 402);
             pnlMapaCalor.TabIndex = 24;
             pnlMapaCalor.Paint += pnlMapaCalor_Paint;
             // 

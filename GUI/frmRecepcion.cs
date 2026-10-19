@@ -104,14 +104,36 @@ namespace GUI
         {
             try
             {
-                if (socioActual == null) throw new Exception("Debe buscar o ingresar un socio primero.");
+                if (socioActual == null)
+                    throw new Exception("Debe buscar o ingresar un socio primero.");
+                if (cmbPlanes.SelectedItem == null)
+                    throw new Exception("Debe seleccionar un plan de suscripción.");
+                string metodoPago = string.Empty;
+                if (cmbMetodoPago.SelectedValue != null)
+                {
+                    metodoPago = cmbMetodoPago.SelectedValue.ToString();
+                }
+                else if (cmbMetodoPago.SelectedItem is KeyValuePair<string, string> kvp)
+                {
+                    metodoPago = !string.IsNullOrWhiteSpace(kvp.Value) ? kvp.Value : kvp.Key;
+                }
+                else if (cmbMetodoPago.SelectedItem != null)
+                {
+                    metodoPago = cmbMetodoPago.SelectedItem.ToString();
+                }
+                else if (!string.IsNullOrWhiteSpace(cmbMetodoPago.Text))
+                {
+                    metodoPago = cmbMetodoPago.Text.Trim();
+                }
+                if (string.IsNullOrWhiteSpace(metodoPago))
+                    throw new Exception("Debe seleccionar un método de pago.");
                 if (socioActual.ID_Socio == 0)
                 {
-                    socioActual.DNI = txtDNI.Text;
-                    socioActual.Nombre = txtNombre.Text;
-                    socioActual.Apellido = txtApellido.Text;
-                    socioActual.Telefono = txtTelefono.Text;
-                    socioActual.Email = txtEmail.Text;
+                    socioActual.DNI = txtDNI.Text.Trim();
+                    socioActual.Nombre = txtNombre.Text.Trim();
+                    socioActual.Apellido = txtApellido.Text.Trim();
+                    socioActual.Telefono = txtTelefono.Text.Trim();
+                    socioActual.Email = txtEmail.Text.Trim();
                     socioBLL.RegistrarSocio(socioActual);
                 }
                 PlanSuscripcionBE planSeleccionado = (PlanSuscripcionBE)cmbPlanes.SelectedItem;
@@ -119,11 +141,11 @@ namespace GUI
                 ComprobantePagoBE comprobante = new ComprobantePagoBE();
                 comprobante.Fecha = DateTime.Now;
                 comprobante.MontoTotal = planSeleccionado.Precio;
-                comprobante.MetodoPago = cmbMetodoPago.SelectedValue.ToString();
+                comprobante.MetodoPago = metodoPago;
                 comprobante.Socio = socioActual;
                 comprobante.EmpleadoCobrador = SessionManager.Instancia.UsuarioActual;
                 comprobanteBLL.RegistrarVenta(comprobante);
-                MessageBox.Show("Venta registrada y permisos de acceso habilitados con éxito.");
+                MessageBox.Show("Venta registrada y permisos de acceso habilitados con éxito.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 this.Close();
             }
             catch (Exception ex)

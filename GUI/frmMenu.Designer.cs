@@ -35,6 +35,7 @@
             btnMenuNutricion = new Button();
             btnMenuEntrenamiento = new Button();
             btnMenuRecepcion = new Button();
+            btnMenuInicio = new Button();
             btnMenuRegistrarse = new Button();
             btnMenuIniciarSesion = new Button();
             pnlCabecera = new Panel();
@@ -50,7 +51,6 @@
             cmbIdiomas = new ComboBox();
             btnNuevoIdioma = new Button();
             pnlContenedor = new Panel();
-            btnMenuInicio = new Button();
             pnlLateral.SuspendLayout();
             pnlCabecera.SuspendLayout();
             pnlSubEntrenamiento.SuspendLayout();
@@ -153,6 +153,22 @@
             btnMenuRecepcion.Text = "Recepción";
             btnMenuRecepcion.UseVisualStyleBackColor = false;
             btnMenuRecepcion.Click += btnMenuRecepcion_Click;
+            // 
+            // btnMenuInicio
+            // 
+            btnMenuInicio.BackColor = Color.FromArgb(37, 99, 235);
+            btnMenuInicio.Dock = DockStyle.Top;
+            btnMenuInicio.FlatAppearance.BorderSize = 0;
+            btnMenuInicio.FlatStyle = FlatStyle.Flat;
+            btnMenuInicio.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            btnMenuInicio.ForeColor = Color.White;
+            btnMenuInicio.Location = new Point(0, 90);
+            btnMenuInicio.Name = "btnMenuInicio";
+            btnMenuInicio.Size = new Size(250, 45);
+            btnMenuInicio.TabIndex = 8;
+            btnMenuInicio.Text = "Menú";
+            btnMenuInicio.UseVisualStyleBackColor = false;
+            btnMenuInicio.Click += btnMenuInicio_Click;
             // 
             // btnMenuRegistrarse
             // 
@@ -356,22 +372,6 @@
             pnlContenedor.Size = new Size(627, 399);
             pnlContenedor.TabIndex = 8;
             // 
-            // btnMenuInicio
-            // 
-            btnMenuInicio.BackColor = Color.FromArgb(37, 99, 235);
-            btnMenuInicio.Dock = DockStyle.Top;
-            btnMenuInicio.FlatAppearance.BorderSize = 0;
-            btnMenuInicio.FlatStyle = FlatStyle.Flat;
-            btnMenuInicio.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-            btnMenuInicio.ForeColor = Color.White;
-            btnMenuInicio.Location = new Point(0, 90);
-            btnMenuInicio.Name = "btnMenuInicio";
-            btnMenuInicio.Size = new Size(250, 45);
-            btnMenuInicio.TabIndex = 8;
-            btnMenuInicio.Text = "Menú";
-            btnMenuInicio.UseVisualStyleBackColor = false;
-            btnMenuInicio.Click += btnMenuInicio_Click;
-            // 
             // frmMenu
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -385,7 +385,7 @@
             ForeColor = Color.FromArgb(31, 41, 55);
             Icon = (Icon)resources.GetObject("$this.Icon");
             Name = "frmMenu";
-            Text = "Menu";
+            Text = "UAI-FIT";
             FormClosing += frmMenu_FormClosing;
             Load += frmMenu_Load;
             pnlLateral.ResumeLayout(false);

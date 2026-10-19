@@ -49,10 +49,9 @@
             // 
             // txtDNI
             // 
-            txtDNI.Anchor = AnchorStyles.Top | AnchorStyles.Left;
             txtDNI.BackColor = Color.White;
             txtDNI.BorderStyle = BorderStyle.FixedSingle;
-            txtDNI.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
+            txtDNI.Font = new Font("Segoe UI", 9F);
             txtDNI.ForeColor = Color.FromArgb(31, 41, 55);
             txtDNI.Location = new Point(28, 54);
             txtDNI.Name = "txtDNI";
@@ -61,11 +60,10 @@
             // 
             // btnBuscar
             // 
-            btnBuscar.Anchor = AnchorStyles.Top | AnchorStyles.Left;
             btnBuscar.BackColor = Color.FromArgb(71, 85, 105);
             btnBuscar.FlatAppearance.BorderSize = 0;
             btnBuscar.FlatStyle = FlatStyle.Flat;
-            btnBuscar.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point);
+            btnBuscar.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
             btnBuscar.ForeColor = Color.White;
             btnBuscar.Location = new Point(420, 50);
             btnBuscar.Name = "btnBuscar";
@@ -77,10 +75,9 @@
             // 
             // txtNombre
             // 
-            txtNombre.Anchor = AnchorStyles.Top | AnchorStyles.Left;
             txtNombre.BackColor = Color.White;
             txtNombre.BorderStyle = BorderStyle.FixedSingle;
-            txtNombre.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
+            txtNombre.Font = new Font("Segoe UI", 9F);
             txtNombre.ForeColor = Color.FromArgb(31, 41, 55);
             txtNombre.Location = new Point(28, 148);
             txtNombre.Name = "txtNombre";
@@ -89,10 +86,9 @@
             // 
             // txtApellido
             // 
-            txtApellido.Anchor = AnchorStyles.Top | AnchorStyles.Left;
             txtApellido.BackColor = Color.White;
             txtApellido.BorderStyle = BorderStyle.FixedSingle;
-            txtApellido.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
+            txtApellido.Font = new Font("Segoe UI", 9F);
             txtApellido.ForeColor = Color.FromArgb(31, 41, 55);
             txtApellido.Location = new Point(420, 148);
             txtApellido.Name = "txtApellido";
@@ -101,10 +97,9 @@
             // 
             // txtEmail
             // 
-            txtEmail.Anchor = AnchorStyles.Top | AnchorStyles.Left;
             txtEmail.BackColor = Color.White;
             txtEmail.BorderStyle = BorderStyle.FixedSingle;
-            txtEmail.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
+            txtEmail.Font = new Font("Segoe UI", 9F);
             txtEmail.ForeColor = Color.FromArgb(31, 41, 55);
             txtEmail.Location = new Point(420, 244);
             txtEmail.Name = "txtEmail";
@@ -113,10 +108,9 @@
             // 
             // txtTelefono
             // 
-            txtTelefono.Anchor = AnchorStyles.Top | AnchorStyles.Left;
             txtTelefono.BackColor = Color.White;
             txtTelefono.BorderStyle = BorderStyle.FixedSingle;
-            txtTelefono.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
+            txtTelefono.Font = new Font("Segoe UI", 9F);
             txtTelefono.ForeColor = Color.FromArgb(31, 41, 55);
             txtTelefono.Location = new Point(28, 244);
             txtTelefono.Name = "txtTelefono";
@@ -125,37 +119,36 @@
             // 
             // cmbPlanes
             // 
-            cmbPlanes.Anchor = AnchorStyles.Top | AnchorStyles.Left;
             cmbPlanes.BackColor = Color.White;
+            cmbPlanes.DropDownStyle = ComboBoxStyle.DropDownList;
             cmbPlanes.FlatStyle = FlatStyle.Flat;
-            cmbPlanes.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
+            cmbPlanes.Font = new Font("Segoe UI", 9F);
             cmbPlanes.ForeColor = Color.FromArgb(31, 41, 55);
             cmbPlanes.FormattingEnabled = true;
             cmbPlanes.Location = new Point(28, 340);
             cmbPlanes.Name = "cmbPlanes";
-            cmbPlanes.Size = new Size(360, 28);
+            cmbPlanes.Size = new Size(360, 23);
             cmbPlanes.TabIndex = 6;
             // 
             // cmbMetodoPago
             // 
-            cmbMetodoPago.Anchor = AnchorStyles.Top | AnchorStyles.Left;
             cmbMetodoPago.BackColor = Color.White;
+            cmbMetodoPago.DropDownStyle = ComboBoxStyle.DropDownList;
             cmbMetodoPago.FlatStyle = FlatStyle.Flat;
-            cmbMetodoPago.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
+            cmbMetodoPago.Font = new Font("Segoe UI", 9F);
             cmbMetodoPago.ForeColor = Color.FromArgb(31, 41, 55);
             cmbMetodoPago.FormattingEnabled = true;
             cmbMetodoPago.Location = new Point(420, 340);
             cmbMetodoPago.Name = "cmbMetodoPago";
-            cmbMetodoPago.Size = new Size(372, 28);
+            cmbMetodoPago.Size = new Size(372, 23);
             cmbMetodoPago.TabIndex = 7;
             // 
             // btnConfirmarVenta
             // 
-            btnConfirmarVenta.Anchor = AnchorStyles.Top | AnchorStyles.Left;
             btnConfirmarVenta.BackColor = Color.FromArgb(37, 99, 235);
             btnConfirmarVenta.FlatAppearance.BorderSize = 0;
             btnConfirmarVenta.FlatStyle = FlatStyle.Flat;
-            btnConfirmarVenta.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point);
+            btnConfirmarVenta.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
             btnConfirmarVenta.ForeColor = Color.White;
             btnConfirmarVenta.Location = new Point(420, 408);
             btnConfirmarVenta.Name = "btnConfirmarVenta";
@@ -244,11 +237,10 @@
             // 
             // btnConsultarPlanes
             // 
-            btnConsultarPlanes.Anchor = AnchorStyles.Top | AnchorStyles.Left;
             btnConsultarPlanes.BackColor = Color.FromArgb(71, 85, 105);
             btnConsultarPlanes.FlatAppearance.BorderSize = 0;
             btnConsultarPlanes.FlatStyle = FlatStyle.Flat;
-            btnConsultarPlanes.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point);
+            btnConsultarPlanes.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
             btnConsultarPlanes.ForeColor = Color.White;
             btnConsultarPlanes.Location = new Point(28, 408);
             btnConsultarPlanes.Name = "btnConsultarPlanes";
@@ -281,7 +273,7 @@
             Controls.Add(txtNombre);
             Controls.Add(btnBuscar);
             Controls.Add(txtDNI);
-            Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
+            Font = new Font("Segoe UI", 9F);
             ForeColor = Color.FromArgb(31, 41, 55);
             Name = "frmRecepcion";
             Text = "frmRecepcion";

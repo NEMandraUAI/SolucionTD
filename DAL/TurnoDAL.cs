@@ -162,24 +162,50 @@ namespace DAL
             using (SqlConnection cx = ConexionDAL.Instancia.ObtenerConexion())
             {
                 cx.Open();
-                string query = "SELECT NroTurno, FechaHora, Estado, ID_Socio, ID_Nutricionista FROM Turno WHERE ID_Socio = @idSocio AND Estado = 'Pendiente'";
-                SqlCommand cmd = new SqlCommand(query, cx);
-                cmd.Parameters.AddWithValue("@idSocio", idSocio);
-                SqlDataReader reader = cmd.ExecuteReader();
-                while (reader.Read())
+                string query = @"SELECT t.NroTurno, t.FechaHora, t.Estado, t.ID_Socio, t.ID_Nutricionista, t.DVH,
+                                        s.DNI, s.Nombre AS SocioNombre, s.Apellido AS SocioApellido,
+                                        u.Nombre AS NutriNombre
+                                 FROM Turno t
+                                 INNER JOIN Socio s ON t.ID_Socio = s.ID_Socio
+                                 INNER JOIN Usuario u ON t.ID_Nutricionista = u.ID
+                                 WHERE t.ID_Socio = @idSocio AND t.Estado = 'Pendiente'
+                                 ORDER BY t.FechaHora ASC";
+                using (SqlCommand cmd = new SqlCommand(query, cx))
                 {
-                    TurnoBE turno = new TurnoBE();
-                    turno.NroTurno = Convert.ToInt32(reader["NroTurno"]);
-                    turno.FechaHora = Convert.ToDateTime(reader["FechaHora"]);
-                    turno.Estado = reader["Estado"].ToString();
-                    turno.ID_Socio = int.Parse(reader["ID_Socio"].ToString());
-                    turno.ID_Nutricionista = int.Parse(reader["ID_Nutricionista"].ToString());
-                    listaPendientes.Add(turno);
+                    cmd.Parameters.AddWithValue("@idSocio", idSocio);
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            TurnoBE turno = new TurnoBE
+                            {
+                                NroTurno = Convert.ToInt32(reader["NroTurno"]),
+                                FechaHora = Convert.ToDateTime(reader["FechaHora"]),
+                                Estado = reader["Estado"].ToString(),
+                                ID_Socio = Convert.ToInt32(reader["ID_Socio"]),
+                                ID_Nutricionista = Convert.ToInt32(reader["ID_Nutricionista"]),
+                                DVH = reader["DVH"] != DBNull.Value ? reader["DVH"].ToString() : null,
+                                Socio = new SocioBE
+                                {
+                                    ID_Socio = Convert.ToInt32(reader["ID_Socio"]),
+                                    DNI = reader["DNI"].ToString(),
+                                    Nombre = reader["SocioNombre"].ToString(),
+                                    Apellido = reader["SocioApellido"].ToString()
+                                },
+                                Nutricionista = new UsuarioBE
+                                {
+                                    ID = Convert.ToInt32(reader["ID_Nutricionista"]),
+                                    Nombre = reader["NutriNombre"].ToString()
+                                }
+                            };
+                            listaPendientes.Add(turno);
+                        }
+                    }
                 }
-                reader.Close();
             }
             return listaPendientes;
         }
+
         public List<TurnoBE> LeerTodos()
         {
             List<TurnoBE> turnos = new List<TurnoBE>();

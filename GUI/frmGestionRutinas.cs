@@ -22,6 +22,7 @@ namespace GUI
         BindingList<EjercicioBE> _ejerciciosBinding = new BindingList<EjercicioBE>();
         List<PuntoEvolucionBE> _serieEvolucionFuerza = new List<PuntoEvolucionBE>();
         int _varianteSugerencia = 0;
+        string _textoBaseDetalle = "Detalle";
 
         public frmGestionRutinas()
         {
@@ -37,6 +38,7 @@ namespace GUI
             typeof(Panel).InvokeMember("DoubleBuffered",
                 BindingFlags.SetProperty | BindingFlags.Instance | BindingFlags.NonPublic,
                 null, pnlGraficoFuerza, new object[] { true });
+            dgvRutinas.CellFormatting += DgvRutinas_CellFormatting;
             cmbObjetivo.Items.Clear();
             foreach (var obj in rutinaBLL.ObtenerObjetivosDisponibles())
             {
@@ -44,9 +46,26 @@ namespace GUI
             }
             ConfigurarGrillaEjercicios();
             ActualizarIdioma(GestorIdioma.Instancia.IdiomaActual);
-            ActivarControlesEdicion(false);
+            LimpiarYDesactivarEdicion();
             ActualizarTagSinergiaNutricional();
             pnlMapaCalor.Invalidate();
+        }
+
+        private void DgvRutinas_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
+        {
+            if (e.RowIndex >= 0 && dgvRutinas.Rows[e.RowIndex].DataBoundItem is RutinaEntrenamientoBE rut)
+            {
+                if (rut.EsVigente)
+                {
+                    dgvRutinas.Rows[e.RowIndex].DefaultCellStyle.ForeColor = Color.FromArgb(22, 101, 52);
+                    dgvRutinas.Rows[e.RowIndex].DefaultCellStyle.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+                }
+                else
+                {
+                    dgvRutinas.Rows[e.RowIndex].DefaultCellStyle.ForeColor = Color.FromArgb(100, 116, 139);
+                    dgvRutinas.Rows[e.RowIndex].DefaultCellStyle.Font = new Font("Segoe UI", 9F, FontStyle.Regular);
+                }
+            }
         }
 
         private void ConfigurarGrillaEjercicios()
@@ -127,7 +146,11 @@ namespace GUI
             if (traducciones.ContainsKey("btnBuscar")) btnBuscar.Text = traducciones["btnBuscar"];
             if (traducciones.ContainsKey("lblObjetivo")) lblObjetivo.Text = traducciones["lblObjetivo"];
             if (traducciones.ContainsKey("lblFrecuencia")) lblFrecuencia.Text = traducciones["lblFrecuencia"];
-            if (traducciones.ContainsKey("lblDetalle")) lblDetalle.Text = traducciones["lblDetalle"];
+            if (traducciones.ContainsKey("lblDetalle"))
+            {
+                _textoBaseDetalle = traducciones["lblDetalle"];
+                lblDetalle.Text = _textoBaseDetalle;
+            }
             if (traducciones.ContainsKey("btnModificar")) btnModificar.Text = traducciones["btnModificar"];
             if (traducciones.ContainsKey("btnEliminar")) btnEliminar.Text = traducciones["btnEliminar"];
             this.Text = traducciones.ContainsKey("titGestionRutinas") ? traducciones["titGestionRutinas"] : "Gestión de Rutinas";
@@ -135,6 +158,7 @@ namespace GUI
             if (dgvRutinas.Columns["FechaCreacion"] != null && traducciones.ContainsKey("colFecha")) dgvRutinas.Columns["FechaCreacion"].HeaderText = traducciones["colFecha"];
             if (dgvRutinas.Columns["ObjetivoFisico"] != null && traducciones.ContainsKey("colObj")) dgvRutinas.Columns["ObjetivoFisico"].HeaderText = traducciones["colObj"];
             if (dgvRutinas.Columns["FrecuenciaSemanal"] != null && traducciones.ContainsKey("colFrec")) dgvRutinas.Columns["FrecuenciaSemanal"].HeaderText = traducciones["colFrec"];
+            if (dgvRutinas.Columns["EstadoVigencia"] != null) dgvRutinas.Columns["EstadoVigencia"].HeaderText = "Estado";
         }
 
         private void ActualizarTagSinergiaNutricional()
@@ -181,22 +205,73 @@ namespace GUI
             }
         }
 
-        private void ActivarControlesEdicion(bool activo)
+        private void LimpiarYDesactivarEdicion()
         {
-            cmbObjetivo.Enabled = activo;
-            numFrecuencia.Enabled = activo;
-            dgvEjercicios.Enabled = activo;
-            btnSugerirPlantilla.Enabled = activo;
-            btnQuitarEjercicio.Enabled = activo;
-            btnModificar.Enabled = activo;
-            btnEliminar.Enabled = activo;
-            if (!activo)
+            cmbObjetivo.Enabled = false;
+            numFrecuencia.Enabled = false;
+            dgvEjercicios.Enabled = false;
+            btnSugerirPlantilla.Enabled = false;
+            btnQuitarEjercicio.Enabled = false;
+            btnModificar.Enabled = false;
+            btnEliminar.Enabled = false;
+            cmbObjetivo.Text = string.Empty;
+            _ejerciciosBinding.Clear();
+            numFrecuencia.Value = 1;
+            lblDetalle.Text = _textoBaseDetalle;
+            lblDetalle.ForeColor = Color.FromArgb(31, 41, 55);
+            pnlMapaCalor.Invalidate();
+        }
+
+        private void ConfigurarModoSegunVigencia(bool esRutinaVigente)
+        {
+            dgvEjercicios.Enabled = true;
+            dgvEjercicios.ReadOnly = !esRutinaVigente;
+            dgvEjercicios.AllowUserToAddRows = esRutinaVigente;
+            dgvEjercicios.AllowUserToDeleteRows = esRutinaVigente;
+            cmbObjetivo.Enabled = esRutinaVigente;
+            numFrecuencia.Enabled = esRutinaVigente;
+            btnSugerirPlantilla.Enabled = esRutinaVigente;
+            btnQuitarEjercicio.Enabled = esRutinaVigente;
+            btnModificar.Enabled = esRutinaVigente;
+            btnEliminar.Enabled = esRutinaVigente;
+            if (esRutinaVigente)
             {
-                cmbObjetivo.Text = string.Empty;
-                _ejerciciosBinding.Clear();
-                numFrecuencia.Value = 1;
-                pnlMapaCalor.Invalidate();
+                lblDetalle.Text = $"{_textoBaseDetalle} — [RUTINA VIGENTE: Edición Habilitada]";
+                lblDetalle.ForeColor = Color.FromArgb(22, 101, 52);
             }
+            else
+            {
+                lblDetalle.Text = $"{_textoBaseDetalle} — [RUTINA HISTÓRICA INMUTABLE: Solo Lectura para Trazabilidad]";
+                lblDetalle.ForeColor = Color.FromArgb(180, 83, 9);
+            }
+        }
+
+        private void CargarRutinaEnControles(RutinaEntrenamientoBE rutina)
+        {
+            if (rutina == null)
+            {
+                LimpiarYDesactivarEdicion();
+                return;
+            }
+            rutinaSeleccionada = rutina;
+            cmbObjetivo.Text = rutina.ObjetivoFisico;
+            numFrecuencia.Value = Math.Clamp(rutina.FrecuenciaSemanal, (int)numFrecuencia.Minimum, (int)numFrecuencia.Maximum);
+            var copiaEjercicios = rutina.Ejercicios
+                .Select(ej => new EjercicioBE
+                {
+                    Nombre = ej.Nombre,
+                    GrupoMuscular = ej.GrupoMuscular,
+                    Series = ej.Series,
+                    Repeticiones = ej.Repeticiones,
+                    TiempoDescansoSegundos = ej.TiempoDescansoSegundos,
+                    CargaSugeridaKg = ej.CargaSugeridaKg
+                }).ToList();
+            _ejerciciosBinding = new BindingList<EjercicioBE>(copiaEjercicios);
+            _ejerciciosBinding.ListChanged += (s, ev) => pnlMapaCalor.Invalidate();
+            dgvEjercicios.DataSource = _ejerciciosBinding;
+            ConfigurarModoSegunVigencia(rutina.EsVigente);
+            ActualizarTagSinergiaNutricional();
+            pnlMapaCalor.Invalidate();
         }
 
         private void btnBuscar_Click(object sender, EventArgs e)
@@ -219,19 +294,87 @@ namespace GUI
                 if (dgvRutinas.Columns["ID_SocioParaDVH"] != null) dgvRutinas.Columns["ID_SocioParaDVH"].Visible = false;
                 if (dgvRutinas.Columns["ID_UsuarioParaDVH"] != null) dgvRutinas.Columns["ID_UsuarioParaDVH"].Visible = false;
                 ActualizarIdioma(GestorIdioma.Instancia.IdiomaActual);
-                rutinaSeleccionada = null;
-                ActivarControlesEdicion(false);
-                ActualizarTagSinergiaNutricional();
                 _serieEvolucionFuerza = rutinaBLL.ObtenerEvolucionFuerza(lista);
                 pnlGraficoFuerza.Invalidate();
+                if (lista.Count > 0 && dgvRutinas.Rows.Count > 0)
+                {
+                    dgvRutinas.ClearSelection();
+                    dgvRutinas.Rows[0].Selected = true;
+                    DataGridViewColumn primeraColVisible = dgvRutinas.Columns.GetFirstColumn(DataGridViewElementStates.Visible);
+                    if (primeraColVisible != null)
+                    {
+                        dgvRutinas.CurrentCell = dgvRutinas.Rows[0].Cells[primeraColVisible.Index];
+                    }
+                    CargarRutinaEnControles(lista[0]);
+                }
+                else
+                {
+                    rutinaSeleccionada = null;
+                    LimpiarYDesactivarEdicion();
+                    ActualizarTagSinergiaNutricional();
+                }
             }
             catch (Exception ex)
             {
                 socioConsultado = null;
+                rutinaSeleccionada = null;
                 _serieEvolucionFuerza.Clear();
                 pnlGraficoFuerza.Invalidate();
+                LimpiarYDesactivarEdicion();
                 ActualizarTagSinergiaNutricional();
                 MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
+        }
+
+        private void dgvRutinas_CellClick(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex >= 0 && dgvRutinas.Rows[e.RowIndex].DataBoundItem is RutinaEntrenamientoBE rut)
+            {
+                CargarRutinaEnControles(rut);
+            }
+        }
+
+        private void cmbObjetivo_Changed(object sender, EventArgs e)
+        {
+            if (rutinaSeleccionada != null)
+            {
+                ActualizarTagSinergiaNutricional();
+            }
+        }
+
+        private void numFrecuencia_ValueChanged(object sender, EventArgs e)
+        {
+            if (rutinaSeleccionada != null)
+            {
+                ActualizarTagSinergiaNutricional();
+            }
+        }
+
+        private void btnSugerirPlantilla_Click(object sender, EventArgs e)
+        {
+            if (rutinaSeleccionada == null || !rutinaSeleccionada.EsVigente) return;
+            _varianteSugerencia = (_varianteSugerencia + 1) % 3;
+            string objetivo = !string.IsNullOrWhiteSpace(cmbObjetivo.Text) ? cmbObjetivo.Text : "Hipertrofia";
+            int frecuencia = (int)numFrecuencia.Value;
+            dgvEjercicios.CancelEdit();
+            dgvEjercicios.EndEdit();
+            var sugeridos = rutinaBLL.GenerarRutinaSugerida(objetivo, frecuencia, _varianteSugerencia);
+            _ejerciciosBinding = new BindingList<EjercicioBE>(sugeridos);
+            _ejerciciosBinding.ListChanged += (s, ev) => pnlMapaCalor.Invalidate();
+            dgvEjercicios.DataSource = null;
+            dgvEjercicios.DataSource = _ejerciciosBinding;
+            dgvEjercicios.Refresh();
+            ActualizarTagSinergiaNutricional();
+            pnlMapaCalor.Invalidate();
+        }
+
+        private void btnQuitarEjercicio_Click(object sender, EventArgs e)
+        {
+            if (rutinaSeleccionada == null || !rutinaSeleccionada.EsVigente) return;
+            if (dgvEjercicios.CurrentRow != null && !dgvEjercicios.CurrentRow.IsNewRow)
+            {
+                dgvEjercicios.Rows.Remove(dgvEjercicios.CurrentRow);
+                pnlMapaCalor.Invalidate();
             }
         }
 
@@ -278,6 +421,7 @@ namespace GUI
                     minVal = Math.Max(0m, minVal - margen);
                     maxVal += margen;
                 }
+
                 for (int i = 0; i <= 3; i++)
                 {
                     float y = top + (alto * i / 3f);
@@ -326,74 +470,6 @@ namespace GUI
                         g.DrawString(_serieEvolucionFuerza[i].EtiquetaFecha, fontEje, brushGris, pts[i].X, bot + 4, sfCenter);
                     }
                 }
-            }
-        }
-
-        private void dgvRutinas_CellClick(object sender, DataGridViewCellEventArgs e)
-        {
-            if (e.RowIndex >= 0)
-            {
-                rutinaSeleccionada = (RutinaEntrenamientoBE)dgvRutinas.Rows[e.RowIndex].DataBoundItem;
-                cmbObjetivo.Text = rutinaSeleccionada.ObjetivoFisico;
-                numFrecuencia.Value = rutinaSeleccionada.FrecuenciaSemanal;
-                var copiaEjercicios = rutinaSeleccionada.Ejercicios
-                    .Select(ej => new EjercicioBE
-                    {
-                        Nombre = ej.Nombre,
-                        GrupoMuscular = ej.GrupoMuscular,
-                        Series = ej.Series,
-                        Repeticiones = ej.Repeticiones,
-                        TiempoDescansoSegundos = ej.TiempoDescansoSegundos,
-                        CargaSugeridaKg = ej.CargaSugeridaKg
-                    }).ToList();
-                _ejerciciosBinding = new BindingList<EjercicioBE>(copiaEjercicios);
-                _ejerciciosBinding.ListChanged += (s, ev) => pnlMapaCalor.Invalidate();
-                dgvEjercicios.DataSource = _ejerciciosBinding;
-                ActivarControlesEdicion(true);
-                ActualizarTagSinergiaNutricional();
-                pnlMapaCalor.Invalidate();
-            }
-        }
-
-        private void cmbObjetivo_Changed(object sender, EventArgs e)
-        {
-            if (rutinaSeleccionada != null)
-            {
-                ActualizarTagSinergiaNutricional();
-            }
-        }
-
-        private void numFrecuencia_ValueChanged(object sender, EventArgs e)
-        {
-            if (rutinaSeleccionada != null)
-            {
-                ActualizarTagSinergiaNutricional();
-            }
-        }
-
-        private void btnSugerirPlantilla_Click(object sender, EventArgs e)
-        {
-            _varianteSugerencia = (_varianteSugerencia + 1) % 3;
-            string objetivo = !string.IsNullOrWhiteSpace(cmbObjetivo.Text) ? cmbObjetivo.Text : "Hipertrofia";
-            int frecuencia = (int)numFrecuencia.Value;
-            dgvEjercicios.CancelEdit();
-            dgvEjercicios.EndEdit();
-            var sugeridos = rutinaBLL.GenerarRutinaSugerida(objetivo, frecuencia, _varianteSugerencia);
-            _ejerciciosBinding = new BindingList<EjercicioBE>(sugeridos);
-            _ejerciciosBinding.ListChanged += (s, ev) => pnlMapaCalor.Invalidate();
-            dgvEjercicios.DataSource = null;
-            dgvEjercicios.DataSource = _ejerciciosBinding;
-            dgvEjercicios.Refresh();
-            ActualizarTagSinergiaNutricional();
-            pnlMapaCalor.Invalidate();
-        }
-
-        private void btnQuitarEjercicio_Click(object sender, EventArgs e)
-        {
-            if (dgvEjercicios.CurrentRow != null && !dgvEjercicios.CurrentRow.IsNewRow)
-            {
-                dgvEjercicios.Rows.Remove(dgvEjercicios.CurrentRow);
-                pnlMapaCalor.Invalidate();
             }
         }
 
@@ -593,7 +669,7 @@ namespace GUI
                     .Where(ej => ej != null && !string.IsNullOrWhiteSpace(ej.Nombre))
                     .ToList();
                 rutinaBLL.ModificarRutina(rutinaSeleccionada);
-                MessageBox.Show("Rutina modificada exitosamente.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("Rutina vigente modificada exitosamente.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 BuscarRutinas();
             }
             catch (Exception ex)
@@ -607,7 +683,7 @@ namespace GUI
             try
             {
                 if (rutinaSeleccionada == null) return;
-                var result = MessageBox.Show($"¿Seguro que desea eliminar la rutina {rutinaSeleccionada.CodigoRutina}?", "Confirmar Baja", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                var result = MessageBox.Show($"¿Seguro que desea eliminar la rutina vigente #{rutinaSeleccionada.CodigoRutina}?\r\nLa rutina anterior pasará a ser la vigente.", "Confirmar Baja", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
                 if (result == DialogResult.Yes)
                 {
                     rutinaBLL.EliminarRutina(rutinaSeleccionada);

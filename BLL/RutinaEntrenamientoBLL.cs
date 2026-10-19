@@ -322,11 +322,40 @@ namespace BLL
         {
             if (string.IsNullOrWhiteSpace(dni))
                 throw new Exception("Debe ingresar el DNI del socio para buscar sus rutinas.");
-            return dal.ObtenerRutinasPorDNI(dni);
+            var lista = dal.ObtenerRutinasPorDNI(dni)
+                .OrderByDescending(r => r.FechaCreacion)
+                .ThenByDescending(r => r.CodigoRutina)
+                .ToList();
+            for (int i = 0; i < lista.Count; i++)
+            {
+                lista[i].EsVigente = (i == 0);
+            }
+            return lista;
+        }
+
+        private void ValidarQueSeaRutinaVigente(RutinaEntrenamientoBE rutina, string operacion)
+        {
+            if (rutina == null || rutina.CodigoRutina <= 0)
+                throw new Exception("Debe seleccionar una rutina válida.");
+            int idSocio = rutina.Socio != null ? rutina.Socio.ID_Socio : 0;
+            var todasLasRutinas = dal.LeerTodos()
+                .Where(r => r.Socio != null && r.Socio.ID_Socio == idSocio)
+                .OrderByDescending(r => r.FechaCreacion)
+                .ThenByDescending(r => r.CodigoRutina)
+                .ToList();
+            if (todasLasRutinas.Count == 0)
+                throw new Exception("No se encontraron rutinas registradas para este socio.");
+            RutinaEntrenamientoBE rutinaMasReciente = todasLasRutinas.First();
+            if (rutinaMasReciente.CodigoRutina != rutina.CodigoRutina)
+            {
+                throw new Exception($"Operación denegada: No se puede {operacion} la rutina #{rutina.CodigoRutina} ({rutina.FechaCreacion:dd/MM/yyyy}) porque es un registro histórico.\r\n\r\n" +
+                                    $"Por trazabilidad deportiva, solo se permite modificar o eliminar la rutina vigente actual (#{rutinaMasReciente.CodigoRutina} del {rutinaMasReciente.FechaCreacion:dd/MM/yyyy}).");
+            }
         }
 
         public void ModificarRutina(RutinaEntrenamientoBE rutina)
         {
+            ValidarQueSeaRutinaVigente(rutina, "modificar");
             if (string.IsNullOrWhiteSpace(rutina.ObjetivoFisico))
                 throw new Exception("El objetivo físico no puede estar vacío.");
             if (rutina.FrecuenciaSemanal <= 0 || rutina.FrecuenciaSemanal > 7)
@@ -344,6 +373,7 @@ namespace BLL
 
         public void EliminarRutina(RutinaEntrenamientoBE rutina)
         {
+            ValidarQueSeaRutinaVigente(rutina, "eliminar");
             dal.EliminarRutina(rutina.CodigoRutina);
             List<string> listaDVH = dal.ObtenerTodosLosDVH();
             string nuevoDVV = DVManager.CalcularDVV(listaDVH);

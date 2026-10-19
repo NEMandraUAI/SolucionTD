@@ -25,6 +25,15 @@ namespace BE
         [DigitoVerificador(4)]
         public int FrecuenciaSemanal { get; set; }
 
+        [Browsable(false)]
+        [JsonIgnore]
+        public bool EsVigente { get; set; }
+
+        public string EstadoVigencia
+        {
+            get { return EsVigente ? "VIGENTE (Actual)" : "HISTÓRICA (Solo Lectura)"; }
+        }
+
         [DigitoVerificador(5)]
         public string DetalleEjercicios
         {

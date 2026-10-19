@@ -198,8 +198,7 @@ namespace GUI
         {
             IdiomaBLL idiomaBLL = new IdiomaBLL();
             _traducciones = idiomaBLL.ObtenerTraducciones(idioma, this.Name);
-            if (_traducciones.ContainsKey(this.Name))
-                this.Text = _traducciones[this.Name];
+            this.Text = "UAI-FIT";
             TraducirControlesRecursivo(this.Controls, _traducciones);
             cmbIdiomas.SelectedIndexChanged -= cmbIdiomas_SelectedIndexChanged;
             cmbIdiomas.SelectedValue = idioma.ID;

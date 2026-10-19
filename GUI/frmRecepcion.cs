@@ -77,11 +77,45 @@ namespace GUI
             cmbPlanes.ValueMember = "CodigoPlan";
         }
 
+        private void LimpiarCamposSocio()
+        {
+            txtDNI.Clear();
+            txtNombre.Clear();
+            txtApellido.Clear();
+            txtTelefono.Clear();
+            txtEmail.Clear();
+            txtNombre.Enabled = true;
+            txtApellido.Enabled = true;
+            socioActual = null;
+            txtDNI.Focus();
+        }
+
         private void btnBuscar_Click(object sender, EventArgs e)
         {
-            socioActual = socioBLL.ConsultarSocio(txtDNI.Text);
+            if (string.IsNullOrWhiteSpace(txtDNI.Text))
+            {
+                MessageBox.Show("Debe ingresar un DNI para buscar.", "Atención", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+            socioActual = socioBLL.ConsultarSocio(txtDNI.Text.Trim());
             if (socioActual != null)
             {
+                bool tienePlanVigente = socioBLL.ObtenerEstadoVigenciaPlan(
+                    socioActual,
+                    out DateTime? fechaVenc,
+                    out string nombrePlan,
+                    out int diasRestantes,
+                    out _);
+                if (tienePlanVigente)
+                {
+                    MessageBox.Show(
+                        $"Operación no permitida:\r\nEl socio {socioActual.Nombre} {socioActual.Apellido} (DNI {socioActual.DNI}) ya posee un plan vigente activo ({nombrePlan}) con cobertura hasta el {fechaVenc:dd/MM/yyyy} ({diasRestantes} día(s) restantes).\r\n\r\nNo se puede vender un nuevo plan hasta que venza el actual.",
+                        "Socio con Plan Vigente",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Warning);
+                    LimpiarCamposSocio();
+                    return;
+                }
                 txtNombre.Text = socioActual.Nombre;
                 txtApellido.Text = socioActual.Apellido;
                 txtTelefono.Text = socioActual.Telefono;
@@ -91,11 +125,13 @@ namespace GUI
             }
             else
             {
-                MessageBox.Show("Socio no encontrado. Complete los datos para procesar el Alta.");
+                MessageBox.Show("Socio no encontrado. Complete los datos para procesar el Alta.", "Nuevo Socio", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 txtNombre.Enabled = true;
                 txtApellido.Enabled = true;
                 txtNombre.Clear();
                 txtApellido.Clear();
+                txtTelefono.Clear();
+                txtEmail.Clear();
                 socioActual = new SocioBE();
             }
         }

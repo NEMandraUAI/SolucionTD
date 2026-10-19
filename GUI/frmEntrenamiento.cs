@@ -247,6 +247,15 @@ namespace GUI
             }
         }
 
+        private void ActualizarEtiquetaSocioValidado()
+        {
+            if (socioActual != null)
+            {
+                char letraVariante = (char)('A' + (_varianteSugerencia % 3));
+                lblInfoSocio.Text = $"Socio Validado: {socioActual.Nombre} {socioActual.Apellido} (Sugerencia: Variante {letraVariante})";
+            }
+        }
+
         private void btnBuscar_Click(object sender, EventArgs e)
         {
             try
@@ -263,7 +272,7 @@ namespace GUI
                     if (!planVigente)
                     {
                         MessageBox.Show($"No se puede asignar una nueva rutina al socio {socioActual.Nombre} {socioActual.Apellido}:\r\n{msgVigencia}\r\n\r\nDerívelo a Recepción para renovar su membresía.", "Suscripción Vencida / Inactiva", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                        lblInfoSocio.Text = $"Socio: {socioActual.Nombre} {socioActual.Apellido} — [{msgVigencia}]";
+                        lblInfoSocio.Text = $"Socio: {socioActual.Nombre} {socioActual.Apellido} — [Suscripción Vencida / Inactiva]";
                         BloquearControlesRutina(true);
                         _rutinasHistoricasSocio.Clear();
                         _ejerciciosBinding.Clear();
@@ -271,11 +280,11 @@ namespace GUI
                         RefrescarVisualizacionesEntrenamiento();
                         return;
                     }
-                    lblInfoSocio.Text = $"Socio Validado: {socioActual.Nombre} {socioActual.Apellido} ({msgVigencia})";
                     _rutinasHistoricasSocio = rutinaBLL.ConsultarRutinasPorDNI(socioActual.DNI);
                     BloquearControlesRutina(false);
                     _varianteSugerencia = 0;
                     CargarRutinaSugeridaInteligente();
+                    ActualizarEtiquetaSocioValidado();
                     ActualizarTagSinergiaNutricional();
                 }
                 else
@@ -302,6 +311,7 @@ namespace GUI
             {
                 _varianteSugerencia = 0;
                 CargarRutinaSugeridaInteligente();
+                ActualizarEtiquetaSocioValidado();
                 ActualizarTagSinergiaNutricional();
             }
         }
@@ -319,11 +329,7 @@ namespace GUI
         {
             _varianteSugerencia = (_varianteSugerencia + 1) % 3;
             CargarRutinaSugeridaInteligente();
-            char letraVariante = (char)('A' + _varianteSugerencia);
-            if (socioActual != null)
-            {
-                lblInfoSocio.Text = $"Socio Validado: {socioActual.Nombre} {socioActual.Apellido} (Sugerencia: Variante {letraVariante})";
-            }
+            ActualizarEtiquetaSocioValidado();
         }
 
         private void btnQuitarEjercicio_Click(object sender, EventArgs e)

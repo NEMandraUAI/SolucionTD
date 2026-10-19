@@ -31,10 +31,12 @@
             lblBienvenida_Base = new Label();
             btnCerrarSesion = new Button();
             pnlDashboardAlertas = new Panel();
-            lblTituloDashboard = new Label();
+            btnVistaAlertas = new Button();
+            btnVistaChurn = new Button();
             lblKpiRecepcion = new Label();
             lblKpiEntrenamiento = new Label();
             lblKpiNutricion = new Label();
+            btnContactarSocio = new Button();
             btnRefrescarAlertas = new Button();
             dgvAlertas = new DataGridView();
             panel1 = new Panel();
@@ -92,10 +94,12 @@
             pnlDashboardAlertas.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             pnlDashboardAlertas.BackColor = Color.White;
             pnlDashboardAlertas.BorderStyle = BorderStyle.FixedSingle;
-            pnlDashboardAlertas.Controls.Add(lblTituloDashboard);
+            pnlDashboardAlertas.Controls.Add(btnVistaAlertas);
+            pnlDashboardAlertas.Controls.Add(btnVistaChurn);
             pnlDashboardAlertas.Controls.Add(lblKpiRecepcion);
             pnlDashboardAlertas.Controls.Add(lblKpiEntrenamiento);
             pnlDashboardAlertas.Controls.Add(lblKpiNutricion);
+            pnlDashboardAlertas.Controls.Add(btnContactarSocio);
             pnlDashboardAlertas.Controls.Add(btnRefrescarAlertas);
             pnlDashboardAlertas.Controls.Add(dgvAlertas);
             pnlDashboardAlertas.Location = new Point(28, 68);
@@ -103,55 +107,91 @@
             pnlDashboardAlertas.Size = new Size(1244, 226);
             pnlDashboardAlertas.TabIndex = 7;
             // 
-            // lblTituloDashboard
+            // btnVistaAlertas
             // 
-            lblTituloDashboard.AutoSize = true;
-            lblTituloDashboard.Font = new Font("Segoe UI", 9.5F, FontStyle.Bold, GraphicsUnit.Point);
-            lblTituloDashboard.ForeColor = Color.FromArgb(31, 41, 55);
-            lblTituloDashboard.Location = new Point(14, 11);
-            lblTituloDashboard.Name = "lblTituloDashboard";
-            lblTituloDashboard.Size = new Size(285, 17);
-            lblTituloDashboard.TabIndex = 0;
-            lblTituloDashboard.Text = "🔔 Panel Proactivo de Alertas Operativas (Por Rol)";
+            btnVistaAlertas.BackColor = Color.FromArgb(31, 41, 55);
+            btnVistaAlertas.FlatAppearance.BorderSize = 0;
+            btnVistaAlertas.FlatStyle = FlatStyle.Flat;
+            btnVistaAlertas.Font = new Font("Segoe UI", 8.25F, FontStyle.Bold);
+            btnVistaAlertas.ForeColor = Color.White;
+            btnVistaAlertas.Location = new Point(12, 6);
+            btnVistaAlertas.Name = "btnVistaAlertas";
+            btnVistaAlertas.Size = new Size(195, 28);
+            btnVistaAlertas.TabIndex = 0;
+            btnVistaAlertas.Text = "🔔 Alertas Operativas";
+            btnVistaAlertas.UseVisualStyleBackColor = false;
+            btnVistaAlertas.Click += btnVistaAlertas_Click;
+            // 
+            // btnVistaChurn
+            // 
+            btnVistaChurn.BackColor = Color.FromArgb(226, 232, 240);
+            btnVistaChurn.FlatAppearance.BorderSize = 0;
+            btnVistaChurn.FlatStyle = FlatStyle.Flat;
+            btnVistaChurn.Font = new Font("Segoe UI", 8.25F, FontStyle.Bold);
+            btnVistaChurn.ForeColor = Color.FromArgb(31, 41, 55);
+            btnVistaChurn.Location = new Point(214, 6);
+            btnVistaChurn.Name = "btnVistaChurn";
+            btnVistaChurn.Size = new Size(225, 28);
+            btnVistaChurn.TabIndex = 1;
+            btnVistaChurn.Text = "📉 Socios en Riesgo (Churn)";
+            btnVistaChurn.UseVisualStyleBackColor = false;
+            btnVistaChurn.Click += btnVistaChurn_Click;
             // 
             // lblKpiRecepcion
             // 
             lblKpiRecepcion.BackColor = Color.FromArgb(239, 246, 255);
             lblKpiRecepcion.BorderStyle = BorderStyle.FixedSingle;
-            lblKpiRecepcion.Font = new Font("Segoe UI", 8.5F, FontStyle.Bold);
+            lblKpiRecepcion.Font = new Font("Segoe UI", 8F, FontStyle.Bold);
             lblKpiRecepcion.ForeColor = Color.FromArgb(30, 58, 138);
-            lblKpiRecepcion.Location = new Point(360, 7);
+            lblKpiRecepcion.Location = new Point(448, 7);
             lblKpiRecepcion.Name = "lblKpiRecepcion";
-            lblKpiRecepcion.Size = new Size(220, 26);
-            lblKpiRecepcion.TabIndex = 1;
-            lblKpiRecepcion.Text = "Recepción: 0 alerta(s)";
+            lblKpiRecepcion.Size = new Size(154, 26);
+            lblKpiRecepcion.TabIndex = 2;
+            lblKpiRecepcion.Text = "Recepción: 0";
             lblKpiRecepcion.TextAlign = ContentAlignment.MiddleCenter;
             // 
             // lblKpiEntrenamiento
             // 
             lblKpiEntrenamiento.BackColor = Color.FromArgb(254, 243, 199);
             lblKpiEntrenamiento.BorderStyle = BorderStyle.FixedSingle;
-            lblKpiEntrenamiento.Font = new Font("Segoe UI", 8.5F, FontStyle.Bold);
+            lblKpiEntrenamiento.Font = new Font("Segoe UI", 8F, FontStyle.Bold);
             lblKpiEntrenamiento.ForeColor = Color.FromArgb(146, 64, 14);
-            lblKpiEntrenamiento.Location = new Point(592, 7);
+            lblKpiEntrenamiento.Location = new Point(608, 7);
             lblKpiEntrenamiento.Name = "lblKpiEntrenamiento";
-            lblKpiEntrenamiento.Size = new Size(220, 26);
-            lblKpiEntrenamiento.TabIndex = 2;
-            lblKpiEntrenamiento.Text = "Entrenamiento: 0 alerta(s)";
+            lblKpiEntrenamiento.Size = new Size(164, 26);
+            lblKpiEntrenamiento.TabIndex = 3;
+            lblKpiEntrenamiento.Text = "Entrenamiento: 0";
             lblKpiEntrenamiento.TextAlign = ContentAlignment.MiddleCenter;
             // 
             // lblKpiNutricion
             // 
             lblKpiNutricion.BackColor = Color.FromArgb(220, 252, 231);
             lblKpiNutricion.BorderStyle = BorderStyle.FixedSingle;
-            lblKpiNutricion.Font = new Font("Segoe UI", 8.5F, FontStyle.Bold);
+            lblKpiNutricion.Font = new Font("Segoe UI", 8F, FontStyle.Bold);
             lblKpiNutricion.ForeColor = Color.FromArgb(22, 101, 52);
-            lblKpiNutricion.Location = new Point(824, 7);
+            lblKpiNutricion.Location = new Point(778, 7);
             lblKpiNutricion.Name = "lblKpiNutricion";
-            lblKpiNutricion.Size = new Size(220, 26);
-            lblKpiNutricion.TabIndex = 3;
-            lblKpiNutricion.Text = "Nutrición: 0 alerta(s)";
+            lblKpiNutricion.Size = new Size(154, 26);
+            lblKpiNutricion.TabIndex = 4;
+            lblKpiNutricion.Text = "Nutrición: 0";
             lblKpiNutricion.TextAlign = ContentAlignment.MiddleCenter;
+            // 
+            // btnContactarSocio
+            // 
+            btnContactarSocio.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            btnContactarSocio.BackColor = Color.FromArgb(21, 128, 61);
+            btnContactarSocio.FlatAppearance.BorderSize = 0;
+            btnContactarSocio.FlatStyle = FlatStyle.Flat;
+            btnContactarSocio.Font = new Font("Segoe UI", 8.25F, FontStyle.Bold);
+            btnContactarSocio.ForeColor = Color.White;
+            btnContactarSocio.Location = new Point(942, 6);
+            btnContactarSocio.Name = "btnContactarSocio";
+            btnContactarSocio.Size = new Size(162, 28);
+            btnContactarSocio.TabIndex = 5;
+            btnContactarSocio.Text = "💬 Contactar Socio";
+            btnContactarSocio.UseVisualStyleBackColor = false;
+            btnContactarSocio.Visible = false;
+            btnContactarSocio.Click += btnContactarSocio_Click;
             // 
             // btnRefrescarAlertas
             // 
@@ -161,11 +201,11 @@
             btnRefrescarAlertas.FlatStyle = FlatStyle.Flat;
             btnRefrescarAlertas.Font = new Font("Segoe UI", 8.25F, FontStyle.Bold);
             btnRefrescarAlertas.ForeColor = Color.White;
-            btnRefrescarAlertas.Location = new Point(1068, 6);
+            btnRefrescarAlertas.Location = new Point(1112, 6);
             btnRefrescarAlertas.Name = "btnRefrescarAlertas";
-            btnRefrescarAlertas.Size = new Size(162, 28);
-            btnRefrescarAlertas.TabIndex = 4;
-            btnRefrescarAlertas.Text = "Actualizar Alertas";
+            btnRefrescarAlertas.Size = new Size(118, 28);
+            btnRefrescarAlertas.TabIndex = 6;
+            btnRefrescarAlertas.Text = "Actualizar";
             btnRefrescarAlertas.UseVisualStyleBackColor = false;
             btnRefrescarAlertas.Click += btnRefrescarAlertas_Click;
             // 
@@ -210,7 +250,7 @@
             dgvAlertas.RowTemplate.Height = 32;
             dgvAlertas.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             dgvAlertas.Size = new Size(1218, 174);
-            dgvAlertas.TabIndex = 5;
+            dgvAlertas.TabIndex = 7;
             // 
             // panel1
             // 
@@ -482,10 +522,12 @@
         private Label lblBienvenida_Base;
         private Button btnCerrarSesion;
         private Panel pnlDashboardAlertas;
-        private Label lblTituloDashboard;
+        private Button btnVistaAlertas;
+        private Button btnVistaChurn;
         private Label lblKpiRecepcion;
         private Label lblKpiEntrenamiento;
         private Label lblKpiNutricion;
+        private Button btnContactarSocio;
         private Button btnRefrescarAlertas;
         private DataGridView dgvAlertas;
         private DataGridView dgvLogs;

@@ -42,6 +42,13 @@ namespace BLL
 
         public void ActualizarPlanSocio(SocioBE socio, PlanSuscripcionBE nuevoPlan)
         {
+            if (socio != null && socio.ID_Socio > 0)
+            {
+                if (ObtenerEstadoVigenciaPlan(socio, out DateTime? fechaVenc, out string nomPlanActual, out int diasRest, out _))
+                {
+                    throw new Exception($"El socio {socio.Nombre} {socio.Apellido} (DNI {socio.DNI}) ya posee un plan vigente activo ({nomPlanActual}) con cobertura hasta el {fechaVenc:dd/MM/yyyy} ({diasRest} día(s) restantes).\r\n\r\nNo se permite abonar ni superponer un nuevo plan hasta que venza el actual.");
+                }
+            }
             socio.PlanAsociado = nuevoPlan;
             socio.EstadoActivo = true;
             socio.DVH = DVManager.CalcularDVH(socio);
@@ -354,6 +361,148 @@ namespace BLL
                                     $"El socio posee '{nomPlan}' vigente hasta el {fechaVenc.Value:dd/MM/yyyy}, por lo que no cubre la fecha solicitada ({fechaObjetivo:dd/MM/yyyy}).\r\n\r\n" +
                                     $"Seleccione una fecha igual o anterior al {fechaVenc.Value:dd/MM/yyyy} o renueve la suscripción.");
             }
+        }
+
+        public List<SocioRiesgoBE> ObtenerSociosEnRiesgoDeFuga(out decimal tasaChurnPorcentaje, out int cantidadRiesgoAlto)
+        {
+            tasaChurnPorcentaje = 0m;
+            cantidadRiesgoAlto = 0;
+            List<SocioRiesgoBE> resultado = new List<SocioRiesgoBE>();
+            List<SocioBE> todosLosSocios = dal.LeerTodos();
+            if (todosLosSocios == null || todosLosSocios.Count == 0)
+                return resultado;
+            List<RutinaEntrenamientoBE> todasLasRutinas = rutinaDAL.LeerTodos();
+            List<TurnoBE> todosLosTurnos = turnoDAL.LeerTodos();
+            foreach (var socio in todosLosSocios)
+            {
+                int puntaje = 0;
+                List<string> motivos = new List<string>();
+                List<DateTime> fechasActividad = new List<DateTime>();
+                bool planVigente = ObtenerEstadoVigenciaPlan(
+                    socio,
+                    out DateTime? fechaVencimiento,
+                    out string nombrePlan,
+                    out int diasRestantes,
+                    out string msgVigencia);
+                if (fechaVencimiento.HasValue)
+                {
+                    fechasActividad.Add(fechaVencimiento.Value.AddDays(-30));
+                }
+                if (!socio.EstadoActivo)
+                {
+                    puntaje += 85;
+                    motivos.Add("Socio inactivo en el padrón");
+                }
+                else if (!fechaVencimiento.HasValue)
+                {
+                    puntaje += 75;
+                    motivos.Add("No registra pagos de suscripción");
+                }
+                else if (diasRestantes <= -5)
+                {
+                    puntaje += 70;
+                    motivos.Add($"Plan '{nombrePlan}' venció hace {Math.Abs(diasRestantes)} días ({fechaVencimiento.Value:dd/MM/yyyy})");
+                }
+                else if (diasRestantes < 0)
+                {
+                    puntaje += 50;
+                    motivos.Add($"Plan '{nombrePlan}' venció hace {Math.Abs(diasRestantes)} día(s)");
+                }
+                else if (diasRestantes <= 5)
+                {
+                    puntaje += 30;
+                    motivos.Add($"Plan '{nombrePlan}' vence en {diasRestantes} día(s) ({fechaVencimiento.Value:dd/MM/yyyy})");
+                }
+                var rutinasSocio = todasLasRutinas
+                    .Where(r => r.Socio != null && r.Socio.ID_Socio == socio.ID_Socio)
+                    .OrderByDescending(r => r.FechaCreacion)
+                    .ThenByDescending(r => r.CodigoRutina)
+                    .ToList();
+                if (rutinasSocio.Count == 0)
+                {
+                    puntaje += 20;
+                    motivos.Add("Sin rutina de entrenamiento asignada");
+                }
+                else
+                {
+                    DateTime ultimaRutinaFecha = rutinasSocio.First().FechaCreacion;
+                    fechasActividad.Add(ultimaRutinaFecha);
+                    int diasSinActualizarRutina = (int)(DateTime.Today - ultimaRutinaFecha.Date).TotalDays;
+                    if (diasSinActualizarRutina > 90)
+                    {
+                        puntaje += 35;
+                        motivos.Add($"Rutina desactualizada hace {diasSinActualizarRutina} días (>3 meses)");
+                    }
+                    else if (diasSinActualizarRutina > 45)
+                    {
+                        puntaje += 15;
+                        motivos.Add($"Sin renovación de rutina hace {diasSinActualizarRutina} días");
+                    }
+                }
+                var turnosSocio = todosLosTurnos
+                    .Where(t => t.ID_Socio == socio.ID_Socio)
+                    .OrderByDescending(t => t.FechaHora)
+                    .ToList();
+                if (turnosSocio.Count > 0)
+                {
+                    fechasActividad.Add(turnosSocio.First().FechaHora);
+                    int ausencias = turnosSocio.Count(t => string.Equals(t.Estado, "Ausente", StringComparison.OrdinalIgnoreCase));
+                    if (ausencias > 0)
+                    {
+                        puntaje += Math.Min(25, ausencias * 12);
+                        motivos.Add($"Registra {ausencias} ausencia(s) en consultorio nutricional");
+                    }
+                }
+                puntaje = Math.Clamp(puntaje, 5, 98);
+                string nivelRiesgo;
+                if (puntaje >= 60 || (fechaVencimiento.HasValue && diasRestantes <= -5))
+                {
+                    nivelRiesgo = "Riesgo de Abandono Alto";
+                    cantidadRiesgoAlto++;
+                }
+                else if (puntaje >= 30)
+                {
+                    nivelRiesgo = "Riesgo Moderado";
+                }
+                else
+                {
+                    nivelRiesgo = "Bajo (Fidelizado)";
+                }
+                if (motivos.Count == 0)
+                {
+                    motivos.Add($"Cuota al día (vence el {fechaVencimiento:dd/MM/yyyy}) y rutina activa.");
+                }
+                DateTime? ultimaAct = fechasActividad.Count > 0 ? fechasActividad.Max() : (DateTime?)null;
+                resultado.Add(new SocioRiesgoBE
+                {
+                    ID_Socio = socio.ID_Socio,
+                    DNI = socio.DNI,
+                    Socio = $"{socio.Nombre} {socio.Apellido}",
+                    PlanActual = nombrePlan,
+                    NivelRiesgo = nivelRiesgo,
+                    PuntajeFuga = puntaje,
+                    ProbabilidadFuga = $"{puntaje}%",
+                    MotivoDetectado = string.Join(" | ", motivos),
+                    UltimaActividad = ultimaAct.HasValue ? ultimaAct.Value.ToString("dd/MM/yyyy") : "Sin registros",
+                    Telefono = socio.Telefono ?? string.Empty,
+                    Email = socio.Email ?? string.Empty,
+                    Contacto = $"{(string.IsNullOrWhiteSpace(socio.Telefono) ? "S/Tel" : socio.Telefono)} / {(string.IsNullOrWhiteSpace(socio.Email) ? "S/Email" : socio.Email)}"
+                });
+            }
+            tasaChurnPorcentaje = Math.Round((decimal)cantidadRiesgoAlto * 100m / todosLosSocios.Count, 1);
+            return resultado
+                .OrderByDescending(r => r.PuntajeFuga)
+                .ThenBy(r => r.Socio)
+                .ToList();
+        }
+
+        public string GenerarMensajeRetencion(SocioRiesgoBE socioRiesgo)
+        {
+            if (socioRiesgo == null) return string.Empty;
+            return $"¡Hola {socioRiesgo.Socio}! Te contactamos del equipo de UAI-FIT. " +
+                   $"Notamos en nuestro sistema el siguiente estado en tu perfil: ({socioRiesgo.MotivoDetectado}). " +
+                   $"Queremos acompañarte para que retomes tus objetivos deportivos: acercate a Recepción para renovar tu {socioRiesgo.PlanActual} " +
+                   $"y coordinar una actualización sin cargo de tu rutina de entrenamiento. ¡Te esperamos!";
         }
     }
 }

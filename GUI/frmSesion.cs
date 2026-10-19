@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
+using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.Text;
@@ -24,6 +25,7 @@ namespace GUI
         UsuarioBLL usuarioBLL = new UsuarioBLL();
         SocioBLL socioBLL = new SocioBLL();
         UsuarioBE usuarioActual;
+        bool _mostrandoVistaChurn = false;
         public event EventHandler CerrarSesion;
 
         public frmSesion(UsuarioBE usuarioP)
@@ -37,21 +39,28 @@ namespace GUI
         {
             lblBienvenida_Base.Text = T("lblBienvenida_Base", "Sesión activa - Bienvenido, ") + usuarioActual.Nombre;
             dgvLogs.AutoGenerateColumns = false;
+            dgvAlertas.CellFormatting += DgvAlertas_CellFormatting;
             ConfigurarGrilla();
-            ConfigurarGrillaAlertas();
             CargarComboUsuarios();
             CargarComboCriticidad();
             dtpDesde.Value = DateTime.Now.AddDays(-7);
             dtpHasta.Value = DateTime.Now;
             EjecutarFiltro();
-            CargarDashboardAlertas();
+            MostrarVistaAlertasOperativas();
             SessionManager.Instancia.PermisosActualizados += SessionManager_PermisosActualizados;
             AplicarPermisosVisuales();
             ActualizarIdioma(GestorIdioma.Instancia.IdiomaActual);
         }
 
-        private void ConfigurarGrillaAlertas()
+        private void MostrarVistaAlertasOperativas()
         {
+            _mostrandoVistaChurn = false;
+            btnContactarSocio.Visible = false;
+            btnVistaAlertas.BackColor = Color.FromArgb(31, 41, 55);
+            btnVistaAlertas.ForeColor = Color.White;
+            btnVistaChurn.BackColor = Color.FromArgb(226, 232, 240);
+            btnVistaChurn.ForeColor = Color.FromArgb(31, 41, 55);
+            dgvAlertas.DataSource = null;
             dgvAlertas.AutoGenerateColumns = false;
             dgvAlertas.Columns.Clear();
             dgvAlertas.Columns.Add(new DataGridViewTextBoxColumn
@@ -84,12 +93,70 @@ namespace GUI
                 HeaderText = "Referencia",
                 FillWeight = 11
             });
-            dgvAlertas.CellFormatting += DgvAlertas_CellFormatting;
+            CargarDatosDashboard();
+        }
+
+        private void MostrarVistaSociosEnRiesgo()
+        {
+            _mostrandoVistaChurn = true;
+            btnContactarSocio.Visible = true;
+            btnVistaChurn.BackColor = Color.FromArgb(185, 28, 28);
+            btnVistaChurn.ForeColor = Color.White;
+            btnVistaAlertas.BackColor = Color.FromArgb(226, 232, 240);
+            btnVistaAlertas.ForeColor = Color.FromArgb(31, 41, 55);
+            dgvAlertas.DataSource = null;
+            dgvAlertas.AutoGenerateColumns = false;
+            dgvAlertas.Columns.Clear();
+            dgvAlertas.Columns.Add(new DataGridViewTextBoxColumn
+            {
+                DataPropertyName = "DNI",
+                HeaderText = "DNI",
+                FillWeight = 10
+            });
+            dgvAlertas.Columns.Add(new DataGridViewTextBoxColumn
+            {
+                DataPropertyName = "Socio",
+                HeaderText = "Socio",
+                FillWeight = 16
+            });
+            dgvAlertas.Columns.Add(new DataGridViewTextBoxColumn
+            {
+                DataPropertyName = "PlanActual",
+                HeaderText = "Plan Asociado",
+                FillWeight = 12
+            });
+            dgvAlertas.Columns.Add(new DataGridViewTextBoxColumn
+            {
+                DataPropertyName = "NivelRiesgo",
+                HeaderText = "Clasificación de Riesgo",
+                FillWeight = 17
+            });
+            dgvAlertas.Columns.Add(new DataGridViewTextBoxColumn
+            {
+                DataPropertyName = "ProbabilidadFuga",
+                HeaderText = "Score Fuga",
+                FillWeight = 9
+            });
+            dgvAlertas.Columns.Add(new DataGridViewTextBoxColumn
+            {
+                DataPropertyName = "MotivoDetectado",
+                HeaderText = "Diagnóstico de Retención / Causas Detectadas",
+                FillWeight = 26
+            });
+            dgvAlertas.Columns.Add(new DataGridViewTextBoxColumn
+            {
+                DataPropertyName = "UltimaActividad",
+                HeaderText = "Últ. Mov.",
+                FillWeight = 10
+            });
+            CargarDatosDashboard();
         }
 
         private void DgvAlertas_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
         {
-            if (e.RowIndex >= 0 && dgvAlertas.Rows[e.RowIndex].DataBoundItem is AlertaDashboardBE alerta)
+            if (e.RowIndex < 0) return;
+            var item = dgvAlertas.Rows[e.RowIndex].DataBoundItem;
+            if (item is AlertaDashboardBE alerta)
             {
                 if (alerta.Prioridad == "ALTA")
                 {
@@ -107,9 +174,30 @@ namespace GUI
                     dgvAlertas.Rows[e.RowIndex].DefaultCellStyle.ForeColor = Color.FromArgb(22, 101, 52);
                 }
             }
+            else if (item is SocioRiesgoBE riesgo)
+            {
+                if (riesgo.NivelRiesgo == "Riesgo de Abandono Alto")
+                {
+                    dgvAlertas.Rows[e.RowIndex].DefaultCellStyle.BackColor = Color.FromArgb(220, 38, 38);
+                    dgvAlertas.Rows[e.RowIndex].DefaultCellStyle.ForeColor = Color.White;
+                    dgvAlertas.Rows[e.RowIndex].DefaultCellStyle.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+                }
+                else if (riesgo.NivelRiesgo == "Riesgo Moderado")
+                {
+                    dgvAlertas.Rows[e.RowIndex].DefaultCellStyle.BackColor = Color.FromArgb(254, 243, 199);
+                    dgvAlertas.Rows[e.RowIndex].DefaultCellStyle.ForeColor = Color.FromArgb(146, 64, 14);
+                    dgvAlertas.Rows[e.RowIndex].DefaultCellStyle.Font = new Font("Segoe UI", 9F, FontStyle.Regular);
+                }
+                else
+                {
+                    dgvAlertas.Rows[e.RowIndex].DefaultCellStyle.BackColor = Color.FromArgb(240, 253, 244);
+                    dgvAlertas.Rows[e.RowIndex].DefaultCellStyle.ForeColor = Color.FromArgb(22, 101, 52);
+                    dgvAlertas.Rows[e.RowIndex].DefaultCellStyle.Font = new Font("Segoe UI", 9F, FontStyle.Regular);
+                }
+            }
         }
 
-        private void CargarDashboardAlertas()
+        private void CargarDatosDashboard()
         {
             if (usuarioActual == null) return;
             var alertas = socioBLL.ObtenerAlertasDashboard(
@@ -117,16 +205,96 @@ namespace GUI
                 out int cantRec,
                 out int cantEnt,
                 out int cantNut);
-            dgvAlertas.DataSource = null;
-            dgvAlertas.DataSource = alertas;
+            var listaRiesgo = socioBLL.ObtenerSociosEnRiesgoDeFuga(
+                out decimal tasaChurn,
+                out int cantRiesgoAlto);
+            btnVistaChurn.Text = $"📉 Socios en Riesgo (Churn: {tasaChurn:0.#}%)";
+            if (_mostrandoVistaChurn)
+            {
+                dgvAlertas.DataSource = null;
+                dgvAlertas.DataSource = listaRiesgo;
+            }
+            else
+            {
+                dgvAlertas.DataSource = null;
+                dgvAlertas.DataSource = alertas;
+            }
             lblKpiRecepcion.Text = $"Recepción: {cantRec} alerta(s)";
             lblKpiEntrenamiento.Text = $"Entrenamiento: {cantEnt} alerta(s)";
             lblKpiNutricion.Text = $"Nutrición: {cantNut} alerta(s)";
         }
 
+        private void btnVistaAlertas_Click(object sender, EventArgs e)
+        {
+            MostrarVistaAlertasOperativas();
+        }
+
+        private void btnVistaChurn_Click(object sender, EventArgs e)
+        {
+            MostrarVistaSociosEnRiesgo();
+        }
+
         private void btnRefrescarAlertas_Click(object sender, EventArgs e)
         {
-            CargarDashboardAlertas();
+            CargarDatosDashboard();
+        }
+
+        private void btnContactarSocio_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                if (!_mostrandoVistaChurn || dgvAlertas.CurrentRow == null || !(dgvAlertas.CurrentRow.DataBoundItem is SocioRiesgoBE socioRiesgo))
+                {
+                    MessageBox.Show("Seleccione un socio de la grilla 'Socios en Riesgo' para iniciar el contacto de retención.", "Atención", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+                string mensaje = socioBLL.GenerarMensajeRetencion(socioRiesgo);
+                Clipboard.SetText(mensaje);
+                DialogResult canal = MessageBox.Show(
+                    $"Socio seleccionado: {socioRiesgo.Socio} (DNI {socioRiesgo.DNI})\r\n" +
+                    $"Estado: {socioRiesgo.NivelRiesgo} ({socioRiesgo.ProbabilidadFuga})\r\n" +
+                    $"Tel: {(string.IsNullOrWhiteSpace(socioRiesgo.Telefono) ? "No registrado" : socioRiesgo.Telefono)} | Email: {(string.IsNullOrWhiteSpace(socioRiesgo.Email) ? "No registrado" : socioRiesgo.Email)}\r\n\r\n" +
+                    $"El mensaje de retención ya fue copiado al portapapeles.\r\n" +
+                    $"¿Desea abrir WhatsApp Web (SÍ) o enviar un Correo Electrónico (NO)?\r\n" +
+                    $"Presione Cancelar para abortar.",
+                    "Gestión de Retención de Clientes (Churn)",
+                    MessageBoxButtons.YesNoCancel,
+                    MessageBoxIcon.Question);
+                if (canal == DialogResult.Yes)
+                {
+                    string soloDigitos = new string((socioRiesgo.Telefono ?? string.Empty).Where(char.IsDigit).ToArray());
+                    if (soloDigitos.Length == 10)
+                    {
+                        soloDigitos = "549" + soloDigitos;
+                    }
+                    string urlWhatsApp = !string.IsNullOrWhiteSpace(soloDigitos)
+                        ? $"https://wa.me/{soloDigitos}?text={Uri.EscapeDataString(mensaje)}"
+                        : $"https://web.whatsapp.com/";
+                    Process.Start(new ProcessStartInfo
+                    {
+                        FileName = urlWhatsApp,
+                        UseShellExecute = true
+                    });
+                    registroBLL.RegistrarEvento($"Gestión de retención por WhatsApp iniciada para socio DNI {socioRiesgo.DNI} ({socioRiesgo.NivelRiesgo}).", usuarioActual, "INFO");
+                }
+                else if (canal == DialogResult.No)
+                {
+                    string destinoEmail = !string.IsNullOrWhiteSpace(socioRiesgo.Email) ? socioRiesgo.Email.Trim() : "";
+                    string asunto = Uri.EscapeDataString("UAI-FIT - Beneficio de Renovación y Seguimiento Deportivo");
+                    string cuerpo = Uri.EscapeDataString(mensaje);
+                    string urlMailto = $"mailto:{destinoEmail}?subject={asunto}&body={cuerpo}";
+                    Process.Start(new ProcessStartInfo
+                    {
+                        FileName = urlMailto,
+                        UseShellExecute = true
+                    });
+                    registroBLL.RegistrarEvento($"Gestión de retención por Email iniciada para socio DNI {socioRiesgo.DNI} ({socioRiesgo.NivelRiesgo}).", usuarioActual, "INFO");
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("El borrador quedó copiado en su portapapeles, pero ocurrió un aviso al abrir el navegador/cliente: " + ex.Message, "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
         }
 
         public void ActualizarIdioma(IdiomaBE idioma)
@@ -212,7 +380,7 @@ namespace GUI
             usuarioActual = SessionManager.Instancia.UsuarioActual;
             if (usuarioActual == null) return;
             AplicarPermisosVisuales();
-            CargarDashboardAlertas();
+            CargarDatosDashboard();
             lblBienvenida_Base.Text = T("lblBienvenida_Base", "Sesión activa - Bienvenido, ") + usuarioActual.Nombre;
         }
 
@@ -230,6 +398,7 @@ namespace GUI
             lblKpiRecepcion.Visible = veRec;
             lblKpiEntrenamiento.Visible = veEnt;
             lblKpiNutricion.Visible = veNut;
+            btnVistaChurn.Visible = veRec || veEnt;
             if (veBitacora)
             {
                 pnlDashboardAlertas.Location = new Point(28, 68);
@@ -350,6 +519,33 @@ namespace GUI
             }
         }
 
+        private void AbrirSubFormularioEnContenedor(Form subForm)
+        {
+            Control contenedor = this.Parent;
+            if (contenedor != null)
+            {
+                subForm.TopLevel = false;
+                subForm.FormBorderStyle = FormBorderStyle.None;
+                subForm.Dock = DockStyle.Fill;
+                contenedor.Controls.Add(subForm);
+                subForm.FormClosed += (s, args) =>
+                {
+                    if (!this.IsDisposed)
+                    {
+                        this.Show();
+                        this.BringToFront();
+                    }
+                };
+                this.Hide();
+                subForm.BringToFront();
+                subForm.Show();
+            }
+            else
+            {
+                subForm.ShowDialog();
+            }
+        }
+
         private void btnControlCambios_Click(object sender, EventArgs e)
         {
             AbrirSubFormularioEnContenedor(new frmControlCambios());
@@ -385,33 +581,6 @@ namespace GUI
         {
             GestorIdioma.Instancia.Desuscribir(this);
             SessionManager.Instancia.PermisosActualizados -= SessionManager_PermisosActualizados;
-        }
-
-        private void AbrirSubFormularioEnContenedor(Form subForm)
-        {
-            Control contenedor = this.Parent;
-            if (contenedor != null)
-            {
-                subForm.TopLevel = false;
-                subForm.FormBorderStyle = FormBorderStyle.None;
-                subForm.Dock = DockStyle.Fill;
-                contenedor.Controls.Add(subForm);
-                subForm.FormClosed += (s, args) =>
-                {
-                    if (!this.IsDisposed)
-                    {
-                        this.Show();
-                        this.BringToFront();
-                    }
-                };
-                this.Hide();
-                subForm.BringToFront();
-                subForm.Show();
-            }
-            else
-            {
-                subForm.ShowDialog();
-            }
         }
     }
 }

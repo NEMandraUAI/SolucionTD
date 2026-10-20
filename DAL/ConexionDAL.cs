@@ -39,10 +39,14 @@ namespace DAL
             }
             else
             {
-                connectionString = ConfigurationManager.ConnectionStrings["DefaultConnection"].ConnectionString;
-                if (connectionString == "DB_CONNECTION_STRING_PLACEHOLDER")
+                string configConn = ConfigurationManager.ConnectionStrings["DefaultConnection"]?.ConnectionString;
+                if (string.IsNullOrWhiteSpace(configConn) || configConn == "DB_CONNECTION_STRING_PLACEHOLDER")
                 {
                     connectionString = "Server=.;Database=ProyectoCampo;Trusted_Connection=True;TrustServerCertificate=True;";
+                }
+                else
+                {
+                    connectionString = configConn;
                 }
             }
             return new SqlConnection(connectionString);

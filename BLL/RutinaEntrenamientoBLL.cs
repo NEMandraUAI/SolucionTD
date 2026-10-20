@@ -326,6 +326,12 @@ namespace BLL
         {
             if (string.IsNullOrWhiteSpace(dni))
                 throw new Exception("Debe ingresar el DNI del socio para buscar sus rutinas.");
+            int idIdioma = (GestorIdioma.Instancia != null && GestorIdioma.Instancia.IdiomaActual != null && GestorIdioma.Instancia.IdiomaActual.ID > 0)
+                ? GestorIdioma.Instancia.IdiomaActual.ID
+                : 1;
+            var dic = new IdiomaDAL().ObtenerTraduccionesPorFormulario(idIdioma, "NegocioBLL");
+            string txtVig = dic.ContainsKey("rutEstadoVigente") ? dic["rutEstadoVigente"] : "VIGENTE (Actual)";
+            string txtHist = dic.ContainsKey("rutEstadoHistorica") ? dic["rutEstadoHistorica"] : "HISTÓRICA (Solo Lectura)";
             var lista = dal.ObtenerRutinasPorDNI(dni)
                 .OrderByDescending(r => r.FechaCreacion)
                 .ThenByDescending(r => r.CodigoRutina)
@@ -333,6 +339,7 @@ namespace BLL
             for (int i = 0; i < lista.Count; i++)
             {
                 lista[i].EsVigente = (i == 0);
+                lista[i].TextoEstadoVigencia = (i == 0) ? txtVig : txtHist;
             }
             return lista;
         }
@@ -387,70 +394,63 @@ namespace BLL
             regBll.RegistrarEvento($"Rutina {rutina.CodigoRutina} eliminada del sistema.", SessionManager.Instancia.UsuarioActual, "ALTA");
         }
 
-        public string EvaluarSinergiaNutricional(int idSocio, string objetivoEntrenamiento, int frecuenciaSemanal, out int nivelSeveridad)
+        public string EvaluarSinergiaNutricional(int idSocio, string objetivoFisico, int frecuenciaSemanal, out int nivelSeveridad)
         {
             nivelSeveridad = 0;
+            int idIdioma = (GestorIdioma.Instancia != null && GestorIdioma.Instancia.IdiomaActual != null && GestorIdioma.Instancia.IdiomaActual.ID > 0)
+                ? GestorIdioma.Instancia.IdiomaActual.ID
+                : 1;
+            var dic = new IdiomaDAL().ObtenerTraduccionesPorFormulario(idIdioma, "NegocioBLL");
             if (idSocio <= 0)
             {
-                return "ℹ️ SINERGIA INTER-ÁREAS: Valide un socio para consultar su estado clínico-nutricional.";
+                return dic.ContainsKey("sinergiaSinPlan")
+                    ? dic["sinergiaSinPlan"]
+                    : "ℹ️ SINERGIA INTER-ÁREAS: El socio aún no registra un Plan Nutricional en el consultorio médico.";
             }
             List<PlanNutricionalBE> planes = planNutDAL.ConsultarPlanesPorSocio(idSocio);
             if (planes == null || planes.Count == 0)
             {
-                nivelSeveridad = 0;
-                return "ℹ️ SINERGIA NUTRICIÓN: El socio no posee planes nutricionales registrados. Se sugiere derivarlo a consulta nutricional.";
+                return dic.ContainsKey("sinergiaSinPlan")
+                    ? dic["sinergiaSinPlan"]
+                    : "ℹ️ SINERGIA INTER-ÁREAS: El socio aún no registra un Plan Nutricional en el consultorio médico.";
             }
-            PlanNutricionalBE ultimoPlan = planes.OrderByDescending(p => p.FechaCreacion).First();
-            EvaluacionBiometricaBE bio = ultimoPlan.DatosBiometricos;
-            string objEntreno = (objetivoEntrenamiento ?? string.Empty).Trim();
-            bool entrenoAltaDemanda = objEntreno.IndexOf("Fuerza", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                                      objEntreno.IndexOf("Hipertrofia", StringComparison.OrdinalIgnoreCase) >= 0;
-            if (bio == null || bio.PesoKg <= 0 || bio.AlturaCm <= 0)
+            PlanNutricionalBE ultimoPlan = planes
+                .OrderByDescending(p => p.FechaCreacion)
+                .ThenByDescending(p => p.CodigoPlan)
+                .First();
+            var bio = ultimoPlan.DatosBiometricos;
+            if (bio == null || bio.PesoKg <= 0)
             {
-                string textoLibre = (ultimoPlan.EvaluacionAntropometrica + " " + ultimoPlan.DetalleHabitos).ToLowerInvariant();
-                if (textoLibre.Contains("déficit") || textoLibre.Contains("deficit") || textoLibre.Contains("hipocal"))
-                {
-                    nivelSeveridad = 2;
-                    return $"⚠️ Socio en Déficit Calórico (Según Nutrición - Plan del {ultimoPlan.FechaCreacion:dd/MM/yyyy}). Moderar volumen de entrenamiento.";
-                }
-                nivelSeveridad = 0;
-                return $"ℹ️ SINERGIA NUTRICIÓN: Último plan registrado el {ultimoPlan.FechaCreacion:dd/MM/yyyy} sin biometría estructurada ({ultimoPlan.EvaluacionAntropometrica}).";
+                nivelSeveridad = 1;
+                return $"ℹ️ Plan Nutricional (#{ultimoPlan.CodigoPlan} - {ultimoPlan.FechaCreacion:dd/MM/yyyy}): {ultimoPlan.ResumenBiometrico}";
             }
-            bool enDeficit = (bio.ObjetivoNutricional ?? string.Empty).IndexOf("Déficit", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                             (bio.ObjetivoNutricional ?? string.Empty).IndexOf("Deficit", StringComparison.OrdinalIgnoreCase) >= 0;
-            if (bio.IndiceMasaCorporal < 18.5m)
-            {
-                nivelSeveridad = 3;
-                return $"🚨 RESTRICCIÓN FÍSICA (Nutrición {ultimoPlan.FechaCreacion:dd/MM/yyyy}): Socio con Bajo Peso (IMC {bio.IndiceMasaCorporal:0.00} | {bio.PesoKg:0.#} kg).\r\n" +
-                       $"Evitar gasto calórico excesivo o frecuencias mayores a 3-4 días. Priorizar fuerza submáxima y recuperación.";
-            }
-            if (bio.IndiceMasaCorporal >= 30.0m)
+            string objNut = bio.ObjetivoNutricional ?? string.Empty;
+            string objEnt = objetivoFisico ?? string.Empty;
+            bool enDeficit = objNut.IndexOf("Déficit", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                             objNut.IndexOf("Pérdida", StringComparison.OrdinalIgnoreCase) >= 0;
+            bool altaExigencia = objEnt.IndexOf("Fuerza", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                                 objEnt.IndexOf("Hipertrofia", StringComparison.OrdinalIgnoreCase) >= 0;
+            if (enDeficit && frecuenciaSemanal >= 5 && altaExigencia)
             {
                 nivelSeveridad = 3;
-                return $"⚠️ RESTRICCIÓN FÍSICA (Nutrición {ultimoPlan.FechaCreacion:dd/MM/yyyy}): {bio.DiagnosticoIMC} (IMC {bio.IndiceMasaCorporal:0.00} | {bio.PesoKg:0.#} kg | Meta: {bio.CaloriasObjetivo:0} kcal).\r\n" +
-                       $"Evitar impacto articular axial elevado. Priorizar trabajo metabólico controlado y máquinas guiadas.";
+                string plantilla = dic.ContainsKey("sinergiaRiesgoAlto")
+                    ? dic["sinergiaRiesgoAlto"]
+                    : "🚨 ALERTA DE SOBREENTRENAMIENTO: El socio está en '{0}' ({1} kcal | IMC {2}). Entrenar {3} días/sem con objetivo '{4}' excede su recuperación. Se recomienda ≤ 4 días o moderar volumen.";
+                return string.Format(plantilla, bio.ObjetivoNutricional, bio.CaloriasObjetivo, bio.IndiceMasaCorporal.ToString("0.00"), frecuenciaSemanal, objEnt);
             }
-            if (enDeficit)
-            {
-                if (entrenoAltaDemanda && frecuenciaSemanal >= 5)
-                {
-                    nivelSeveridad = 3;
-                    return $"🚨 ALERTA DE SOBREENTRENAMIENTO: Socio en Déficit Calórico ({bio.CaloriasObjetivo:0} kcal/día | IMC {bio.IndiceMasaCorporal:0.00}).\r\n" +
-                           $"Asignar '{objEntreno}' con frecuencia de {frecuenciaSemanal} días/semana excede su recuperación energética. Se sugiere bajar a 3-4 días.";
-                }
-                nivelSeveridad = 2;
-                return $"⚠️ Socio en Déficit Calórico (Según Nutrición: {bio.CaloriasObjetivo:0} kcal/día | Peso: {bio.PesoKg:0.#} kg | IMC: {bio.IndiceMasaCorporal:0.00}).\r\n" +
-                       $"Recomendación para '{objEntreno}': Controlar el volumen total de series y priorizar cargas de mantenimiento muscular.";
-            }
-            if (bio.IndiceMasaCorporal >= 25.0m)
+            if (bio.IndiceMasaCorporal < 18.5m || bio.IndiceMasaCorporal >= 30.0m)
             {
                 nivelSeveridad = 2;
-                return $"⚠️ AVISO NUTRICIONAL ({ultimoPlan.FechaCreacion:dd/MM/yyyy}): Socio con Sobrepeso (IMC {bio.IndiceMasaCorporal:0.00} | {bio.PesoKg:0.#} kg | Protocolo: {bio.ObjetivoNutricional}).\r\n" +
-                       $"Se sugiere combinar la rutina de '{objEntreno}' con densidad metabólica y descansos activos (45-60 seg).";
+                string plantilla = dic.ContainsKey("sinergiaPrecaucion")
+                    ? dic["sinergiaPrecaucion"]
+                    : "⚠️ PRECAUCIÓN CLÍNICA-DEPORTIVA: Socio con diagnóstico '{0}' (IMC {1} | Plan: {2}). Priorizar ejercicios de bajo impacto articular y control de carga.";
+                return string.Format(plantilla, bio.DiagnosticoIMC, bio.IndiceMasaCorporal.ToString("0.00"), bio.ObjetivoNutricional);
             }
             nivelSeveridad = 1;
-            return $"✓ SINERGIA NUTRICIONAL ÓPTIMA ({ultimoPlan.FechaCreacion:dd/MM/yyyy}): {bio.ObjetivoNutricional} ({bio.CaloriasObjetivo:0} kcal/día | {bio.PesoKg:0.#} kg | IMC {bio.IndiceMasaCorporal:0.00}).\r\n" +
-                   $"Disponibilidad energética plena para soportar la rutina de '{objEntreno}' ({frecuenciaSemanal} días/semana).";
+            string plantillaOpt = dic.ContainsKey("sinergiaOptima")
+                ? dic["sinergiaOptima"]
+                : "✅ SINERGIA ÓPTIMA: Plan nutricional '{0}' ({1} kcal | Peso: {2} kg | IMC: {3}) alineado con entrenamiento de '{4}' ({5} días/sem).";
+            return string.Format(plantillaOpt, bio.ObjetivoNutricional, bio.CaloriasObjetivo, bio.PesoKg.ToString("0.#"), bio.IndiceMasaCorporal.ToString("0.00"), objEnt, frecuenciaSemanal);
         }
 
         public List<PuntoEvolucionBE> ObtenerEvolucionFuerza(List<RutinaEntrenamientoBE> rutinas)

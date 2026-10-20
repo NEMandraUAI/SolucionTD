@@ -18,6 +18,7 @@ namespace BLL
         RutinaEntrenamientoDAL rutinaDAL = new RutinaEntrenamientoDAL();
         PlanNutricionalDAL planNutricionalDAL = new PlanNutricionalDAL();
         IntegridadDAL intDal = new IntegridadDAL();
+        IdiomaDAL idiomaDAL = new IdiomaDAL();
         RegistroBLL regBll = new RegistroBLL();
 
         public SocioBE ConsultarSocio(string dni)
@@ -27,8 +28,14 @@ namespace BLL
 
         public void RegistrarSocio(SocioBE socio)
         {
-            if (string.IsNullOrWhiteSpace(socio.DNI))
+            if (socio == null || string.IsNullOrWhiteSpace(socio.DNI))
                 throw new Exception("El DNI es un campo obligatorio.");
+            string dniLimpio = socio.DNI.Trim();
+            if (dniLimpio.Length < 7 || dniLimpio.Length > 8 || !dniLimpio.All(char.IsDigit))
+                throw new Exception("El DNI debe contener únicamente entre 7 y 8 dígitos numéricos.");
+            if (string.IsNullOrWhiteSpace(socio.Nombre) || string.IsNullOrWhiteSpace(socio.Apellido))
+                throw new Exception("El nombre y el apellido del socio son obligatorios.");
+            socio.DNI = dniLimpio;
             if (dal.ObtenerPorDNI(socio.DNI) != null)
                 throw new Exception("Ya existe un socio registrado con este DNI.");
             socio.EstadoActivo = true;
@@ -64,16 +71,119 @@ namespace BLL
             intDal.ActualizarDVV("Socio", nuevoDVV);
         }
 
-        public List<AlertaDashboardBE> ObtenerAlertasDashboard(UsuarioBE usuarioActual, out int alertasRecepcion, out int alertasEntrenamiento, out int alertasNutricion)
+        private Dictionary<string, string> ObtenerDiccionarioNegocio()
+        {
+            int idIdioma = (GestorIdioma.Instancia != null && GestorIdioma.Instancia.IdiomaActual != null && GestorIdioma.Instancia.IdiomaActual.ID > 0)
+                ? GestorIdioma.Instancia.IdiomaActual.ID
+                : 1;
+            return new IdiomaDAL().ObtenerTraduccionesPorFormulario(idIdioma, "NegocioBLL");
+        }
+
+        private string TN(Dictionary<string, string> dic, string clave, string porDefecto, params object[] args)
+        {
+            string plantilla = (dic != null && dic.ContainsKey(clave)) ? dic[clave] : porDefecto;
+            if (args == null || args.Length == 0) return plantilla;
+            try
+            {
+                return string.Format(plantilla, args);
+            }
+            catch
+            {
+                return plantilla;
+            }
+        }
+
+        public bool ObtenerEstadoVigenciaPlan(
+            SocioBE socio,
+            out DateTime? fechaVencimiento,
+            out string nombrePlan,
+            out int diasRestantes,
+            out string mensajeEstado)
+        {
+            var dic = ObtenerDiccionarioNegocio();
+            fechaVencimiento = null;
+            nombrePlan = TN(dic, "vigSinPlan", "Sin Plan");
+            diasRestantes = -999;
+            if (socio == null || socio.ID_Socio <= 0)
+            {
+                mensajeEstado = TN(dic, "vigSocioInvalido", "Socio no válido.");
+                return false;
+            }
+            if (!socio.EstadoActivo)
+            {
+                mensajeEstado = TN(dic, "vigSocioInactivo", "El socio se encuentra dado de baja / inactivo en el padrón.");
+                return false;
+            }
+            List<PlanSuscripcionBE> catalogoPlanes = planSuscripcionDAL.ListarPlanes();
+            int codPlan = socio.PlanAsociado != null ? socio.PlanAsociado.CodigoPlan : 0;
+            PlanSuscripcionBE plan = catalogoPlanes.FirstOrDefault(p => p.CodigoPlan == codPlan);
+            int duracionDias = plan != null ? plan.DuracionDias : 30;
+            nombrePlan = plan != null ? plan.Nombre : TN(dic, "vigPlanEstandar", "Plan Estándar");
+            List<ComprobantePagoBE> pagosSocio = comprobanteDAL.ConsultarComprobantesFiltros(
+                new DateTime(2000, 1, 1),
+                DateTime.Now.AddYears(5),
+                socio.DNI)
+                .Where(c => c.Socio != null && c.Socio.ID_Socio == socio.ID_Socio)
+                .OrderByDescending(c => c.Fecha)
+                .ThenByDescending(c => c.NroComprobante)
+                .ToList();
+            if (pagosSocio.Count == 0)
+            {
+                mensajeEstado = TN(dic, "vigSinPagos", "El socio no registra comprobantes de pago de suscripción.");
+                return false;
+            }
+            ComprobantePagoBE ultimoPago = pagosSocio.First();
+            DateTime venc = ultimoPago.Fecha.Date.AddDays(duracionDias);
+            fechaVencimiento = venc;
+            diasRestantes = (int)(venc - DateTime.Today).TotalDays;
+            if (diasRestantes < 0)
+            {
+                mensajeEstado = TN(dic, "vigCuotaVencida", "Cuota VENCIDA el {0} (hace {1} día(s) — {2}).", venc.ToString("dd/MM/yyyy"), Math.Abs(diasRestantes), nombrePlan);
+                return false;
+            }
+            mensajeEstado = TN(dic, "vigPlanVigente", "Plan vigente ({0}) hasta el {1} ({2} día(s) restantes).", nombrePlan, venc.ToString("dd/MM/yyyy"), diasRestantes);
+            return true;
+        }
+
+        public void ValidarPlanVigenteAlDiaDeHoy(SocioBE socio, string operacion)
+        {
+            if (!ObtenerEstadoVigenciaPlan(socio, out DateTime? fechaVenc, out string nomPlan, out int diasRest, out string msg))
+            {
+                throw new Exception($"{operacion}:\r\n{msg}");
+            }
+        }
+
+        public void ValidarPlanVigenteParaFecha(SocioBE socio, DateTime fechaObjetivo, string operacion)
+        {
+            if (!ObtenerEstadoVigenciaPlan(socio, out DateTime? fechaVenc, out string nomPlan, out int diasRest, out string msg))
+            {
+                throw new Exception($"{operacion}:\r\n{msg}");
+            }
+            if (fechaVenc.HasValue && fechaObjetivo.Date > fechaVenc.Value.Date)
+            {
+                throw new Exception($"{operacion}:\r\n'{nomPlan}' ({fechaVenc.Value:dd/MM/yyyy}) < ({fechaObjetivo:dd/MM/yyyy}).");
+            }
+        }
+
+        public List<AlertaDashboardBE> ObtenerAlertasDashboard(
+            UsuarioBE usuarioActual,
+            out int alertasRecepcion,
+            out int alertasEntrenamiento,
+            out int alertasNutricion)
         {
             alertasRecepcion = 0;
             alertasEntrenamiento = 0;
             alertasNutricion = 0;
             List<AlertaDashboardBE> alertas = new List<AlertaDashboardBE>();
             if (usuarioActual == null) return alertas;
+            var dic = ObtenerDiccionarioNegocio();
+            string nomAreaRec = TN(dic, "areaRecepcion", "Recepción");
+            string nomAreaEnt = TN(dic, "areaEntrenamiento", "Entrenamiento");
+            string nomAreaNut = TN(dic, "areaNutricion", "Nutrición");
             bool veRecepcion = usuarioActual.TienePermiso("VENDER_PLAN") ||
                                usuarioActual.TienePermiso("ASENTAR_TURNO") ||
                                usuarioActual.TienePermiso("REVISAR_AGENDA") ||
+                               usuarioActual.TienePermiso("CONSULTAR_COMPROBANTES") ||
                                usuarioActual.TienePermiso("GESTION_ROLES");
             bool veEntrenamiento = usuarioActual.TienePermiso("ASIGNAR_RUTINA") ||
                                    usuarioActual.TienePermiso("CONSULTAR_SOCIO") ||
@@ -117,25 +227,25 @@ namespace BLL
                     int vencidos = vencimientosCriticos.Count(v => v.DiasRestantes < 0);
                     alertas.Add(new AlertaDashboardBE
                     {
-                        Area = "Recepción",
+                        Area = nomAreaRec,
                         Prioridad = vencidos > 0 ? "ALTA" : "MEDIA",
-                        Titulo = $"Hay {vencimientosCriticos.Count} socio(s) con plan próximo a vencer (≤ 5 días) o vencido",
-                        Detalle = $"{porVencer} vencen esta semana y {vencidos} presentan cuota vencida pendiente de renovación.",
+                        Titulo = TN(dic, "alertaVencResumenTit", "Hay {0} socio(s) con plan próximo a vencer (≤ 5 días) o vencido", vencimientosCriticos.Count),
+                        Detalle = TN(dic, "alertaVencResumenDet", "{0} vencen esta semana y {1} presentan cuota vencida pendiente de renovación.", porVencer, vencidos),
                         FechaReferencia = DateTime.Today.ToString("dd/MM/yyyy")
                     });
                     alertasRecepcion++;
                     foreach (var item in vencimientosCriticos.OrderBy(v => v.DiasRestantes))
                     {
                         string nomPlan = item.Plan != null ? item.Plan.Nombre : "Plan";
-                        string estadoTexto = item.DiasRestantes < 0
-                            ? $"Venció hace {Math.Abs(item.DiasRestantes)} día(s) ({item.FechaVenc:dd/MM/yyyy})"
-                            : (item.DiasRestantes == 0 ? "Vence HOY" : $"Vence en {item.DiasRestantes} día(s) ({item.FechaVenc:dd/MM/yyyy})");
+                        string detTexto = item.DiasRestantes < 0
+                            ? TN(dic, "alertaVencItemDetVencido", "{0} — Venció hace {1} día(s) ({2}). Gestionar renovación en Recepción.", nomPlan, Math.Abs(item.DiasRestantes), item.FechaVenc.ToString("dd/MM/yyyy"))
+                            : TN(dic, "alertaVencItemDetPorVencer", "{0} — Vence en {1} día(s) ({2}). Gestionar renovación en Recepción.", nomPlan, item.DiasRestantes, item.FechaVenc.ToString("dd/MM/yyyy"));
                         alertas.Add(new AlertaDashboardBE
                         {
-                            Area = "Recepción",
+                            Area = nomAreaRec,
                             Prioridad = item.DiasRestantes < 0 ? "ALTA" : "MEDIA",
-                            Titulo = $"Vencimiento de cuota: {item.Socio.Nombre} {item.Socio.Apellido} (DNI {item.Socio.DNI})",
-                            Detalle = $"{nomPlan} — {estadoTexto}. Gestionar renovación en Recepción.",
+                            Titulo = TN(dic, "alertaVencItemTit", "Vencimiento de cuota: {0} (DNI {1})", $"{item.Socio.Nombre} {item.Socio.Apellido}", item.Socio.DNI),
+                            Detalle = detTexto,
                             FechaReferencia = item.FechaVenc.ToString("dd/MM/yyyy")
                         });
                         alertasRecepcion++;
@@ -145,10 +255,10 @@ namespace BLL
                 {
                     alertas.Add(new AlertaDashboardBE
                     {
-                        Area = "Recepción",
+                        Area = nomAreaRec,
                         Prioridad = "INFO",
-                        Titulo = "Suscripciones al día",
-                        Detalle = "No hay socios activos con planes que venzan en los próximos 5 días.",
+                        Titulo = TN(dic, "alertaSuscAlDiaTit", "Suscripciones al día"),
+                        Detalle = TN(dic, "alertaSuscAlDiaDet", "No hay socios activos con planes que venzan en los próximos 5 días."),
                         FechaReferencia = DateTime.Today.ToString("dd/MM/yyyy")
                     });
                 }
@@ -159,10 +269,10 @@ namespace BLL
                     {
                         alertas.Add(new AlertaDashboardBE
                         {
-                            Area = "Recepción",
+                            Area = nomAreaRec,
                             Prioridad = t.Estado == "Pendiente" ? "MEDIA" : "INFO",
-                            Titulo = $"Turno médico hoy a las {t.FechaHora:HH:mm} hs — Socio: {t.NombreSocio}",
-                            Detalle = $"DNI: {t.DNISocio} | Profesional: {t.NombreNutricionista} | Estado actual: {t.Estado}.",
+                            Titulo = TN(dic, "alertaTurnoHoyTit", "Turno médico hoy a las {0} hs — Socio: {1}", t.FechaHora.ToString("HH:mm"), t.NombreSocio),
+                            Detalle = TN(dic, "alertaTurnoHoyDet", "DNI: {0} | Profesional: {1} | Estado actual: {2}.", t.DNISocio, t.NombreNutricionista, t.Estado),
                             FechaReferencia = t.FechaHora.ToString("dd/MM/yyyy HH:mm")
                         });
                         alertasRecepcion++;
@@ -172,10 +282,10 @@ namespace BLL
                 {
                     alertas.Add(new AlertaDashboardBE
                     {
-                        Area = "Recepción",
+                        Area = nomAreaRec,
                         Prioridad = "INFO",
-                        Titulo = "Sin turnos nutricionales agendados para hoy",
-                        Detalle = "La agenda de consultorios médicos del día de la fecha se encuentra libre.",
+                        Titulo = TN(dic, "alertaSinTurnosHoyTit", "Sin turnos nutricionales agendados para hoy"),
+                        Detalle = TN(dic, "alertaSinTurnosHoyDet", "La agenda de consultorios médicos del día de la fecha se encuentra libre."),
                         FechaReferencia = DateTime.Today.ToString("dd/MM/yyyy")
                     });
                 }
@@ -211,25 +321,25 @@ namespace BLL
                 {
                     alertas.Add(new AlertaDashboardBE
                     {
-                        Area = "Entrenamiento",
+                        Area = nomAreaEnt,
                         Prioridad = "ALTA",
-                        Titulo = $"Hay {desactualizados.Count} socio(s) que requieren actualización o asignación de rutina",
-                        Detalle = $"{cantMasTresMeses} no actualizan su rutina hace más de 3 meses (>90 días) y {cantSinRutina} no poseen rutina activa.",
+                        Titulo = TN(dic, "alertaRutinaResumenTit", "Hay {0} socio(s) que requieren actualización o asignación de rutina", desactualizados.Count),
+                        Detalle = TN(dic, "alertaRutinaResumenDet", "{0} no actualizan su rutina hace más de 3 meses (>90 días) y {1} no poseen rutina activa.", cantMasTresMeses, cantSinRutina),
                         FechaReferencia = DateTime.Today.ToString("dd/MM/yyyy")
                     });
                     alertasEntrenamiento++;
                     foreach (var d in desactualizados.OrderByDescending(x => x.DiasSinActualizar))
                     {
                         string det = d.FechaUltima.HasValue
-                            ? $"Última rutina creada el {d.FechaUltima.Value:dd/MM/yyyy} (hace {d.DiasSinActualizar} días). Supera el límite de 3 meses."
-                            : "El socio se encuentra activo pero aún no registra ninguna rutina de entrenamiento en el sistema.";
+                            ? TN(dic, "alertaRutinaItemDetAntigua", "Última rutina creada el {0} (hace {1} días). Supera el límite de 3 meses.", d.FechaUltima.Value.ToString("dd/MM/yyyy"), d.DiasSinActualizar)
+                            : TN(dic, "alertaRutinaItemDetSinRutina", "El socio se encuentra activo pero aún no registra ninguna rutina de entrenamiento.");
                         alertas.Add(new AlertaDashboardBE
                         {
-                            Area = "Entrenamiento",
+                            Area = nomAreaEnt,
                             Prioridad = "MEDIA",
-                            Titulo = $"Revisión deportiva pendiente: {d.Socio.Nombre} {d.Socio.Apellido} (DNI {d.Socio.DNI})",
+                            Titulo = TN(dic, "alertaRutinaItemTit", "Revisión deportiva pendiente: {0} (DNI {1})", $"{d.Socio.Nombre} {d.Socio.Apellido}", d.Socio.DNI),
                             Detalle = det,
-                            FechaReferencia = d.FechaUltima.HasValue ? d.FechaUltima.Value.ToString("dd/MM/yyyy") : "Sin rutina"
+                            FechaReferencia = d.FechaUltima.HasValue ? d.FechaUltima.Value.ToString("dd/MM/yyyy") : "-"
                         });
                         alertasEntrenamiento++;
                     }
@@ -238,10 +348,10 @@ namespace BLL
                 {
                     alertas.Add(new AlertaDashboardBE
                     {
-                        Area = "Entrenamiento",
+                        Area = nomAreaEnt,
                         Prioridad = "INFO",
-                        Titulo = "Planificaciones deportivas al día",
-                        Detalle = $"Todos los socios activos ({sociosActivos.Count}) tienen rutinas actualizadas dentro de los últimos 3 meses.",
+                        Titulo = TN(dic, "alertaRutinasAlDiaTit", "Planificaciones deportivas al día"),
+                        Detalle = TN(dic, "alertaRutinasAlDiaDet", "Todos los socios activos ({0}) tienen rutinas actualizadas dentro de los últimos 3 meses.", sociosActivos.Count),
                         FechaReferencia = DateTime.Today.ToString("dd/MM/yyyy")
                     });
                 }
@@ -258,10 +368,10 @@ namespace BLL
                 {
                     alertas.Add(new AlertaDashboardBE
                     {
-                        Area = "Nutrición",
+                        Area = nomAreaNut,
                         Prioridad = "MEDIA",
-                        Titulo = $"Tiene {pendientesHoy} consulta(s) nutricional(es) pendiente(s) para hoy",
-                        Detalle = $"Próximo turno a las {turnosHoyNutri.Where(t => t.Estado == "Pendiente").Min(t => t.FechaHora):HH:mm} hs.",
+                        Titulo = TN(dic, "alertaNutriTurnosPendTit", "Tiene {0} consulta(s) nutricional(es) pendiente(s) para hoy", pendientesHoy),
+                        Detalle = TN(dic, "alertaNutriTurnosPendDet", "Próximo turno a las {0} hs.", turnosHoyNutri.Where(t => t.Estado == "Pendiente").Min(t => t.FechaHora).ToString("HH:mm")),
                         FechaReferencia = DateTime.Today.ToString("dd/MM/yyyy")
                     });
                     alertasNutricion++;
@@ -281,10 +391,10 @@ namespace BLL
                         {
                             alertas.Add(new AlertaDashboardBE
                             {
-                                Area = "Nutrición",
+                                Area = nomAreaNut,
                                 Prioridad = "ALTA",
-                                Titulo = $"Seguimiento clínico prioritario: {socio.Nombre} {socio.Apellido} (DNI {socio.DNI})",
-                                Detalle = $"Presenta {ultimoPlan.DatosBiometricos.DiagnosticoIMC} (IMC {imc:0.00} | {ultimoPlan.DatosBiometricos.PesoKg:0.#} kg) en su evaluación del {ultimoPlan.FechaCreacion:dd/MM/yyyy}.",
+                                Titulo = TN(dic, "alertaNutriImcTit", "Seguimiento clínico prioritario: {0} (DNI {1})", $"{socio.Nombre} {socio.Apellido}", socio.DNI),
+                                Detalle = TN(dic, "alertaNutriImcDet", "Presenta {0} (IMC {1} | {2} kg) en su evaluación del {3}.", ultimoPlan.DatosBiometricos.DiagnosticoIMC, imc.ToString("0.00"), ultimoPlan.DatosBiometricos.PesoKg.ToString("0.#"), ultimoPlan.FechaCreacion.ToString("dd/MM/yyyy")),
                                 FechaReferencia = ultimoPlan.FechaCreacion.ToString("dd/MM/yyyy")
                             });
                             alertasNutricion++;
@@ -293,74 +403,6 @@ namespace BLL
                 }
             }
             return alertas;
-        }
-
-        public bool ObtenerEstadoVigenciaPlan(SocioBE socio, out DateTime? fechaVencimiento, out string nombrePlan, out int diasRestantes, out string mensajeEstado)
-        {
-            fechaVencimiento = null;
-            nombrePlan = "Sin Plan";
-            diasRestantes = -999;
-            if (socio == null || socio.ID_Socio <= 0)
-            {
-                mensajeEstado = "Socio no válido.";
-                return false;
-            }
-            if (!socio.EstadoActivo)
-            {
-                mensajeEstado = "El socio se encuentra dado de baja / inactivo en el padrón.";
-                return false;
-            }
-            List<PlanSuscripcionBE> catalogoPlanes = planSuscripcionDAL.ListarPlanes();
-            int codPlan = socio.PlanAsociado != null ? socio.PlanAsociado.CodigoPlan : 0;
-            PlanSuscripcionBE plan = catalogoPlanes.FirstOrDefault(p => p.CodigoPlan == codPlan);
-            int duracionDias = plan != null ? plan.DuracionDias : 30;
-            nombrePlan = plan != null ? plan.Nombre : "Plan Estándar";
-            List<ComprobantePagoBE> pagosSocio = comprobanteDAL.ConsultarComprobantesFiltros(
-                new DateTime(2000, 1, 1),
-                DateTime.Now.AddYears(5),
-                socio.DNI)
-                .Where(c => c.Socio != null && c.Socio.ID_Socio == socio.ID_Socio)
-                .OrderByDescending(c => c.Fecha)
-                .ThenByDescending(c => c.NroComprobante)
-                .ToList();
-            if (pagosSocio.Count == 0)
-            {
-                mensajeEstado = "El socio no registra comprobantes de pago de suscripción.";
-                return false;
-            }
-            ComprobantePagoBE ultimoPago = pagosSocio.First();
-            DateTime venc = ultimoPago.Fecha.Date.AddDays(duracionDias);
-            fechaVencimiento = venc;
-            diasRestantes = (int)(venc - DateTime.Today).TotalDays;
-            if (diasRestantes < 0)
-            {
-                mensajeEstado = $"Cuota VENCIDA el {venc:dd/MM/yyyy} (hace {Math.Abs(diasRestantes)} día(s) — {nombrePlan}).";
-                return false;
-            }
-            mensajeEstado = $"Plan vigente ({nombrePlan}) hasta el {venc:dd/MM/yyyy} ({diasRestantes} día(s) restantes).";
-            return true;
-        }
-
-        public void ValidarPlanVigenteAlDiaDeHoy(SocioBE socio, string operacion)
-        {
-            if (!ObtenerEstadoVigenciaPlan(socio, out DateTime? fechaVenc, out string nomPlan, out int diasRest, out string msg))
-            {
-                throw new Exception($"Operación denegada ({operacion}):\r\n{msg}\r\n\r\nDerive al socio a Recepción para renovar su suscripción.");
-            }
-        }
-
-        public void ValidarPlanVigenteParaFecha(SocioBE socio, DateTime fechaObjetivo, string operacion)
-        {
-            if (!ObtenerEstadoVigenciaPlan(socio, out DateTime? fechaVenc, out string nomPlan, out int diasRest, out string msg))
-            {
-                throw new Exception($"Operación denegada ({operacion}):\r\n{msg}\r\n\r\nEl socio debe renovar su cuota antes de realizar esta operación.");
-            }
-            if (fechaVenc.HasValue && fechaObjetivo.Date > fechaVenc.Value.Date)
-            {
-                throw new Exception($"Cobertura de plan insuficiente para {operacion}:\r\n" +
-                                    $"El socio posee '{nomPlan}' vigente hasta el {fechaVenc.Value:dd/MM/yyyy}, por lo que no cubre la fecha solicitada ({fechaObjetivo:dd/MM/yyyy}).\r\n\r\n" +
-                                    $"Seleccione una fecha igual o anterior al {fechaVenc.Value:dd/MM/yyyy} o renueve la suscripción.");
-            }
         }
 
         public List<SocioRiesgoBE> ObtenerSociosEnRiesgoDeFuga(out decimal tasaChurnPorcentaje, out int cantidadRiesgoAlto)
@@ -372,6 +414,7 @@ namespace BLL
             {
                 return new List<SocioRiesgoBE>();
             }
+            var dic = ObtenerDiccionarioNegocio();
             List<SocioRiesgoBE> resultado = new List<SocioRiesgoBE>();
             List<SocioBE> todosLosSocios = dal.LeerTodos();
             if (todosLosSocios == null || todosLosSocios.Count == 0)
@@ -396,27 +439,27 @@ namespace BLL
                 if (!socio.EstadoActivo)
                 {
                     puntaje += 85;
-                    motivos.Add("Socio inactivo en el padrón");
+                    motivos.Add(TN(dic, "churnMotivoInactivo", "Socio inactivo en el padrón"));
                 }
                 else if (!fechaVencimiento.HasValue)
                 {
                     puntaje += 75;
-                    motivos.Add("No registra pagos de suscripción");
+                    motivos.Add(TN(dic, "churnMotivoSinPagos", "No registra pagos de suscripción"));
                 }
                 else if (diasRestantes <= -5)
                 {
                     puntaje += 70;
-                    motivos.Add($"Plan '{nombrePlan}' venció hace {Math.Abs(diasRestantes)} días ({fechaVencimiento.Value:dd/MM/yyyy})");
+                    motivos.Add(TN(dic, "churnMotivoPlanVencido", "Plan '{0}' venció hace {1} día(s) ({2})", nombrePlan, Math.Abs(diasRestantes), fechaVencimiento.Value.ToString("dd/MM/yyyy")));
                 }
                 else if (diasRestantes < 0)
                 {
                     puntaje += 50;
-                    motivos.Add($"Plan '{nombrePlan}' venció hace {Math.Abs(diasRestantes)} día(s)");
+                    motivos.Add(TN(dic, "churnMotivoPlanVencido", "Plan '{0}' venció hace {1} día(s) ({2})", nombrePlan, Math.Abs(diasRestantes), fechaVencimiento.Value.ToString("dd/MM/yyyy")));
                 }
                 else if (diasRestantes <= 5)
                 {
                     puntaje += 30;
-                    motivos.Add($"Plan '{nombrePlan}' vence en {diasRestantes} día(s) ({fechaVencimiento.Value:dd/MM/yyyy})");
+                    motivos.Add(TN(dic, "churnMotivoPlanPorVencer", "Plan '{0}' vence en {1} día(s) ({2})", nombrePlan, diasRestantes, fechaVencimiento.Value.ToString("dd/MM/yyyy")));
                 }
                 var rutinasSocio = todasLasRutinas
                     .Where(r => r.Socio != null && r.Socio.ID_Socio == socio.ID_Socio)
@@ -426,7 +469,7 @@ namespace BLL
                 if (rutinasSocio.Count == 0)
                 {
                     puntaje += 20;
-                    motivos.Add("Sin rutina de entrenamiento asignada");
+                    motivos.Add(TN(dic, "churnMotivoSinRutina", "Sin rutina de entrenamiento asignada"));
                 }
                 else
                 {
@@ -436,12 +479,12 @@ namespace BLL
                     if (diasSinActualizarRutina > 90)
                     {
                         puntaje += 35;
-                        motivos.Add($"Rutina desactualizada hace {diasSinActualizarRutina} días (>3 meses)");
+                        motivos.Add(TN(dic, "churnMotivoRutinaAntigua", "Sin actualización de rutina hace {0} días", diasSinActualizarRutina));
                     }
                     else if (diasSinActualizarRutina > 45)
                     {
                         puntaje += 15;
-                        motivos.Add($"Sin renovación de rutina hace {diasSinActualizarRutina} días");
+                        motivos.Add(TN(dic, "churnMotivoRutinaAntigua", "Sin actualización de rutina hace {0} días", diasSinActualizarRutina));
                     }
                 }
                 var turnosSocio = todosLosTurnos
@@ -455,27 +498,31 @@ namespace BLL
                     if (ausencias > 0)
                     {
                         puntaje += Math.Min(25, ausencias * 12);
-                        motivos.Add($"Registra {ausencias} ausencia(s) en consultorio nutricional");
+                        motivos.Add(TN(dic, "churnMotivoAusencias", "Registra {0} ausencia(s) en consultorio nutricional", ausencias));
                     }
+                }
+                if (fechaVencimiento.HasValue && diasRestantes <= -5 && puntaje < 60)
+                {
+                    puntaje = 70;
                 }
                 puntaje = Math.Clamp(puntaje, 5, 98);
                 string nivelRiesgo;
-                if (puntaje >= 60 || (fechaVencimiento.HasValue && diasRestantes <= -5))
+                if (puntaje >= 60)
                 {
-                    nivelRiesgo = "Riesgo de Abandono Alto";
+                    nivelRiesgo = TN(dic, "churnNivelAlto", "Riesgo de Abandono Alto");
                     cantidadRiesgoAlto++;
                 }
                 else if (puntaje >= 30)
                 {
-                    nivelRiesgo = "Riesgo Moderado";
+                    nivelRiesgo = TN(dic, "churnNivelModerado", "Riesgo Moderado");
                 }
                 else
                 {
-                    nivelRiesgo = "Bajo (Fidelizado)";
+                    nivelRiesgo = TN(dic, "churnNivelBajo", "Bajo (Fidelizado)");
                 }
                 if (motivos.Count == 0)
                 {
-                    motivos.Add($"Cuota al día (vence el {fechaVencimiento:dd/MM/yyyy}) y rutina activa.");
+                    motivos.Add(TN(dic, "churnMotivoAlDia", "Cuota al día (vence el {0}) y rutina activa.", fechaVencimiento.HasValue ? fechaVencimiento.Value.ToString("dd/MM/yyyy") : "-"));
                 }
                 DateTime? ultimaAct = fechasActividad.Count > 0 ? fechasActividad.Max() : (DateTime?)null;
                 resultado.Add(new SocioRiesgoBE
@@ -488,10 +535,10 @@ namespace BLL
                     PuntajeFuga = puntaje,
                     ProbabilidadFuga = $"{puntaje}%",
                     MotivoDetectado = string.Join(" | ", motivos),
-                    UltimaActividad = ultimaAct.HasValue ? ultimaAct.Value.ToString("dd/MM/yyyy") : "Sin registros",
+                    UltimaActividad = ultimaAct.HasValue ? ultimaAct.Value.ToString("dd/MM/yyyy") : "-",
                     Telefono = socio.Telefono ?? string.Empty,
                     Email = socio.Email ?? string.Empty,
-                    Contacto = $"{(string.IsNullOrWhiteSpace(socio.Telefono) ? "S/Tel" : socio.Telefono)} / {(string.IsNullOrWhiteSpace(socio.Email) ? "S/Email" : socio.Email)}"
+                    Contacto = $"{(string.IsNullOrWhiteSpace(socio.Telefono) ? "-" : socio.Telefono)} / {(string.IsNullOrWhiteSpace(socio.Email) ? "-" : socio.Email)}"
                 });
             }
             tasaChurnPorcentaje = Math.Round((decimal)cantidadRiesgoAlto * 100m / todosLosSocios.Count, 1);
@@ -509,10 +556,14 @@ namespace BLL
                 throw new Exception("Acceso denegado: No posee el permiso requerido (GESTION_SOCIOS_RIESGO) para contactar socios en riesgo.");
             }
             if (socioRiesgo == null) return string.Empty;
-            return $"¡Hola {socioRiesgo.Socio}! Te contactamos del equipo de UAI-FIT. " +
-                   $"Notamos en nuestro sistema el siguiente estado en tu perfil: ({socioRiesgo.MotivoDetectado}). " +
-                   $"Queremos acompañarte para que retomes tus objetivos deportivos: acercate a Recepción para renovar tu {socioRiesgo.PlanActual} " +
-                   $"y coordinar una actualización sin cargo de tu rutina de entrenamiento. ¡Te esperamos!";
+            var dic = ObtenerDiccionarioNegocio();
+            return TN(
+                dic,
+                "churnMsgRetencion",
+                "¡Hola {0}! Te contactamos del equipo de UAI-FIT. Notamos en nuestro sistema el siguiente estado en tu perfil: ({1}). Queremos acompañarte para que retomes tus objetivos deportivos: acercate a Recepción para renovar tu {2} y coordinar una actualización sin cargo de tu rutina. ¡Te esperamos!",
+                socioRiesgo.Socio,
+                socioRiesgo.MotivoDetectado,
+                socioRiesgo.PlanActual);
         }
     }
 }

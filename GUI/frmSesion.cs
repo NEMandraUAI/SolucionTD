@@ -181,13 +181,13 @@ namespace GUI
             }
             else if (item is SocioRiesgoBE riesgo)
             {
-                if (riesgo.NivelRiesgo == "Riesgo de Abandono Alto")
+                if (riesgo.PuntajeFuga >= 60)
                 {
                     dgvAlertas.Rows[e.RowIndex].DefaultCellStyle.BackColor = Color.FromArgb(220, 38, 38);
                     dgvAlertas.Rows[e.RowIndex].DefaultCellStyle.ForeColor = Color.White;
                     dgvAlertas.Rows[e.RowIndex].DefaultCellStyle.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
                 }
-                else if (riesgo.NivelRiesgo == "Riesgo Moderado")
+                else if (riesgo.PuntajeFuga >= 30)
                 {
                     dgvAlertas.Rows[e.RowIndex].DefaultCellStyle.BackColor = Color.FromArgb(254, 243, 199);
                     dgvAlertas.Rows[e.RowIndex].DefaultCellStyle.ForeColor = Color.FromArgb(146, 64, 14);

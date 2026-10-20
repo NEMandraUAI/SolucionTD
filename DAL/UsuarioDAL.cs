@@ -61,7 +61,7 @@ namespace DAL
             using (SqlConnection cn = ConexionDAL.Instancia.ObtenerConexion())
             {
                 cn.Open();
-                string consulta = "SELECT ID, Nombre, Clave, IntentosFallidos, Bloqueado, DVH, ID_Idioma, NivelJerarquia FROM Usuario";
+                string consulta = "SELECT ID, Nombre, Clave, IntentosFallidos, Bloqueado, DVH, ID_Idioma, NivelJerarquia FROM Usuario ORDER BY ID ASC";
                 using (SqlCommand cmd = new SqlCommand(consulta, cn))
                 {
                     using (SqlDataReader reader = cmd.ExecuteReader())

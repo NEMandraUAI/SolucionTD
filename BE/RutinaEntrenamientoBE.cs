@@ -29,9 +29,18 @@ namespace BE
         [JsonIgnore]
         public bool EsVigente { get; set; }
 
+        [Browsable(false)]
+        [JsonIgnore]
+        public string TextoEstadoVigencia { get; set; } = string.Empty;
+
         public string EstadoVigencia
         {
-            get { return EsVigente ? "VIGENTE (Actual)" : "HISTÓRICA (Solo Lectura)"; }
+            get
+            {
+                if (!string.IsNullOrWhiteSpace(TextoEstadoVigencia))
+                    return TextoEstadoVigencia;
+                return EsVigente ? "VIGENTE (Actual)" : "HISTÓRICA (Solo Lectura)";
+            }
         }
 
         [DigitoVerificador(5)]

@@ -109,7 +109,7 @@ namespace DAL
             using (SqlConnection cx = ConexionDAL.Instancia.ObtenerConexion())
             {
                 cx.Open();
-                string sql = @"SELECT CodigoRutina, FechaCreacion, ObjetivoFisico, FrecuenciaSemanal, DetalleEjercicios, ID_Socio, ID_Usuario, DVH FROM RutinaEntrenamiento";
+                string sql = @"SELECT CodigoRutina, FechaCreacion, ObjetivoFisico, FrecuenciaSemanal, DetalleEjercicios, ID_Socio, ID_Usuario, DVH FROM RutinaEntrenamiento ORDER BY CodigoRutina ASC";
                 SqlCommand cmd = new SqlCommand(sql, cx);
                 using (SqlDataReader dr = cmd.ExecuteReader())
                 {

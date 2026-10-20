@@ -14,35 +14,53 @@ namespace DAL
             using (SqlConnection cn = ConexionDAL.Instancia.ObtenerConexion())
             {
                 cn.Open();
-                string query = $"BACKUP DATABASE [ProyectoCampo] TO DISK = '{rutaArchivo}' WITH FORMAT, MEDIANAME = 'SQLServerBackups', NAME = 'Full Backup of ProyectoCampo';";
+                string query = "BACKUP DATABASE [ProyectoCampo] TO DISK = @ruta WITH FORMAT, MEDIANAME = 'SQLServerBackups', NAME = 'Full Backup of ProyectoCampo';";
                 using (SqlCommand cmd = new SqlCommand(query, cn))
                 {
+                    cmd.CommandTimeout = 120;
+                    cmd.Parameters.AddWithValue("@ruta", rutaArchivo);
                     cmd.ExecuteNonQuery();
                 }
             }
         }
+
         public void RestaurarBackup(string rutaArchivo)
         {
             string cadenaOriginal = ConexionDAL.Instancia.ObtenerConexion().ConnectionString;
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(cadenaOriginal);
             builder.InitialCatalog = "master";
+            SqlConnection.ClearAllPools();
             using (SqlConnection cn = new SqlConnection(builder.ConnectionString))
             {
                 cn.Open();
-                string querySingle = "ALTER DATABASE [ProyectoCampo] SET SINGLE_USER WITH ROLLBACK IMMEDIATE;";
-                using (SqlCommand cmd = new SqlCommand(querySingle, cn))
+                try
                 {
-                    cmd.ExecuteNonQuery();
+                    string querySingle = "ALTER DATABASE [ProyectoCampo] SET SINGLE_USER WITH ROLLBACK IMMEDIATE;";
+                    using (SqlCommand cmd = new SqlCommand(querySingle, cn))
+                    {
+                        cmd.CommandTimeout = 60;
+                        cmd.ExecuteNonQuery();
+                    }
+                    string queryRestore = "RESTORE DATABASE [ProyectoCampo] FROM DISK = @ruta WITH REPLACE;";
+                    using (SqlCommand cmd = new SqlCommand(queryRestore, cn))
+                    {
+                        cmd.CommandTimeout = 180;
+                        cmd.Parameters.AddWithValue("@ruta", rutaArchivo);
+                        cmd.ExecuteNonQuery();
+                    }
                 }
-                string queryRestore = $"RESTORE DATABASE [ProyectoCampo] FROM DISK = '{rutaArchivo}' WITH REPLACE;";
-                using (SqlCommand cmd = new SqlCommand(queryRestore, cn))
+                finally
                 {
-                    cmd.ExecuteNonQuery();
-                }
-                string queryMulti = "ALTER DATABASE [ProyectoCampo] SET MULTI_USER;";
-                using (SqlCommand cmd = new SqlCommand(queryMulti, cn))
-                {
-                    cmd.ExecuteNonQuery();
+                    try
+                    {
+                        string queryMulti = "ALTER DATABASE [ProyectoCampo] SET MULTI_USER;";
+                        using (SqlCommand cmd = new SqlCommand(queryMulti, cn))
+                        {
+                            cmd.CommandTimeout = 60;
+                            cmd.ExecuteNonQuery();
+                        }
+                    }
+                    catch { }
                 }
             }
         }

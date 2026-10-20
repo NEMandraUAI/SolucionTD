@@ -62,8 +62,10 @@ namespace DAL
             using (SqlConnection cx = ConexionDAL.Instancia.ObtenerConexion())
             {
                 cx.Open();
-                SqlCommand cmd = new SqlCommand("UPDATE Socio SET CodigoPlan = @CodigoPlan, EstadoActivo = @EstadoActivo, DVH = @DVH WHERE ID_Socio = @ID", cx);
+                SqlCommand cmd = new SqlCommand("UPDATE Socio SET Telefono = @Telefono, Email = @Email, CodigoPlan = @CodigoPlan, EstadoActivo = @EstadoActivo, DVH = @DVH WHERE ID_Socio = @ID", cx);
                 cmd.Parameters.AddWithValue("@ID", socio.ID_Socio);
+                cmd.Parameters.AddWithValue("@Telefono", !string.IsNullOrWhiteSpace(socio.Telefono) ? (object)socio.Telefono : DBNull.Value);
+                cmd.Parameters.AddWithValue("@Email", !string.IsNullOrWhiteSpace(socio.Email) ? (object)socio.Email : DBNull.Value);
                 cmd.Parameters.AddWithValue("@EstadoActivo", socio.EstadoActivo);
                 cmd.Parameters.AddWithValue("@DVH", (object)socio.DVH ?? DBNull.Value);
                 if (socio.PlanAsociado != null && socio.PlanAsociado.CodigoPlan > 0)
@@ -94,7 +96,7 @@ namespace DAL
         public List<SocioBE> LeerTodos()
         {
             List<SocioBE> lista = new List<SocioBE>();
-            string query = "SELECT ID_Socio, DNI, Nombre, Apellido, Telefono, Email, EstadoActivo, CodigoPlan, DVH FROM Socio";
+            string query = "SELECT ID_Socio, DNI, Nombre, Apellido, Telefono, Email, EstadoActivo, CodigoPlan, DVH FROM Socio ORDER BY ID_Socio ASC";
             using (SqlConnection cx = ConexionDAL.Instancia.ObtenerConexion())
             {
                 using (SqlCommand cmd = new SqlCommand(query, cx))
@@ -109,14 +111,13 @@ namespace DAL
                             socio.DNI = reader["DNI"].ToString();
                             socio.Nombre = reader["Nombre"].ToString();
                             socio.Apellido = reader["Apellido"].ToString();
-                            socio.Telefono = reader["Telefono"].ToString();
+                            socio.Telefono = reader["Telefono"] != DBNull.Value ? reader["Telefono"].ToString() : null;
                             socio.Email = reader["Email"] != DBNull.Value ? reader["Email"].ToString() : null;
                             socio.EstadoActivo = Convert.ToBoolean(reader["EstadoActivo"]);
                             if (reader["CodigoPlan"] != DBNull.Value)
                             {
                                 socio.PlanAsociado = new PlanSuscripcionBE { CodigoPlan = Convert.ToInt32(reader["CodigoPlan"]) };
                             }
-                            socio.EstadoActivo = Convert.ToBoolean(reader["EstadoActivo"]);
                             socio.DVH = reader["DVH"] != DBNull.Value ? reader["DVH"].ToString() : null;
                             lista.Add(socio);
                         }

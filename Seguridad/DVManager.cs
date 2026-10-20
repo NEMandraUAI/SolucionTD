@@ -15,16 +15,16 @@ namespace Seguridad
         {
             StringBuilder sb = new StringBuilder();
             Type tipo = entidad.GetType();
-            PropertyInfo[] propiedades = tipo.GetProperties();
-            foreach (var prop in propiedades)
+            var propiedadesOrdenadas = tipo.GetProperties()
+                .Where(p => Attribute.IsDefined(p, typeof(DigitoVerificadorAttribute)))
+                .OrderBy(p => ((DigitoVerificadorAttribute)Attribute.GetCustomAttribute(p, typeof(DigitoVerificadorAttribute))).Orden)
+                .ToList();
+            foreach (var prop in propiedadesOrdenadas)
             {
-                if (Attribute.IsDefined(prop, typeof(DigitoVerificadorAttribute)))
+                var valor = prop.GetValue(entidad);
+                if (valor != null)
                 {
-                    var valor = prop.GetValue(entidad);
-                    if (valor != null)
-                    {
-                        sb.Append(FormatearValorInvariante(valor));
-                    }
+                    sb.Append(FormatearValorInvariante(valor));
                 }
             }
             return CryptoManager.GenerarHash(sb.ToString());

@@ -16,7 +16,7 @@ namespace DAL
             using (SqlConnection cx = ConexionDAL.Instancia.ObtenerConexion())
             {
                 cx.Open();
-                SqlCommand cmd = new SqlCommand("SELECT CodigoPlan, Nombre, Precio, DuracionDias, DVH FROM PlanSuscripcion", cx);
+                SqlCommand cmd = new SqlCommand("SELECT CodigoPlan, Nombre, Precio, DuracionDias, DVH FROM PlanSuscripcion ORDER BY CodigoPlan ASC", cx);
                 using (SqlDataReader dr = cmd.ExecuteReader())
                 {
                     while (dr.Read())

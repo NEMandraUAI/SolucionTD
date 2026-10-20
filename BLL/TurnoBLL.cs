@@ -83,12 +83,16 @@ namespace BLL
 
         public SugerenciaTurnoBE ObtenerSugerenciaPredictiva(int idSocio, List<UsuarioBE> nutricionistasDisponibles)
         {
+            int idIdioma = (GestorIdioma.Instancia != null && GestorIdioma.Instancia.IdiomaActual != null && GestorIdioma.Instancia.IdiomaActual.ID > 0)
+                ? GestorIdioma.Instancia.IdiomaActual.ID
+                : 1;
+            var dic = new IdiomaDAL().ObtenerTraduccionesPorFormulario(idIdioma, "NegocioBLL");
             if (idSocio <= 0)
             {
                 return new SugerenciaTurnoBE
                 {
                     TieneSugerencia = false,
-                    Mensaje = "Ingrese el DNI de un socio activo para analizar su historial de turnos."
+                    Mensaje = string.Empty
                 };
             }
             List<TurnoBE> historialSocio = _turnoDAL.LeerTodos()
@@ -99,7 +103,9 @@ namespace BLL
                 return new SugerenciaTurnoBE
                 {
                     TieneSugerencia = false,
-                    Mensaje = "ℹ️ Socio sin historial previo de turnos nutricionales. Seleccione día y horario manualmente."
+                    Mensaje = dic.ContainsKey("predSinHistorial")
+                        ? dic["predSinHistorial"]
+                        : "ℹ️ Socio sin historial previo de turnos nutricionales. Seleccione día y horario manualmente."
                 };
             }
             var turnosBase = historialSocio.Where(t => string.Equals(t.Estado, "Asistió", StringComparison.OrdinalIgnoreCase)).ToList();
@@ -137,10 +143,22 @@ namespace BLL
             DateTime fechaCandidata = CalcularProximaFechaDia(diaPreferido, horaPreferida);
             DateTime fechaHoraFinal = BuscarSlotDisponible(idNutriPreferido, fechaCandidata, horaPreferida, out bool fueDesplazado);
             string nombreDia = TraducirDiaSemana(fechaHoraFinal.DayOfWeek);
-            string infoNutri = nutriElegido != null ? $" con {nutriElegido.Nombre}" : "";
+            string infoNutri = nutriElegido != null ? $" ({nutriElegido.Nombre})" : "";
             string notaDisponibilidad = fueDesplazado
-                ? " (Horario habitual ocupado; se sugiere el turno libre más cercano)"
-                : " (Horario libre verificado)";
+                ? (dic.ContainsKey("predNotaDesplazado") ? dic["predNotaDesplazado"] : " (Horario habitual ocupado; se sugiere el turno libre más cercano)")
+                : (dic.ContainsKey("predNotaLibre") ? dic["predNotaLibre"] : " (Horario libre verificado)");
+            string plantillaSug = dic.ContainsKey("predSugerencia")
+                ? dic["predSugerencia"]
+                : "💡 Sugerencia Predictiva: {0} {1} a las {2} hs{3}.\r\nCoincide con su patrón histórico ({4} de {5} turnos en {0}){6}.";
+            string mensajeFormateado;
+            try
+            {
+                mensajeFormateado = string.Format(plantillaSug, nombreDia, fechaHoraFinal.ToString("dd/MM/yyyy"), fechaHoraFinal.ToString("HH:mm"), infoNutri, coincidenciasDia, turnosBase.Count, notaDisponibilidad);
+            }
+            catch
+            {
+                mensajeFormateado = $"{nombreDia} {fechaHoraFinal:dd/MM/yyyy HH:mm}{infoNutri}";
+            }
             return new SugerenciaTurnoBE
             {
                 TieneSugerencia = true,
@@ -150,8 +168,7 @@ namespace BLL
                 CoincidenciasDia = coincidenciasDia,
                 CoincidenciasHora = coincidenciasHora,
                 TotalTurnosAnalizados = turnosBase.Count,
-                Mensaje = $"💡 Sugerencia Predictiva: {nombreDia} {fechaHoraFinal:dd/MM/yyyy} a las {fechaHoraFinal:HH:mm} hs{infoNutri}.\r\n" +
-                          $"Coincide con su patrón histórico ({coincidenciasDia} de {turnosBase.Count} turnos en {nombreDia}){notaDisponibilidad}."
+                Mensaje = mensajeFormateado
             };
         }
 
@@ -207,17 +224,12 @@ namespace BLL
 
         private string TraducirDiaSemana(DayOfWeek dia)
         {
-            switch (dia)
-            {
-                case DayOfWeek.Monday: return "Lunes";
-                case DayOfWeek.Tuesday: return "Martes";
-                case DayOfWeek.Wednesday: return "Miércoles";
-                case DayOfWeek.Thursday: return "Jueves";
-                case DayOfWeek.Friday: return "Viernes";
-                case DayOfWeek.Saturday: return "Sábado";
-                case DayOfWeek.Sunday: return "Domingo";
-                default: return dia.ToString();
-            }
+            int idIdioma = (GestorIdioma.Instancia != null && GestorIdioma.Instancia.IdiomaActual != null)
+                ? GestorIdioma.Instancia.IdiomaActual.ID
+                : 1;
+            string cultura = idIdioma == 2 ? "en-US" : (idIdioma == 3 ? "pt-BR" : (idIdioma == 5 ? "it-IT" : "es-AR"));
+            string nombre = new CultureInfo(cultura).DateTimeFormat.GetDayName(dia);
+            return char.ToUpper(nombre[0]) + nombre.Substring(1);
         }
     }
 }

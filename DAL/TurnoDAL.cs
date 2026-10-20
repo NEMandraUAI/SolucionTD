@@ -212,7 +212,7 @@ namespace DAL
             using (SqlConnection cx = ConexionDAL.Instancia.ObtenerConexion())
             {
                 cx.Open();
-                string query = "SELECT NroTurno, FechaHora, Estado, ID_Socio, ID_Nutricionista, DVH FROM Turno";
+                string query = "SELECT NroTurno, FechaHora, Estado, ID_Socio, ID_Nutricionista, DVH FROM Turno ORDER BY NroTurno ASC";
                 SqlCommand cmd = new SqlCommand(query, cx);
                 SqlDataReader reader = cmd.ExecuteReader();
                 while (reader.Read())

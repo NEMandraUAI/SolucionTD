@@ -179,6 +179,11 @@ namespace GUI
                     socioActual.Email = txtEmail.Text.Trim();
                     socioBLL.RegistrarSocio(socioActual);
                 }
+                else
+                {
+                    socioActual.Telefono = txtTelefono.Text.Trim();
+                    socioActual.Email = txtEmail.Text.Trim();
+                }
                 PlanSuscripcionBE planSeleccionado = (PlanSuscripcionBE)cmbPlanes.SelectedItem;
                 socioBLL.ActualizarPlanSocio(socioActual, planSeleccionado);
                 ComprobantePagoBE comprobante = new ComprobantePagoBE();

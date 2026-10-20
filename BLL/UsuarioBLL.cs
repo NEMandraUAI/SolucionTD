@@ -25,10 +25,6 @@ namespace BLL
             {
                 throw new Exception("Usuario o clave incorrectos.");
             }
-            if (usuarioBD.Nombre != usuario)
-            {
-                throw new Exception("Usuario o clave incorrectos.");
-            }
             if (usuarioBD.Bloqueado)
             {
                 registroBLL.RegistrarEvento("Intento de acceso a cuenta bloqueada: " + usuarioBD.Nombre, usuarioBD, "CRÍTICO");
@@ -92,6 +88,10 @@ namespace BLL
         public List<UsuarioHistoricoBE> ObtenerHistorialUsuario(int idUsuario) => usuarioDAL.ListarHistorial(idUsuario);
         public void RegistrarUsuario(string nombre, string clavePlana)
         {
+            if (string.IsNullOrWhiteSpace(nombre) || nombre.Trim().Length < 4)
+                throw new Exception("El nombre de usuario debe tener al menos 4 caracteres.");
+            if (string.IsNullOrWhiteSpace(clavePlana) || clavePlana.Length < 4)
+                throw new Exception("La contraseña debe tener al menos 4 caracteres.");
             if (usuarioDAL.ObtenerPorUsername(nombre) != null)
             {
                 throw new Exception("El nombre de usuario ya se encuentra registrado.");

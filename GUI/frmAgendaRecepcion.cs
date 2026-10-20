@@ -37,6 +37,12 @@ namespace GUI
             ActualizarIdioma(GestorIdioma.Instancia.IdiomaActual);
             CargarNutricionistas();
             CargarAgenda(dtpFechaAgenda.Value);
+            bool puedeAsentar = SessionManager.Instancia.UsuarioActual != null &&
+                    SessionManager.Instancia.UsuarioActual.TienePermiso("ASENTAR_TURNO");
+            btnReservar.Enabled = puedeAsentar;
+            btnAsistio.Enabled = puedeAsentar;
+            btnAusente.Enabled = puedeAsentar;
+            txtDNI.Enabled = puedeAsentar;
         }
 
         private void CargarNutricionistas()

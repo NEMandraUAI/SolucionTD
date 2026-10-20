@@ -253,7 +253,8 @@ namespace GUI
                     out _,
                     out msgVigencia);
             }
-            bool permitirEdicion = esRutinaVigente && cuotaAlDia;
+            bool tienePermisoAsignar = SessionManager.Instancia.UsuarioActual != null && SessionManager.Instancia.UsuarioActual.TienePermiso("ASIGNAR_RUTINA");
+            bool permitirEdicion = esRutinaVigente && cuotaAlDia && tienePermisoAsignar;
             dgvEjercicios.Enabled = true;
             dgvEjercicios.ReadOnly = !permitirEdicion;
             dgvEjercicios.AllowUserToAddRows = permitirEdicion;

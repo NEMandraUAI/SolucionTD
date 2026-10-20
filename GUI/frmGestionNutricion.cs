@@ -554,10 +554,13 @@ namespace GUI
 
         private void BloquearCamposPlan(bool bloquear)
         {
-            pnlCalculadoraBiometrica.Enabled = !bloquear;
-            btnSugerirHabitos.Enabled = !bloquear;
-            txtHabitos.Enabled = !bloquear;
-            btnAsignarPlan.Enabled = !bloquear;
+            bool puedeAsignar = SessionManager.Instancia.UsuarioActual != null &&
+                    SessionManager.Instancia.UsuarioActual.TienePermiso("ASIGNAR_PLAN_NUTRICIONAL");
+            bool habilitarEdicion = !bloquear && puedeAsignar;
+            pnlCalculadoraBiometrica.Enabled = habilitarEdicion;
+            txtHabitos.Enabled = habilitarEdicion;
+            btnSugerirHabitos.Enabled = habilitarEdicion;
+            btnAsignarPlan.Enabled = habilitarEdicion;
             btnExportarPDF.Enabled = !bloquear;
         }
 

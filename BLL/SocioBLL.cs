@@ -367,6 +367,11 @@ namespace BLL
         {
             tasaChurnPorcentaje = 0m;
             cantidadRiesgoAlto = 0;
+            UsuarioBE usuarioSesion = SessionManager.Instancia.UsuarioActual;
+            if (usuarioSesion == null || !usuarioSesion.TienePermiso("GESTION_SOCIOS_RIESGO"))
+            {
+                return new List<SocioRiesgoBE>();
+            }
             List<SocioRiesgoBE> resultado = new List<SocioRiesgoBE>();
             List<SocioBE> todosLosSocios = dal.LeerTodos();
             if (todosLosSocios == null || todosLosSocios.Count == 0)
@@ -498,6 +503,11 @@ namespace BLL
 
         public string GenerarMensajeRetencion(SocioRiesgoBE socioRiesgo)
         {
+            UsuarioBE usuarioSesion = SessionManager.Instancia.UsuarioActual;
+            if (usuarioSesion == null || !usuarioSesion.TienePermiso("GESTION_SOCIOS_RIESGO"))
+            {
+                throw new Exception("Acceso denegado: No posee el permiso requerido (GESTION_SOCIOS_RIESGO) para contactar socios en riesgo.");
+            }
             if (socioRiesgo == null) return string.Empty;
             return $"¡Hola {socioRiesgo.Socio}! Te contactamos del equipo de UAI-FIT. " +
                    $"Notamos en nuestro sistema el siguiente estado en tu perfil: ({socioRiesgo.MotivoDetectado}). " +

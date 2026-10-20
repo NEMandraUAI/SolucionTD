@@ -267,16 +267,30 @@ namespace GUI
 
         public void AplicarPermisosUI()
         {
-            bool haySesion = SessionManager.Instancia.UsuarioActual != null;
+            UsuarioBE usuario = SessionManager.Instancia.UsuarioActual;
+            bool haySesion = usuario != null;
             btnMenuIniciarSesion.Visible = !haySesion;
             btnMenuRegistrarse.Visible = !haySesion;
             btnMenuCerrarSesion.Visible = haySesion;
             btnMenuInicio.Visible = haySesion;
             if (haySesion)
             {
-                btnMenuRecepcion.Visible = SessionManager.Instancia.UsuarioActual.TienePermiso("VENDER_PLAN");
-                btnMenuEntrenamiento.Visible = SessionManager.Instancia.UsuarioActual.TienePermiso("ASIGNAR_RUTINA");
-                btnMenuNutricion.Visible = SessionManager.Instancia.UsuarioActual.TienePermiso("ASIGNAR_PLAN_NUTRICIONAL");
+                bool puedeVenderPlan = usuario.TienePermiso("VENDER_PLAN");
+                bool puedeConsultarComprobantes = usuario.TienePermiso("CONSULTAR_COMPROBANTES") || puedeVenderPlan;
+                bool puedeAgendaRec = usuario.TienePermiso("ASENTAR_TURNO") || usuario.TienePermiso("REVISAR_AGENDA");
+                btnSubVenderPlan.Visible = puedeVenderPlan;
+                btnSubConsultarComprobantes.Visible = puedeConsultarComprobantes;
+                btnSubAgendarTurno.Visible = puedeAgendaRec;
+                btnMenuRecepcion.Visible = puedeVenderPlan || puedeConsultarComprobantes || puedeAgendaRec;
+                bool puedeAsignarRutina = usuario.TienePermiso("ASIGNAR_RUTINA");
+                bool puedeGestionarRutinas = usuario.TienePermiso("CONSULTAR_SOCIO") || puedeAsignarRutina;
+                btnSubAsignarRutina.Visible = puedeAsignarRutina;
+                btnSubGestionRutinas.Visible = puedeGestionarRutinas;
+                btnMenuEntrenamiento.Visible = puedeAsignarRutina || puedeGestionarRutinas;
+                bool puedeNutricion = usuario.TienePermiso("ASIGNAR_PLAN_NUTRICIONAL") ||
+                                      usuario.TienePermiso("CONSULTAR_AGENDA") ||
+                                      usuario.TienePermiso("CONSULTAR_PLANES_NUT");
+                btnMenuNutricion.Visible = puedeNutricion;
             }
             else
             {

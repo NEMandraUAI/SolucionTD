@@ -24,18 +24,21 @@ namespace GUI
         UsuarioBLL usuarioBLL = new UsuarioBLL();
         List<ComponentePermiso> listaArbolCompleto;
         FamiliaBE familiaSeleccionada;
+
         public frmGestionRoles()
         {
             InitializeComponent();
             GestorIdioma.Instancia.Suscribir(this);
             this.FormClosing += (s, e) => GestorIdioma.Instancia.Desuscribir(this);
         }
+
         private void frmGestionRoles_Load(object sender, EventArgs e)
         {
             CargarArbolRoles();
             CargarUsuarios();
             ActualizarIdioma(GestorIdioma.Instancia.IdiomaActual);
         }
+
         public void ActualizarIdioma(IdiomaBE idioma)
         {
             IdiomaBLL idiomaBLL = new IdiomaBLL();
@@ -49,6 +52,7 @@ namespace GUI
                 tvPermisosDisponibles.Nodes[1].Text = T("nodoPatentesBase", "PERMISOS SIMPLES (Patentes)") + "   ";
             }
         }
+
         private void TraducirControlesRecursivo(Control.ControlCollection controles, Dictionary<string, string> traducciones)
         {
             foreach (Control control in controles)
@@ -80,6 +84,7 @@ namespace GUI
                 }
             }
         }
+
         private void TraducirItemMenu(ToolStripItem item, Dictionary<string, string> traducciones)
         {
             if (traducciones.ContainsKey(item.Name))
@@ -94,6 +99,7 @@ namespace GUI
                 }
             }
         }
+
         private void CargarArbolRoles()
         {
             var arbolEstructural = permisoBLL.ObtenerArbolJerarquicoVisual();
@@ -101,6 +107,7 @@ namespace GUI
             listaArbolCompleto = permisoBLL.ObtenerArbolCompleto();
             CargarCatalogoPermisosDisponibles();
         }
+
         private void CargarCatalogoPermisosDisponibles()
         {
             tvPermisosDisponibles.Nodes.Clear();
@@ -125,6 +132,7 @@ namespace GUI
             tvPermisosDisponibles.Nodes.Add(nodoPatentes);
             tvPermisosDisponibles.ExpandAll();
         }
+
         private void LlenarTreeView(TreeView tv, List<ComponentePermiso> catalogo)
         {
             tv.Nodes.Clear();
@@ -138,6 +146,7 @@ namespace GUI
             }
             tv.ExpandAll();
         }
+
         private void MostrarRecursivo(TreeNode nodoPadre, ComponentePermiso componente)
         {
             if (componente.ObtenerHijos() == null) return;
@@ -150,42 +159,78 @@ namespace GUI
                 MostrarRecursivo(nodoHijo, hijo);
             }
         }
+
         private void CargarUsuarios()
         {
             cmbUsuarios.DataSource = usuarioBLL.ListarTodos();
             cmbUsuarios.DisplayMember = "Nombre";
             cmbUsuarios.ValueMember = "ID";
         }
+
         private void AsignarColorNodo(TreeNode nodo, ComponentePermiso componente)
         {
             if (componente is FamiliaBE)
             {
-                nodo.ForeColor = System.Drawing.Color.Blue;
-                nodo.NodeFont = new System.Drawing.Font(tvRoles.Font, System.Drawing.FontStyle.Bold);
+                nodo.ForeColor = Color.Blue;
+                nodo.NodeFont = new Font(tvRoles.Font, FontStyle.Bold);
             }
             else if (componente is PatenteBE)
             {
-                nodo.ForeColor = System.Drawing.Color.DarkGreen;
+                nodo.ForeColor = Color.DarkGreen;
             }
         }
+
         private void btnCrearFamilia_Click(object sender, EventArgs e)
         {
             string nombreRol = Microsoft.VisualBasic.Interaction.InputBox(T("msgInputNuevoRol", "Nombre de la nueva familia (Rol):"), T("titInputNuevoRol", "Nuevo Rol"), "");
             if (!string.IsNullOrWhiteSpace(nombreRol))
             {
-                FamiliaBE nuevaFamilia = new FamiliaBE { Nombre = nombreRol };
+                FamiliaBE nuevaFamilia = new FamiliaBE { Nombre = nombreRol.Trim() };
                 try
                 {
                     permisoBLL.GuardarFamiliaCompleta(nuevaFamilia);
                     MessageBox.Show(T("msgRolCreado", "Rol creado. Ahora selecciónelo y añada permisos."), T("titExito", "Éxito"), MessageBoxButtons.OK, MessageBoxIcon.Information);
                     CargarArbolRoles();
                 }
-                catch (Exception ex) { MessageBox.Show(T(ex.Message, ex.Message), T("titError", "Error"), MessageBoxButtons.OK, MessageBoxIcon.Error); }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(T(ex.Message, ex.Message), T("titError", "Error"), MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
             }
         }
+
         private void btnEliminarFamilia_Click(object sender, EventArgs e)
         {
-            if (tvRoles.SelectedNode != null && tvRoles.SelectedNode.Tag is FamiliaBE fam)
+            if (tvRoles.SelectedNode == null) return;
+            if (tvRoles.SelectedNode.Parent != null &&
+                tvRoles.SelectedNode.Parent.Tag is FamiliaBE familiaPadre &&
+                tvRoles.SelectedNode.Tag is ComponentePermiso componenteHijo)
+            {
+                DialogResult resp = MessageBox.Show(
+                    $"{T("msgConfirmarQuitarHijoRol", "¿Desea quitar el permiso o sub-rol seleccionado del rol padre?")}\r\n\r\n({componenteHijo.Nombre} -> {familiaPadre.Nombre})",
+                    T("titConfirmarQuitarHijo", "Quitar Permiso de Rol"),
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Question);
+                if (resp == DialogResult.Yes)
+                {
+                    try
+                    {
+                        familiaPadre.RemoverHijo(componenteHijo);
+                        permisoBLL.GuardarFamiliaCompleta(familiaPadre);
+                        CargarArbolRoles();
+                        cmbUsuarios_SelectedIndexChanged(null, null);
+                        NotificarPosibleCambioEnUsuarioActual();
+                        MessageBox.Show(T("msgHijoQuitadoExito", "El permiso fue removido correctamente del rol."), T("titExito", "Éxito"), MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
+                    catch (Exception ex)
+                    {
+                        CargarArbolRoles();
+                        MessageBox.Show(T(ex.Message, ex.Message), T("titEliminacionDenegada", "Eliminación denegada"), MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    }
+                }
+                return;
+            }
+            if (tvRoles.SelectedNode.Tag is FamiliaBE fam)
             {
                 try
                 {
@@ -199,6 +244,7 @@ namespace GUI
                 }
             }
         }
+
         private void cmbUsuarios_SelectedIndexChanged(object sender, EventArgs e)
         {
             if (cmbUsuarios.SelectedItem is UsuarioBE user)
@@ -208,12 +254,15 @@ namespace GUI
                 foreach (var p in user.Permisos)
                 {
                     TreeNode nodo = new TreeNode(p.Nombre);
+                    nodo.Tag = p;
+                    AsignarColorNodo(nodo, p);
                     tvPermisosUsuario.Nodes.Add(nodo);
                     if (p is FamiliaBE) MostrarRecursivo(nodo, p);
                 }
                 tvPermisosUsuario.ExpandAll();
             }
         }
+
         private void btnAsignarRolUsuario_Click(object sender, EventArgs e)
         {
             if (cmbUsuarios.SelectedItem is UsuarioBE user && tvRoles.SelectedNode != null)
@@ -228,17 +277,31 @@ namespace GUI
                         cmbUsuarios_SelectedIndexChanged(null, null);
                         NotificarPosibleCambioEnUsuarioActual();
                     }
-                    catch (Exception ex) { MessageBox.Show(T(ex.Message, ex.Message), T("titError", "Error"), MessageBoxButtons.OK, MessageBoxIcon.Error); }
+                    catch (Exception ex)
+                    {
+                        user.Permisos.Remove(rolAsignar);
+                        MessageBox.Show(T(ex.Message, ex.Message), T("titError", "Error"), MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        cmbUsuarios_SelectedIndexChanged(null, null);
+                    }
                 }
             }
         }
+
         private void btnQuitarRolUsuario_Click(object sender, EventArgs e)
         {
             if (cmbUsuarios.SelectedItem is UsuarioBE user && tvPermisosUsuario.SelectedNode != null)
             {
+                if (tvPermisosUsuario.SelectedNode.Parent != null)
+                {
+                    MessageBox.Show(
+                        T("msgPermisoHeredadoNoQuitar", "El permiso seleccionado es heredado de un Rol. Para quitarlo del usuario debe seleccionar el nodo del Rol raíz (en azul), o bien modificar la estructura del Rol en el árbol izquierdo."),
+                        T("titAtencion", "Atención"),
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Information);
+                    return;
+                }
                 string nombreQuitar = tvPermisosUsuario.SelectedNode.Text;
                 var permisoAQuitar = user.Permisos.FirstOrDefault(x => x.Nombre == nombreQuitar);
-
                 if (permisoAQuitar != null)
                 {
                     user.Permisos.Remove(permisoAQuitar);
@@ -256,6 +319,7 @@ namespace GUI
                 }
             }
         }
+
         private void btnAsignarPatenteARol_Click(object sender, EventArgs e)
         {
             if (tvRoles.SelectedNode == null || tvPermisosDisponibles.SelectedNode == null)
@@ -276,11 +340,17 @@ namespace GUI
                 return;
             }
             FamiliaBE familiaDestino = (FamiliaBE)destino;
+            if (familiaDestino.ObtenerHijos().Any(h => h.ID == origen.ID))
+            {
+                MessageBox.Show(T("msgPermisoYaExisteEnRol", "El rol seleccionado ya posee asignado este permiso o sub-rol."), T("titAtencion", "Atención"), MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
             try
             {
                 familiaDestino.AgregarHijo(origen);
                 permisoBLL.GuardarFamiliaCompleta(familiaDestino);
                 CargarArbolRoles();
+                cmbUsuarios_SelectedIndexChanged(null, null);
                 NotificarPosibleCambioEnUsuarioActual();
                 MessageBox.Show(T("msgPermisoAsignadoExito1", "El permiso/rol '") + origen.Nombre + T("msgPermisoAsignadoExito2", "' se asignó correctamente a '") + familiaDestino.Nombre + "'.", T("titExito", "Éxito"), MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
@@ -290,6 +360,7 @@ namespace GUI
                 MessageBox.Show(T(ex.Message, ex.Message), T("titErrorValidacion", "Error de validación"), MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
+
         private void btnCrearRolAnidado_Click(object sender, EventArgs e)
         {
             if (tvRoles.SelectedNode == null)
@@ -311,6 +382,7 @@ namespace GUI
                 {
                     permisoBLL.CrearRolDentroDeRol(familiaPadre, nombreNuevoRol);
                     CargarArbolRoles();
+                    cmbUsuarios_SelectedIndexChanged(null, null);
                     NotificarPosibleCambioEnUsuarioActual();
                     MessageBox.Show(T("msgSubRolExito", "Sub-rol creado y asignado con éxito."), T("titExito", "Éxito"), MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
@@ -320,6 +392,7 @@ namespace GUI
                 }
             }
         }
+
         private void NotificarPosibleCambioEnUsuarioActual()
         {
             if (SessionManager.Instancia.UsuarioActual != null)

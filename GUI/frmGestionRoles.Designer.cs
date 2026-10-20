@@ -46,10 +46,9 @@
             // 
             // tvRoles
             // 
-            tvRoles.Anchor = AnchorStyles.Top | AnchorStyles.Left;
             tvRoles.BackColor = Color.White;
             tvRoles.BorderStyle = BorderStyle.FixedSingle;
-            tvRoles.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
+            tvRoles.Font = new Font("Segoe UI", 9F);
             tvRoles.ForeColor = Color.FromArgb(31, 41, 55);
             tvRoles.HideSelection = false;
             tvRoles.Location = new Point(28, 54);
@@ -59,15 +58,15 @@
             // 
             // cmbUsuarios
             // 
-            cmbUsuarios.Anchor = AnchorStyles.Top | AnchorStyles.Left;
             cmbUsuarios.BackColor = Color.White;
+            cmbUsuarios.DropDownStyle = ComboBoxStyle.DropDownList;
             cmbUsuarios.FlatStyle = FlatStyle.Flat;
-            cmbUsuarios.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
+            cmbUsuarios.Font = new Font("Segoe UI", 9F);
             cmbUsuarios.ForeColor = Color.FromArgb(31, 41, 55);
             cmbUsuarios.FormattingEnabled = true;
             cmbUsuarios.Location = new Point(426, 54);
             cmbUsuarios.Name = "cmbUsuarios";
-            cmbUsuarios.Size = new Size(300, 28);
+            cmbUsuarios.Size = new Size(300, 23);
             cmbUsuarios.TabIndex = 1;
             cmbUsuarios.SelectedIndexChanged += cmbUsuarios_SelectedIndexChanged;
             // 
@@ -76,7 +75,7 @@
             tvPermisosUsuario.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             tvPermisosUsuario.BackColor = Color.White;
             tvPermisosUsuario.BorderStyle = BorderStyle.FixedSingle;
-            tvPermisosUsuario.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
+            tvPermisosUsuario.Font = new Font("Segoe UI", 9F);
             tvPermisosUsuario.ForeColor = Color.FromArgb(31, 41, 55);
             tvPermisosUsuario.Location = new Point(754, 54);
             tvPermisosUsuario.Name = "tvPermisosUsuario";
@@ -85,11 +84,10 @@
             // 
             // btnCrearFamilia
             // 
-            btnCrearFamilia.Anchor = AnchorStyles.Top | AnchorStyles.Left;
             btnCrearFamilia.BackColor = Color.FromArgb(37, 99, 235);
             btnCrearFamilia.FlatAppearance.BorderSize = 0;
             btnCrearFamilia.FlatStyle = FlatStyle.Flat;
-            btnCrearFamilia.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point);
+            btnCrearFamilia.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
             btnCrearFamilia.ForeColor = Color.White;
             btnCrearFamilia.Location = new Point(426, 480);
             btnCrearFamilia.Name = "btnCrearFamilia";
@@ -101,11 +99,10 @@
             // 
             // btnEliminarFamilia
             // 
-            btnEliminarFamilia.Anchor = AnchorStyles.Top | AnchorStyles.Left;
             btnEliminarFamilia.BackColor = Color.FromArgb(185, 28, 28);
             btnEliminarFamilia.FlatAppearance.BorderSize = 0;
             btnEliminarFamilia.FlatStyle = FlatStyle.Flat;
-            btnEliminarFamilia.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point);
+            btnEliminarFamilia.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
             btnEliminarFamilia.ForeColor = Color.White;
             btnEliminarFamilia.Location = new Point(426, 612);
             btnEliminarFamilia.Name = "btnEliminarFamilia";
@@ -117,11 +114,10 @@
             // 
             // btnAsignarRolUsuario
             // 
-            btnAsignarRolUsuario.Anchor = AnchorStyles.Top | AnchorStyles.Left;
             btnAsignarRolUsuario.BackColor = Color.FromArgb(37, 99, 235);
             btnAsignarRolUsuario.FlatAppearance.BorderSize = 0;
             btnAsignarRolUsuario.FlatStyle = FlatStyle.Flat;
-            btnAsignarRolUsuario.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point);
+            btnAsignarRolUsuario.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
             btnAsignarRolUsuario.ForeColor = Color.White;
             btnAsignarRolUsuario.Location = new Point(426, 100);
             btnAsignarRolUsuario.Name = "btnAsignarRolUsuario";
@@ -133,11 +129,10 @@
             // 
             // btnQuitarRolUsuario
             // 
-            btnQuitarRolUsuario.Anchor = AnchorStyles.Top | AnchorStyles.Left;
             btnQuitarRolUsuario.BackColor = Color.FromArgb(71, 85, 105);
             btnQuitarRolUsuario.FlatAppearance.BorderSize = 0;
             btnQuitarRolUsuario.FlatStyle = FlatStyle.Flat;
-            btnQuitarRolUsuario.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point);
+            btnQuitarRolUsuario.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
             btnQuitarRolUsuario.ForeColor = Color.White;
             btnQuitarRolUsuario.Location = new Point(426, 160);
             btnQuitarRolUsuario.Name = "btnQuitarRolUsuario";
@@ -149,11 +144,10 @@
             // 
             // btnAsignarPermisoARol
             // 
-            btnAsignarPermisoARol.Anchor = AnchorStyles.Top | AnchorStyles.Left;
             btnAsignarPermisoARol.BackColor = Color.FromArgb(37, 99, 235);
             btnAsignarPermisoARol.FlatAppearance.BorderSize = 0;
             btnAsignarPermisoARol.FlatStyle = FlatStyle.Flat;
-            btnAsignarPermisoARol.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point);
+            btnAsignarPermisoARol.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
             btnAsignarPermisoARol.ForeColor = Color.White;
             btnAsignarPermisoARol.Location = new Point(426, 414);
             btnAsignarPermisoARol.Name = "btnAsignarPermisoARol";
@@ -165,11 +159,10 @@
             // 
             // btnCrearRolAnidado
             // 
-            btnCrearRolAnidado.Anchor = AnchorStyles.Top | AnchorStyles.Left;
             btnCrearRolAnidado.BackColor = Color.FromArgb(37, 99, 235);
             btnCrearRolAnidado.FlatAppearance.BorderSize = 0;
             btnCrearRolAnidado.FlatStyle = FlatStyle.Flat;
-            btnCrearRolAnidado.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point);
+            btnCrearRolAnidado.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
             btnCrearRolAnidado.ForeColor = Color.White;
             btnCrearRolAnidado.Location = new Point(426, 546);
             btnCrearRolAnidado.Name = "btnCrearRolAnidado";
@@ -184,7 +177,7 @@
             tvPermisosDisponibles.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
             tvPermisosDisponibles.BackColor = Color.White;
             tvPermisosDisponibles.BorderStyle = BorderStyle.FixedSingle;
-            tvPermisosDisponibles.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
+            tvPermisosDisponibles.Font = new Font("Segoe UI", 9F);
             tvPermisosDisponibles.ForeColor = Color.FromArgb(31, 41, 55);
             tvPermisosDisponibles.HideSelection = false;
             tvPermisosDisponibles.Location = new Point(28, 414);
@@ -256,7 +249,7 @@
             Controls.Add(tvPermisosUsuario);
             Controls.Add(cmbUsuarios);
             Controls.Add(tvRoles);
-            Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
+            Font = new Font("Segoe UI", 9F);
             ForeColor = Color.FromArgb(31, 41, 55);
             Name = "frmGestionRoles";
             Text = "Gestion de Roles";

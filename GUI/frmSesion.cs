@@ -98,6 +98,11 @@ namespace GUI
 
         private void MostrarVistaSociosEnRiesgo()
         {
+            if (usuarioActual == null || !usuarioActual.TienePermiso("GESTION_SOCIOS_RIESGO"))
+            {
+                MostrarVistaAlertasOperativas();
+                return;
+            }
             _mostrandoVistaChurn = true;
             btnContactarSocio.Visible = true;
             btnVistaChurn.BackColor = Color.FromArgb(185, 28, 28);
@@ -205,15 +210,29 @@ namespace GUI
                 out int cantRec,
                 out int cantEnt,
                 out int cantNut);
-            var listaRiesgo = socioBLL.ObtenerSociosEnRiesgoDeFuga(
-                out decimal tasaChurn,
-                out int cantRiesgoAlto);
-            string textoBaseChurn = T("btnVistaChurn", "📉 Socios en Riesgo (Churn)");
-            btnVistaChurn.Text = $"{textoBaseChurn}: {tasaChurn:0.#}%";
-            if (_mostrandoVistaChurn)
+            bool tienePermisoChurn = usuarioActual.TienePermiso("GESTION_SOCIOS_RIESGO");
+            if (!tienePermisoChurn && _mostrandoVistaChurn)
             {
-                dgvAlertas.DataSource = null;
-                dgvAlertas.DataSource = listaRiesgo;
+                MostrarVistaAlertasOperativas();
+                return;
+            }
+            if (tienePermisoChurn)
+            {
+                var listaRiesgo = socioBLL.ObtenerSociosEnRiesgoDeFuga(
+                    out decimal tasaChurn,
+                    out int cantRiesgoAlto);
+                string textoBaseChurn = T("btnVistaChurn", "📉 Socios en Riesgo (Churn)");
+                btnVistaChurn.Text = $"{textoBaseChurn}: {tasaChurn:0.#}%";
+                if (_mostrandoVistaChurn)
+                {
+                    dgvAlertas.DataSource = null;
+                    dgvAlertas.DataSource = listaRiesgo;
+                }
+                else
+                {
+                    dgvAlertas.DataSource = null;
+                    dgvAlertas.DataSource = alertas;
+                }
             }
             else
             {
@@ -243,6 +262,7 @@ namespace GUI
 
         private void btnContactarSocio_Click(object sender, EventArgs e)
         {
+            if (usuarioActual == null || !usuarioActual.TienePermiso("GESTION_SOCIOS_RIESGO")) return;
             try
             {
                 if (!_mostrandoVistaChurn || dgvAlertas.CurrentRow == null || !(dgvAlertas.CurrentRow.DataBoundItem is SocioRiesgoBE socioRiesgo))
@@ -388,26 +408,42 @@ namespace GUI
         private void AplicarPermisosVisuales()
         {
             bool veBitacora = usuarioActual.TienePermiso("CONTROL_BITACORA");
-            btnGestionRoles.Visible = usuarioActual.TienePermiso("GESTION_ROLES");
-            btnControlCambios.Visible = veBitacora;
+            bool veControlCambios = usuarioActual.TienePermiso("CONTROL_CAMBIOS");
+            bool veGestionRoles = usuarioActual.TienePermiso("GESTION_ROLES");
+            bool veBackup = usuarioActual.TienePermiso("REALIZAR_BACKUP");
+            bool veSociosRiesgo = usuarioActual.TienePermiso("GESTION_SOCIOS_RIESGO");
+            btnGestionRoles.Visible = veGestionRoles;
+            btnControlCambios.Visible = veControlCambios;
             panel1.Visible = veBitacora;
             dgvLogs.Visible = veBitacora;
-            btnBackup.Visible = usuarioActual.TienePermiso("REALIZAR_BACKUP");
-            bool veRec = usuarioActual.TienePermiso("VENDER_PLAN") || usuarioActual.TienePermiso("ASENTAR_TURNO") || usuarioActual.TienePermiso("REVISAR_AGENDA") || usuarioActual.TienePermiso("GESTION_ROLES");
-            bool veEnt = usuarioActual.TienePermiso("ASIGNAR_RUTINA") || usuarioActual.TienePermiso("CONSULTAR_SOCIO") || usuarioActual.TienePermiso("GESTION_ROLES");
-            bool veNut = usuarioActual.TienePermiso("ASIGNAR_PLAN_NUTRICIONAL") || usuarioActual.TienePermiso("CONSULTAR_AGENDA") || usuarioActual.TienePermiso("CONSULTAR_PLANES_NUT") || usuarioActual.TienePermiso("GESTION_ROLES");
+            btnBackup.Visible = veBackup;
+            bool veRec = usuarioActual.TienePermiso("VENDER_PLAN") || usuarioActual.TienePermiso("ASENTAR_TURNO") || usuarioActual.TienePermiso("REVISAR_AGENDA") || usuarioActual.TienePermiso("CONSULTAR_COMPROBANTES") || veGestionRoles;
+            bool veEnt = usuarioActual.TienePermiso("ASIGNAR_RUTINA") || usuarioActual.TienePermiso("CONSULTAR_SOCIO") || veGestionRoles;
+            bool veNut = usuarioActual.TienePermiso("ASIGNAR_PLAN_NUTRICIONAL") || usuarioActual.TienePermiso("CONSULTAR_AGENDA") || usuarioActual.TienePermiso("CONSULTAR_PLANES_NUT") || veGestionRoles;
             lblKpiRecepcion.Visible = veRec;
             lblKpiEntrenamiento.Visible = veEnt;
             lblKpiNutricion.Visible = veNut;
-            btnVistaChurn.Visible = veRec || veEnt;
+            btnVistaChurn.Visible = veSociosRiesgo;
+            btnVistaChurn.Enabled = veSociosRiesgo;
+            if (!veSociosRiesgo)
+            {
+                btnContactarSocio.Visible = false;
+                btnContactarSocio.Enabled = false;
+                if (_mostrandoVistaChurn)
+                {
+                    MostrarVistaAlertasOperativas();
+                }
+            }
             if (veBitacora)
             {
                 pnlDashboardAlertas.Location = new Point(28, 68);
                 pnlDashboardAlertas.Height = 226;
                 dgvAlertas.Height = 174;
+                EjecutarFiltro();
             }
             else
             {
+                dgvLogs.DataSource = null;
                 pnlDashboardAlertas.Location = new Point(28, 68);
                 pnlDashboardAlertas.Height = 656;
                 dgvAlertas.Height = 602;
@@ -450,6 +486,11 @@ namespace GUI
 
         private void EjecutarFiltro()
         {
+            if (usuarioActual == null || !usuarioActual.TienePermiso("CONTROL_BITACORA"))
+            {
+                dgvLogs.DataSource = null;
+                return;
+            }
             int? idUsu = null;
             if (cmbUsuarios.SelectedValue != null && (int)cmbUsuarios.SelectedValue > 0)
             {
@@ -549,11 +590,13 @@ namespace GUI
 
         private void btnControlCambios_Click(object sender, EventArgs e)
         {
+            if (usuarioActual == null || !usuarioActual.TienePermiso("CONTROL_CAMBIOS")) return;
             AbrirSubFormularioEnContenedor(new frmControlCambios());
         }
 
         private void btnGestionRoles_Click(object sender, EventArgs e)
         {
+            if (usuarioActual == null || !usuarioActual.TienePermiso("GESTION_ROLES")) return;
             AbrirSubFormularioEnContenedor(new frmGestionRoles());
         }
 

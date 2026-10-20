@@ -121,6 +121,8 @@ namespace BLL
         }
         public void RestaurarEstadoUsuario(int idUsuario, int idCambioHistorico, UsuarioBE usuarioAutor)
         {
+            if (usuarioAutor == null || !usuarioAutor.TienePermiso("CONTROL_CAMBIOS"))
+                throw new Exception("Operación de Seguridad Denegada: No posee el permiso requerido (CONTROL_CAMBIOS).");
             var historial = usuarioDAL.ListarHistorial(idUsuario);
             var versionARestaurar = historial.FirstOrDefault(h => h.ID_Cambio == idCambioHistorico);
             if (versionARestaurar == null)
@@ -190,6 +192,8 @@ namespace BLL
         }
         public void ModificarJerarquiaUsuario(int idUsuarioTarget, int nuevoNivel, UsuarioBE usuarioAutor)
         {
+            if (usuarioAutor == null || !usuarioAutor.TienePermiso("CONTROL_CAMBIOS"))
+                throw new Exception("Operación de Seguridad Denegada: No posee el permiso requerido (CONTROL_CAMBIOS).");
             UsuarioBE target = usuarioDAL.ObtenerPorID(idUsuarioTarget);
             if (target == null) throw new Exception("El usuario especificado no existe.");
             if (target.NivelJerarquia == 100)

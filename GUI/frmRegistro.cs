@@ -28,6 +28,7 @@ namespace GUI
             txtClave2.PasswordChar = '*';
             btnVerClave.Text = T("btnVerClave_Text", "Ver Clave");
             GestorIdioma.Instancia.Suscribir(this);
+            this.FormClosing += (s, e) => GestorIdioma.Instancia.Desuscribir(this);
         }
         private void btnRegistrar_Click(object sender, EventArgs e)
         {
@@ -78,6 +79,9 @@ namespace GUI
             if (_traducciones.ContainsKey(this.Name))
                 this.Text = _traducciones[this.Name];
             TraducirControlesRecursivo(this.Controls, _traducciones);
+            btnVerClave.Text = (txtClave1.PasswordChar == '*' && txtClave2.PasswordChar == '*')
+                ? T("btnVerClave_Text", "Ver Clave")
+                : T("btnOcultarClave", "Ocultar Clave");
         }
         private void TraducirControlesRecursivo(Control.ControlCollection controles, Dictionary<string, string> traducciones)
         {

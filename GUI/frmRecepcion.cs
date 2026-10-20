@@ -14,6 +14,11 @@ namespace GUI
         ComprobantePagoBLL comprobanteBLL = new ComprobantePagoBLL();
         IdiomaBLL idiomaBLL = new IdiomaBLL();
         SocioBE socioActual = null;
+        private Dictionary<string, string> _traducciones = new Dictionary<string, string>();
+        private string T(string clave, string textoPorDefecto)
+        {
+            return _traducciones != null && _traducciones.ContainsKey(clave) ? _traducciones[clave] : textoPorDefecto;
+        }
 
         public frmRecepcion()
         {
@@ -31,23 +36,25 @@ namespace GUI
 
         public void ActualizarIdioma(IdiomaBE idioma)
         {
-            var traducciones = idiomaBLL.ObtenerTraducciones(idioma, this.Name);
-            if (traducciones.ContainsKey("btnBuscar")) btnBuscar.Text = traducciones["btnBuscar"];
-            if (traducciones.ContainsKey("btnConfirmarVenta")) btnConfirmarVenta.Text = traducciones["btnConfirmarVenta"];
-            if (traducciones.ContainsKey("btnConsultarPlanes")) btnConsultarPlanes.Text = traducciones["btnConsultarPlanes"];
-            if (traducciones.ContainsKey("lblDNI")) lblDNI.Text = traducciones["lblDNI"];
-            if (traducciones.ContainsKey("lblNombre")) lblNombre.Text = traducciones["lblNombre"];
-            if (traducciones.ContainsKey("lblApellido")) lblApellido.Text = traducciones["lblApellido"];
-            if (traducciones.ContainsKey("lblTelefono")) lblTelefono.Text = traducciones["lblTelefono"];
-            if (traducciones.ContainsKey("lblEmail")) lblEmail.Text = traducciones["lblEmail"];
-            if (traducciones.ContainsKey("lblPlan")) lblPlan.Text = traducciones["lblPlan"];
-            if (traducciones.ContainsKey("lblMetodoPago")) lblMetodoPago.Text = traducciones["lblMetodoPago"];
-            this.Text = traducciones.ContainsKey("titRecepcion") ? traducciones["titRecepcion"] : "Recepción";
-            Dictionary<string, string> metodos = new Dictionary<string, string>();
-            metodos.Add("Efectivo", traducciones.ContainsKey("metodoEfectivo") ? traducciones["metodoEfectivo"] : "Efectivo");
-            metodos.Add("Tarjeta de Débito", traducciones.ContainsKey("metodoDebito") ? traducciones["metodoDebito"] : "Tarjeta de Débito");
-            metodos.Add("Tarjeta de Crédito", traducciones.ContainsKey("metodoCredito") ? traducciones["metodoCredito"] : "Tarjeta de Crédito");
-            metodos.Add("Transferencia", traducciones.ContainsKey("metodoTransferencia") ? traducciones["metodoTransferencia"] : "Transferencia");
+            _traducciones = idiomaBLL.ObtenerTraducciones(idioma, this.Name);
+            if (_traducciones.ContainsKey("btnBuscar")) btnBuscar.Text = _traducciones["btnBuscar"];
+            if (_traducciones.ContainsKey("btnConfirmarVenta")) btnConfirmarVenta.Text = _traducciones["btnConfirmarVenta"];
+            if (_traducciones.ContainsKey("btnConsultarPlanes")) btnConsultarPlanes.Text = _traducciones["btnConsultarPlanes"];
+            if (_traducciones.ContainsKey("lblDNI")) lblDNI.Text = _traducciones["lblDNI"];
+            if (_traducciones.ContainsKey("lblNombre")) lblNombre.Text = _traducciones["lblNombre"];
+            if (_traducciones.ContainsKey("lblApellido")) lblApellido.Text = _traducciones["lblApellido"];
+            if (_traducciones.ContainsKey("lblTelefono")) lblTelefono.Text = _traducciones["lblTelefono"];
+            if (_traducciones.ContainsKey("lblEmail")) lblEmail.Text = _traducciones["lblEmail"];
+            if (_traducciones.ContainsKey("lblPlan")) lblPlan.Text = _traducciones["lblPlan"];
+            if (_traducciones.ContainsKey("lblMetodoPago")) lblMetodoPago.Text = _traducciones["lblMetodoPago"];
+            this.Text = T("titRecepcion", "Recepción");
+            Dictionary<string, string> metodos = new Dictionary<string, string>
+            {
+                { "Efectivo", T("metodoEfectivo", "Efectivo") },
+                { "Tarjeta de Débito", T("metodoDebito", "Tarjeta de Débito") },
+                { "Tarjeta de Crédito", T("metodoCredito", "Tarjeta de Crédito") },
+                { "Transferencia", T("metodoTransferencia", "Transferencia") }
+            };
             cmbMetodoPago.DataSource = new BindingSource(metodos, null);
             cmbMetodoPago.DisplayMember = "Value";
             cmbMetodoPago.ValueMember = "Key";
@@ -57,9 +64,9 @@ namespace GUI
                 List<PlanSuscripcionBE> planes = (List<PlanSuscripcionBE>)cmbPlanes.DataSource;
                 foreach (var plan in planes)
                 {
-                    if (plan.CodigoPlan == 1 && traducciones.ContainsKey("planMensual")) plan.Nombre = traducciones["planMensual"];
-                    if (plan.CodigoPlan == 2 && traducciones.ContainsKey("planTrimestral")) plan.Nombre = traducciones["planTrimestral"];
-                    if (plan.CodigoPlan == 3 && traducciones.ContainsKey("planAnual")) plan.Nombre = traducciones["planAnual"];
+                    if (plan.CodigoPlan == 1) plan.Nombre = T("planMensual", "Plan Mensual");
+                    if (plan.CodigoPlan == 2) plan.Nombre = T("planTrimestral", "Plan Trimestral");
+                    if (plan.CodigoPlan == 3) plan.Nombre = T("planAnual", "Plan Anual");
                 }
                 cmbPlanes.DataSource = null;
                 cmbPlanes.DataSource = planes;
@@ -94,7 +101,7 @@ namespace GUI
         {
             if (string.IsNullOrWhiteSpace(txtDNI.Text))
             {
-                MessageBox.Show("Debe ingresar un DNI para buscar.", "Atención", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show(T("msgIngresarDNI", "Debe ingresar un DNI para buscar."), T("titAtencion", "Atención"), MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
             socioActual = socioBLL.ConsultarSocio(txtDNI.Text.Trim());
@@ -109,8 +116,8 @@ namespace GUI
                 if (tienePlanVigente)
                 {
                     MessageBox.Show(
-                        $"Operación no permitida:\r\nEl socio {socioActual.Nombre} {socioActual.Apellido} (DNI {socioActual.DNI}) ya posee un plan vigente activo ({nombrePlan}) con cobertura hasta el {fechaVenc:dd/MM/yyyy} ({diasRestantes} día(s) restantes).\r\n\r\nNo se puede vender un nuevo plan hasta que venza el actual.",
-                        "Socio con Plan Vigente",
+                        $"{T("msgSocioConPlanVigente", "Operación no permitida: El socio ya posee un plan vigente activo. No se puede vender un nuevo plan hasta que venza el actual.")}\r\n\r\n({socioActual.Nombre} {socioActual.Apellido} — {nombrePlan}: {fechaVenc:dd/MM/yyyy})",
+                        T("titSocioConPlanVigente", "Socio con Plan Vigente"),
                         MessageBoxButtons.OK,
                         MessageBoxIcon.Warning);
                     LimpiarCamposSocio();
@@ -125,7 +132,7 @@ namespace GUI
             }
             else
             {
-                MessageBox.Show("Socio no encontrado. Complete los datos para procesar el Alta.", "Nuevo Socio", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show(T("msgSocioNoEncontradoAlta", "Socio no encontrado. Complete los datos para procesar el Alta."), T("titNuevoSocio", "Nuevo Socio"), MessageBoxButtons.OK, MessageBoxIcon.Information);
                 txtNombre.Enabled = true;
                 txtApellido.Enabled = true;
                 txtNombre.Clear();
@@ -141,9 +148,9 @@ namespace GUI
             try
             {
                 if (socioActual == null)
-                    throw new Exception("Debe buscar o ingresar un socio primero.");
+                    throw new Exception(T("msgBuscarSocioPrimero", "Debe buscar o ingresar un socio primero."));
                 if (cmbPlanes.SelectedItem == null)
-                    throw new Exception("Debe seleccionar un plan de suscripción.");
+                    throw new Exception(T("msgSeleccionarPlan", "Debe seleccionar un plan de suscripción."));
                 string metodoPago = string.Empty;
                 if (cmbMetodoPago.SelectedValue != null)
                 {
@@ -162,7 +169,7 @@ namespace GUI
                     metodoPago = cmbMetodoPago.Text.Trim();
                 }
                 if (string.IsNullOrWhiteSpace(metodoPago))
-                    throw new Exception("Debe seleccionar un método de pago.");
+                    throw new Exception(T("msgSeleccionarMetodoPago", "Debe seleccionar un método de pago."));
                 if (socioActual.ID_Socio == 0)
                 {
                     socioActual.DNI = txtDNI.Text.Trim();
@@ -181,12 +188,12 @@ namespace GUI
                 comprobante.Socio = socioActual;
                 comprobante.EmpleadoCobrador = SessionManager.Instancia.UsuarioActual;
                 comprobanteBLL.RegistrarVenta(comprobante);
-                MessageBox.Show("Venta registrada y permisos de acceso habilitados con éxito.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show(T("msgVentaExito", "Venta registrada y permisos de acceso habilitados con éxito."), T("titExito", "Éxito"), MessageBoxButtons.OK, MessageBoxIcon.Information);
                 this.Close();
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(T(ex.Message, ex.Message), T("titError", "Error"), MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 

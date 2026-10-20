@@ -23,6 +23,11 @@ namespace GUI
         List<PuntoEvolucionBE> _serieEvolucionFuerza = new List<PuntoEvolucionBE>();
         bool _cargandoInicial = false;
         int _varianteSugerencia = 0;
+        private Dictionary<string, string> _traducciones = new Dictionary<string, string>();
+        private string T(string clave, string textoPorDefecto)
+        {
+            return _traducciones != null && _traducciones.ContainsKey(clave) ? _traducciones[clave] : textoPorDefecto;
+        }
 
         public frmEntrenamiento()
         {
@@ -160,7 +165,7 @@ namespace GUI
                     puntos.Add(new PuntoEvolucionBE
                     {
                         Fecha = DateTime.Now,
-                        EtiquetaFecha = "Nueva (Actual)",
+                        EtiquetaFecha = T("txtNuevaActual", "Nueva (Actual)"),
                         ValorPrimario = cargaPromNueva,
                         ValorSecundario = volNuevo,
                         Detalle = $"{cargaPromNueva:0.0} kg prom."
@@ -190,14 +195,32 @@ namespace GUI
 
         public void ActualizarIdioma(IdiomaBE idioma)
         {
-            var traducciones = idiomaBLL.ObtenerTraducciones(idioma, this.Name);
-            if (traducciones.ContainsKey("btnBuscar")) btnBuscar.Text = traducciones["btnBuscar"];
-            if (traducciones.ContainsKey("btnAsignarRutina")) btnAsignarRutina.Text = traducciones["btnAsignarRutina"];
-            if (traducciones.ContainsKey("lblDNI")) lblDNI.Text = traducciones["lblDNI"];
-            if (traducciones.ContainsKey("lblObjetivo")) lblObjetivo.Text = traducciones["lblObjetivo"];
-            if (traducciones.ContainsKey("lblFrecuencia")) lblFrecuencia.Text = traducciones["lblFrecuencia"];
-            if (traducciones.ContainsKey("lblDetalle")) lblDetalle.Text = traducciones["lblDetalle"];
-            this.Text = traducciones.ContainsKey("titEntrenamiento") ? traducciones["titEntrenamiento"] : "Asignación de Rutina";
+            _traducciones = idiomaBLL.ObtenerTraducciones(idioma, this.Name);
+            btnBuscar.Text = T("btnBuscar", "Validar Socio");
+            btnAsignarRutina.Text = T("btnAsignarRutina", "Guardar Rutina");
+            btnSugerirRutina.Text = T("btnSugerirRutina", "Regenerar Sugerencia");
+            btnQuitarEjercicio.Text = T("btnQuitarEjercicio", "Quitar Ejercicio");
+            lblDNI.Text = T("lblDNI", "DNI del Socio:");
+            lblObjetivo.Text = T("lblObjetivo", "Objetivo Físico:");
+            lblFrecuencia.Text = T("lblFrecuencia", "Días por Semana:");
+            lblDetalle.Text = T("lblDetalle", "Detalle de Ejercicios:");
+            lblTituloMapa.Text = T("lblTituloMapa", "Mapa de Calor Muscular (Volumen)");
+            this.Text = T("titEntrenamiento", "Diseño de Entrenamiento");
+            if (dgvEjercicios.Columns["Nombre"] != null)
+                dgvEjercicios.Columns["Nombre"].HeaderText = T("colNombre", "Ejercicio");
+            if (dgvEjercicios.Columns["GrupoMuscular"] != null)
+                dgvEjercicios.Columns["GrupoMuscular"].HeaderText = T("colGrupoMuscular", "Grupo Muscular");
+            if (dgvEjercicios.Columns["Series"] != null)
+                dgvEjercicios.Columns["Series"].HeaderText = T("colSeries", "Series");
+            if (dgvEjercicios.Columns["Repeticiones"] != null)
+                dgvEjercicios.Columns["Repeticiones"].HeaderText = T("colRepeticiones", "Repeticiones");
+            if (dgvEjercicios.Columns["TiempoDescansoSegundos"] != null)
+                dgvEjercicios.Columns["TiempoDescansoSegundos"].HeaderText = T("colTiempoDescansoSegundos", "Descanso (seg)");
+            if (dgvEjercicios.Columns["CargaSugeridaKg"] != null)
+                dgvEjercicios.Columns["CargaSugeridaKg"].HeaderText = T("colCargaSugeridaKg", "Carga Sug. (Kg)");
+            ActualizarEtiquetaSocioValidado();
+            ActualizarTagSinergiaNutricional();
+            RefrescarVisualizacionesEntrenamiento();
         }
 
         private void BloquearControlesRutina(bool bloquear)
@@ -210,11 +233,20 @@ namespace GUI
             btnAsignarRutina.Enabled = !bloquear;
         }
 
+        private void ActualizarEtiquetaSocioValidado()
+        {
+            if (socioActual != null && socioActual.EstadoActivo)
+            {
+                char letraVariante = (char)('A' + (_varianteSugerencia % 3));
+                lblInfoSocio.Text = $"{T("lblSocioValidadoPrefijo", "Socio Validado: ")}{socioActual.Nombre} {socioActual.Apellido} ({T("lblSugerenciaVariante", "Sugerencia: Variante ")}{letraVariante})";
+            }
+        }
+
         private void ActualizarTagSinergiaNutricional()
         {
             if (socioActual == null || !socioActual.EstadoActivo)
             {
-                lblAlertaNutricional.Text = "ℹ️ SINERGIA INTER-ÁREAS: Valide un socio activo para consultar su estado clínico-nutricional.";
+                lblAlertaNutricional.Text = T("lblSinergiaInicial", "ℹ️ SINERGIA INTER-ÁREAS: Valide un socio activo para consultar su estado clínico-nutricional.");
                 lblAlertaNutricional.BackColor = Color.FromArgb(241, 245, 249);
                 lblAlertaNutricional.ForeColor = Color.FromArgb(71, 85, 105);
                 return;
@@ -247,15 +279,6 @@ namespace GUI
             }
         }
 
-        private void ActualizarEtiquetaSocioValidado()
-        {
-            if (socioActual != null)
-            {
-                char letraVariante = (char)('A' + (_varianteSugerencia % 3));
-                lblInfoSocio.Text = $"Socio Validado: {socioActual.Nombre} {socioActual.Apellido} (Sugerencia: Variante {letraVariante})";
-            }
-        }
-
         private void btnBuscar_Click(object sender, EventArgs e)
         {
             try
@@ -271,8 +294,12 @@ namespace GUI
                         out string msgVigencia);
                     if (!planVigente)
                     {
-                        MessageBox.Show($"No se puede asignar una nueva rutina al socio {socioActual.Nombre} {socioActual.Apellido}:\r\n{msgVigencia}\r\n\r\nDerívelo a Recepción para renovar su membresía.", "Suscripción Vencida / Inactiva", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                        lblInfoSocio.Text = $"Socio: {socioActual.Nombre} {socioActual.Apellido} — [Suscripción Vencida / Inactiva]";
+                        MessageBox.Show(
+                            $"{T("msgSocioVencido", "No se puede asignar una nueva rutina al socio porque su suscripción se encuentra vencida o inactiva. Derívelo a Recepción.")}\r\n\r\n({msgVigencia})",
+                            T("titSuscripcionVencida", "Suscripción Vencida / Inactiva"),
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Warning);
+                        lblInfoSocio.Text = $"{socioActual.Nombre} {socioActual.Apellido} — [{T("titSuscripcionVencida", "Suscripción Vencida / Inactiva")}]";
                         BloquearControlesRutina(true);
                         _rutinasHistoricasSocio.Clear();
                         _ejerciciosBinding.Clear();
@@ -289,7 +316,7 @@ namespace GUI
                 }
                 else
                 {
-                    MessageBox.Show("Socio no encontrado. Verifique el DNI.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show(T("msgSocioNoEncontrado", "Socio no encontrado. Verifique el DNI."), T("titError", "Error"), MessageBoxButtons.OK, MessageBoxIcon.Error);
                     lblInfoSocio.Text = "-";
                     socioActual = null;
                     _rutinasHistoricasSocio.Clear();
@@ -301,7 +328,7 @@ namespace GUI
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(T(ex.Message, ex.Message), T("titError", "Error"), MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -355,10 +382,10 @@ namespace GUI
             using (Pen penEje = new Pen(Color.FromArgb(148, 163, 184), 1.2f))
             using (Pen penCurva = new Pen(Color.FromArgb(16, 185, 129), 2.5f))
             {
-                g.DrawString("Progresión de Fuerza del Socio (Historial + Rutina en Diseño)", fontTitulo, brushTexto, 12, 6);
+                g.DrawString(T("titGraficoFuerza", "Progresión de Fuerza del Socio (Historial + Rutina en Diseño)"), fontTitulo, brushTexto, 12, 6);
                 if (_serieEvolucionFuerza == null || _serieEvolucionFuerza.Count == 0)
                 {
-                    g.DrawString("Valide un socio para visualizar su progresión histórica de cargas (kg) y la proyección de la nueva rutina.", fontEje, brushGris, 14, 72);
+                    g.DrawString(T("msgGraficoFuerzaVacio", "Valide un socio para visualizar su progresión histórica de cargas (kg) y la proyección de la nueva rutina."), fontEje, brushGris, 14, 72);
                     return;
                 }
                 decimal cargaIni = _serieEvolucionFuerza.First().ValorPrimario;
@@ -463,8 +490,8 @@ namespace GUI
                 int cxDorso = 232;
                 int yBase = 26;
                 StringFormat sfCenter = new StringFormat { Alignment = StringAlignment.Center };
-                g.DrawString("FRENTE", fontSub, brushTexto, cxFrente, 6, sfCenter);
-                g.DrawString("DORSO", fontSub, brushTexto, cxDorso, 6, sfCenter);
+                g.DrawString(T("txtFrente", "FRENTE"), fontSub, brushTexto, cxFrente, 6, sfCenter);
+                g.DrawString(T("txtDorso", "DORSO"), fontSub, brushTexto, cxDorso, 6, sfCenter);
                 g.FillEllipse(brushCabeza, cxFrente - 12, yBase, 24, 26);
                 g.DrawEllipse(penBorde, cxFrente - 12, yBase, 24, 26);
                 g.FillRectangle(brushCabeza, cxFrente - 5, yBase + 25, 10, 7);
@@ -585,13 +612,13 @@ namespace GUI
                 {
                     g.FillRectangle(bRojo, 14, yLeyenda, 11, 11);
                     g.DrawRectangle(penBorde, 14, yLeyenda, 11, 11);
-                    g.DrawString("Primario (≥5s)", fontLeyenda, brushTexto, 28, yLeyenda - 2);
+                    g.DrawString(T("txtPrimario", "Primario (≥5s)"), fontLeyenda, brushTexto, 28, yLeyenda - 2);
                     g.FillRectangle(bNaranja, 114, yLeyenda, 11, 11);
                     g.DrawRectangle(penBorde, 114, yLeyenda, 11, 11);
-                    g.DrawString("Secundario (1-4s)", fontLeyenda, brushTexto, 128, yLeyenda - 2);
+                    g.DrawString(T("txtSecundario", "Secundario (1-4s)"), fontLeyenda, brushTexto, 128, yLeyenda - 2);
                     g.FillRectangle(bGris, 228, yLeyenda, 11, 11);
                     g.DrawRectangle(penBorde, 228, yLeyenda, 11, 11);
-                    g.DrawString("Inactivo", fontLeyenda, brushTexto, 242, yLeyenda - 2);
+                    g.DrawString(T("txtInactivo", "Inactivo"), fontLeyenda, brushTexto, 242, yLeyenda - 2);
                 }
                 string[] ordenGrupos = { "Pecho", "Espalda", "Piernas", "Hombros", "Bíceps", "Tríceps", "Core" };
                 int col = 0;
@@ -638,12 +665,12 @@ namespace GUI
                 rutina.Socio = socioActual;
                 rutina.Entrenador = SessionManager.Instancia.UsuarioActual;
                 rutinaBLL.AsignarRutina(rutina);
-                MessageBox.Show("Rutina de entrenamiento generada y asignada al socio con éxito.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show(T("msgRutinaAsignadaExito", "Rutina de entrenamiento generada y asignada al socio con éxito."), T("titExito", "Éxito"), MessageBoxButtons.OK, MessageBoxIcon.Information);
                 this.Close();
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message, "Error de Validación", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show(T(ex.Message, ex.Message), T("titError", "Error de Validación"), MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
         }
 

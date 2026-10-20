@@ -104,6 +104,22 @@ namespace GUI
             if (_traducciones.ContainsKey(this.Name))
                 this.Text = _traducciones[this.Name];
             TraducirControlesRecursivo(this.Controls, _traducciones);
+            if (cmbFiltroFormulario != null && cmbFiltroFormulario.Items.Count > 0 && _traduccionesActuales != null && _traduccionesActuales.Count > 0)
+            {
+                int idx = cmbFiltroFormulario.SelectedIndex;
+                var formularios = _traduccionesActuales
+                    .Where(t => !string.IsNullOrEmpty(t.Formulario))
+                    .Select(t => t.Formulario)
+                    .Distinct()
+                    .OrderBy(f => f)
+                    .ToList();
+                formularios.Insert(0, T("cmbFiltroTodos", "Todos"));
+                cmbFiltroFormulario.SelectedIndexChanged -= CmbFiltroFormulario_SelectedIndexChanged;
+                cmbFiltroFormulario.DataSource = formularios;
+                if (idx >= 0 && idx < cmbFiltroFormulario.Items.Count)
+                    cmbFiltroFormulario.SelectedIndex = idx;
+                cmbFiltroFormulario.SelectedIndexChanged += CmbFiltroFormulario_SelectedIndexChanged;
+            }
         }
         private void TraducirControlesRecursivo(Control.ControlCollection controles, Dictionary<string, string> traducciones)
         {

@@ -12,6 +12,11 @@ namespace GUI
     {
         ComprobantePagoBLL comprobanteBLL = new ComprobantePagoBLL();
         IdiomaBLL idiomaBLL = new IdiomaBLL();
+        private Dictionary<string, string> _traducciones = new Dictionary<string, string>();
+        private string T(string clave, string textoPorDefecto)
+        {
+            return _traducciones != null && _traducciones.ContainsKey(clave) ? _traducciones[clave] : textoPorDefecto;
+        }
 
         public frmConsultarComprobantes()
         {
@@ -29,26 +34,30 @@ namespace GUI
 
         public void ActualizarIdioma(IdiomaBE idioma)
         {
-            var traducciones = idiomaBLL.ObtenerTraducciones(idioma, this.Name);
-            if (traducciones.ContainsKey("lblDesde")) lblDesde.Text = traducciones["lblDesde"];
-            if (traducciones.ContainsKey("lblHasta")) lblHasta.Text = traducciones["lblHasta"];
-            if (traducciones.ContainsKey("lblDNI")) lblDNI.Text = traducciones["lblDNI"];
-            if (traducciones.ContainsKey("btnFiltrar")) btnFiltrar.Text = traducciones["btnFiltrar"];
-            if (traducciones.ContainsKey("btnLimpiar")) btnLimpiar.Text = traducciones["btnLimpiar"];
-            this.Text = traducciones.ContainsKey("titConsultarComprobantes") ? traducciones["titConsultarComprobantes"] : "Consulta de Comprobantes";
-            if (dgvComprobantes.Columns["NroComprobante"] != null && traducciones.ContainsKey("colNro")) dgvComprobantes.Columns["NroComprobante"].HeaderText = traducciones["colNro"];
-            if (dgvComprobantes.Columns["Fecha"] != null && traducciones.ContainsKey("colFecha")) dgvComprobantes.Columns["Fecha"].HeaderText = traducciones["colFecha"];
-            if (dgvComprobantes.Columns["MontoTotal"] != null && traducciones.ContainsKey("colMonto")) dgvComprobantes.Columns["MontoTotal"].HeaderText = traducciones["colMonto"];
-            if (dgvComprobantes.Columns["MetodoPago"] != null && traducciones.ContainsKey("colMetodo")) dgvComprobantes.Columns["MetodoPago"].HeaderText = traducciones["colMetodo"];
-            if (dgvComprobantes.Columns["DNI_Socio"] != null && traducciones.ContainsKey("colDNISocio")) dgvComprobantes.Columns["DNI_Socio"].HeaderText = traducciones["colDNISocio"];
-            if (dgvComprobantes.Columns["Nombre_Socio"] != null && traducciones.ContainsKey("colNombreSocio")) dgvComprobantes.Columns["Nombre_Socio"].HeaderText = traducciones["colNombreSocio"];
-            if (dgvComprobantes.Columns["Cobrador"] != null && traducciones.ContainsKey("colCobrador")) dgvComprobantes.Columns["Cobrador"].HeaderText = traducciones["colCobrador"];
+            _traducciones = idiomaBLL.ObtenerTraducciones(idioma, this.Name);
+            if (_traducciones.ContainsKey("lblDesde")) lblDesde.Text = _traducciones["lblDesde"];
+            if (_traducciones.ContainsKey("lblHasta")) lblHasta.Text = _traducciones["lblHasta"];
+            if (_traducciones.ContainsKey("lblDNI")) lblDNI.Text = _traducciones["lblDNI"];
+            if (_traducciones.ContainsKey("btnFiltrar")) btnFiltrar.Text = _traducciones["btnFiltrar"];
+            if (_traducciones.ContainsKey("btnLimpiar")) btnLimpiar.Text = _traducciones["btnLimpiar"];
+            this.Text = T("titConsultarComprobantes", "Consulta de Comprobantes");
+            if (dgvComprobantes.Columns["NroComprobante"] != null && _traducciones.ContainsKey("colNro")) dgvComprobantes.Columns["NroComprobante"].HeaderText = _traducciones["colNro"];
+            if (dgvComprobantes.Columns["Fecha"] != null && _traducciones.ContainsKey("colFecha")) dgvComprobantes.Columns["Fecha"].HeaderText = _traducciones["colFecha"];
+            if (dgvComprobantes.Columns["MontoTotal"] != null && _traducciones.ContainsKey("colMonto")) dgvComprobantes.Columns["MontoTotal"].HeaderText = _traducciones["colMonto"];
+            if (dgvComprobantes.Columns["MetodoPago"] != null && _traducciones.ContainsKey("colMetodo")) dgvComprobantes.Columns["MetodoPago"].HeaderText = _traducciones["colMetodo"];
+            if (dgvComprobantes.Columns["DNI_Socio"] != null && _traducciones.ContainsKey("colDNISocio")) dgvComprobantes.Columns["DNI_Socio"].HeaderText = _traducciones["colDNISocio"];
+            if (dgvComprobantes.Columns["Nombre_Socio"] != null && _traducciones.ContainsKey("colNombreSocio")) dgvComprobantes.Columns["Nombre_Socio"].HeaderText = _traducciones["colNombreSocio"];
+            if (dgvComprobantes.Columns["Cobrador"] != null && _traducciones.ContainsKey("colCobrador")) dgvComprobantes.Columns["Cobrador"].HeaderText = _traducciones["colCobrador"];
         }
 
         private void EjecutarFiltro()
         {
             try
             {
+                if (dtpDesde.Value.Date > dtpHasta.Value.Date)
+                {
+                    throw new Exception(T("msgFechasInvalidas", "La fecha 'Desde' no puede ser mayor a la fecha 'Hasta'."));
+                }
                 var lista = comprobanteBLL.ConsultarComprobantesFiltros(dtpDesde.Value, dtpHasta.Value, txtDNI.Text);
                 dgvComprobantes.DataSource = null;
                 dgvComprobantes.DataSource = lista.Select(c => new
@@ -65,7 +74,7 @@ namespace GUI
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show(T(ex.Message, ex.Message), T("titError", "Error"), MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
         }
 

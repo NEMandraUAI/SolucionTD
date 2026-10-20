@@ -66,31 +66,31 @@ namespace GUI
             dgvAlertas.Columns.Add(new DataGridViewTextBoxColumn
             {
                 DataPropertyName = "Area",
-                HeaderText = "Área Operativa",
+                HeaderText = T("Area", "Área Operativa"),
                 FillWeight = 13
             });
             dgvAlertas.Columns.Add(new DataGridViewTextBoxColumn
             {
                 DataPropertyName = "Prioridad",
-                HeaderText = "Nivel",
+                HeaderText = T("Prioridad", "Nivel"),
                 FillWeight = 9
             });
             dgvAlertas.Columns.Add(new DataGridViewTextBoxColumn
             {
                 DataPropertyName = "Titulo",
-                HeaderText = "Alerta Proactiva",
+                HeaderText = T("Titulo", "Alerta Proactiva"),
                 FillWeight = 32
             });
             dgvAlertas.Columns.Add(new DataGridViewTextBoxColumn
             {
                 DataPropertyName = "Detalle",
-                HeaderText = "Detalle y Acción Sugerida",
+                HeaderText = T("Detalle", "Detalle y Acción Sugerida"),
                 FillWeight = 35
             });
             dgvAlertas.Columns.Add(new DataGridViewTextBoxColumn
             {
                 DataPropertyName = "FechaReferencia",
-                HeaderText = "Referencia",
+                HeaderText = T("FechaReferencia", "Referencia"),
                 FillWeight = 11
             });
             CargarDatosDashboard();
@@ -110,43 +110,43 @@ namespace GUI
             dgvAlertas.Columns.Add(new DataGridViewTextBoxColumn
             {
                 DataPropertyName = "DNI",
-                HeaderText = "DNI",
+                HeaderText = T("DNI", "DNI"),
                 FillWeight = 10
             });
             dgvAlertas.Columns.Add(new DataGridViewTextBoxColumn
             {
                 DataPropertyName = "Socio",
-                HeaderText = "Socio",
+                HeaderText = T("Socio", "Socio"),
                 FillWeight = 16
             });
             dgvAlertas.Columns.Add(new DataGridViewTextBoxColumn
             {
                 DataPropertyName = "PlanActual",
-                HeaderText = "Plan Asociado",
+                HeaderText = T("PlanActual", "Plan Asociado"),
                 FillWeight = 12
             });
             dgvAlertas.Columns.Add(new DataGridViewTextBoxColumn
             {
                 DataPropertyName = "NivelRiesgo",
-                HeaderText = "Clasificación de Riesgo",
+                HeaderText = T("NivelRiesgo", "Clasificación de Riesgo"),
                 FillWeight = 17
             });
             dgvAlertas.Columns.Add(new DataGridViewTextBoxColumn
             {
                 DataPropertyName = "ProbabilidadFuga",
-                HeaderText = "Score Fuga",
+                HeaderText = T("ProbabilidadFuga", "Score Fuga"),
                 FillWeight = 9
             });
             dgvAlertas.Columns.Add(new DataGridViewTextBoxColumn
             {
                 DataPropertyName = "MotivoDetectado",
-                HeaderText = "Diagnóstico de Retención / Causas Detectadas",
+                HeaderText = T("MotivoDetectado", "Diagnóstico de Retención / Causas Detectadas"),
                 FillWeight = 26
             });
             dgvAlertas.Columns.Add(new DataGridViewTextBoxColumn
             {
                 DataPropertyName = "UltimaActividad",
-                HeaderText = "Últ. Mov.",
+                HeaderText = T("UltimaActividad", "Últ. Mov."),
                 FillWeight = 10
             });
             CargarDatosDashboard();
@@ -208,7 +208,8 @@ namespace GUI
             var listaRiesgo = socioBLL.ObtenerSociosEnRiesgoDeFuga(
                 out decimal tasaChurn,
                 out int cantRiesgoAlto);
-            btnVistaChurn.Text = $"📉 Socios en Riesgo (Churn: {tasaChurn:0.#}%)";
+            string textoBaseChurn = T("btnVistaChurn", "📉 Socios en Riesgo (Churn)");
+            btnVistaChurn.Text = $"{textoBaseChurn}: {tasaChurn:0.#}%";
             if (_mostrandoVistaChurn)
             {
                 dgvAlertas.DataSource = null;
@@ -219,9 +220,10 @@ namespace GUI
                 dgvAlertas.DataSource = null;
                 dgvAlertas.DataSource = alertas;
             }
-            lblKpiRecepcion.Text = $"Recepción: {cantRec} alerta(s)";
-            lblKpiEntrenamiento.Text = $"Entrenamiento: {cantEnt} alerta(s)";
-            lblKpiNutricion.Text = $"Nutrición: {cantNut} alerta(s)";
+            string sufijo = T("kpiAlertasSufijo", " alerta(s)");
+            lblKpiRecepcion.Text = T("kpiRecepcionBase", "Recepción: ") + cantRec + sufijo;
+            lblKpiEntrenamiento.Text = T("kpiEntrenamientoBase", "Entrenamiento: ") + cantEnt + sufijo;
+            lblKpiNutricion.Text = T("kpiNutricionBase", "Nutrición: ") + cantNut + sufijo;
         }
 
         private void btnVistaAlertas_Click(object sender, EventArgs e)
@@ -245,19 +247,17 @@ namespace GUI
             {
                 if (!_mostrandoVistaChurn || dgvAlertas.CurrentRow == null || !(dgvAlertas.CurrentRow.DataBoundItem is SocioRiesgoBE socioRiesgo))
                 {
-                    MessageBox.Show("Seleccione un socio de la grilla 'Socios en Riesgo' para iniciar el contacto de retención.", "Atención", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    MessageBox.Show(T("msgSeleccionarSocioRiesgo", "Seleccione un socio de la grilla 'Socios en Riesgo' para iniciar el contacto de retención."), T("titError", "Atención"), MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;
                 }
                 string mensaje = socioBLL.GenerarMensajeRetencion(socioRiesgo);
                 Clipboard.SetText(mensaje);
                 DialogResult canal = MessageBox.Show(
-                    $"Socio seleccionado: {socioRiesgo.Socio} (DNI {socioRiesgo.DNI})\r\n" +
-                    $"Estado: {socioRiesgo.NivelRiesgo} ({socioRiesgo.ProbabilidadFuga})\r\n" +
-                    $"Tel: {(string.IsNullOrWhiteSpace(socioRiesgo.Telefono) ? "No registrado" : socioRiesgo.Telefono)} | Email: {(string.IsNullOrWhiteSpace(socioRiesgo.Email) ? "No registrado" : socioRiesgo.Email)}\r\n\r\n" +
-                    $"El mensaje de retención ya fue copiado al portapapeles.\r\n" +
-                    $"¿Desea abrir WhatsApp Web (SÍ) o enviar un Correo Electrónico (NO)?\r\n" +
-                    $"Presione Cancelar para abortar.",
-                    "Gestión de Retención de Clientes (Churn)",
+                    $"{T("Socio", "Socio")}: {socioRiesgo.Socio} (DNI {socioRiesgo.DNI})\r\n" +
+                    $"{T("NivelRiesgo", "Riesgo")}: {socioRiesgo.NivelRiesgo} ({socioRiesgo.ProbabilidadFuga})\r\n" +
+                    $"Tel: {(string.IsNullOrWhiteSpace(socioRiesgo.Telefono) ? "-" : socioRiesgo.Telefono)} | Email: {(string.IsNullOrWhiteSpace(socioRiesgo.Email) ? "-" : socioRiesgo.Email)}\r\n\r\n" +
+                    T("msgDialogoContactoPregunta", "El mensaje de retención ya fue copiado al portapapeles.\r\n¿Desea abrir WhatsApp Web (SÍ) o enviar un Correo Electrónico (NO)?\r\nPresione Cancelar para abortar."),
+                    T("titDialogoContacto", "Gestión de Retención de Clientes (Churn)"),
                     MessageBoxButtons.YesNoCancel,
                     MessageBoxIcon.Question);
                 if (canal == DialogResult.Yes)
@@ -293,7 +293,7 @@ namespace GUI
             }
             catch (Exception ex)
             {
-                MessageBox.Show("El borrador quedó copiado en su portapapeles, pero ocurrió un aviso al abrir el navegador/cliente: " + ex.Message, "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show(ex.Message, T("titError", "Aviso"), MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
         }
 
@@ -326,6 +326,7 @@ namespace GUI
                     cmbCriticidad.SelectedValue = valorSeleccionadoCrit;
                 }
             }
+            CargarDatosDashboard();
         }
 
         private void TraducirControlesRecursivo(Control.ControlCollection controles, Dictionary<string, string> traducciones)

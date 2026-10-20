@@ -23,6 +23,11 @@ namespace GUI
         List<PuntoEvolucionBE> _serieEvolucionFuerza = new List<PuntoEvolucionBE>();
         int _varianteSugerencia = 0;
         string _textoBaseDetalle = "Detalle";
+        private Dictionary<string, string> _traducciones = new Dictionary<string, string>();
+        private string T(string clave, string textoPorDefecto)
+        {
+            return _traducciones != null && _traducciones.ContainsKey(clave) ? _traducciones[clave] : textoPorDefecto;
+        }
 
         public frmGestionRutinas()
         {
@@ -141,24 +146,37 @@ namespace GUI
 
         public void ActualizarIdioma(IdiomaBE idioma)
         {
-            var traducciones = idiomaBLL.ObtenerTraducciones(idioma, this.Name);
-            if (traducciones.ContainsKey("lblDNI")) lblDNI.Text = traducciones["lblDNI"];
-            if (traducciones.ContainsKey("btnBuscar")) btnBuscar.Text = traducciones["btnBuscar"];
-            if (traducciones.ContainsKey("lblObjetivo")) lblObjetivo.Text = traducciones["lblObjetivo"];
-            if (traducciones.ContainsKey("lblFrecuencia")) lblFrecuencia.Text = traducciones["lblFrecuencia"];
-            if (traducciones.ContainsKey("lblDetalle"))
+            _traducciones = idiomaBLL.ObtenerTraducciones(idioma, this.Name);
+            lblDNI.Text = T("lblDNI", "DNI del Socio:");
+            btnBuscar.Text = T("btnBuscar", "Buscar Rutinas");
+            lblObjetivo.Text = T("lblObjetivo", "Objetivo Físico:");
+            lblFrecuencia.Text = T("lblFrecuencia", "Días a la semana:");
+            _textoBaseDetalle = T("lblDetalle", "Ejercicios:");
+            lblDetalle.Text = _textoBaseDetalle;
+            btnModificar.Text = T("btnModificar", "Guardar Cambios");
+            btnEliminar.Text = T("btnEliminar", "Dar de Baja (Borrar)");
+            btnSugerirPlantilla.Text = T("btnSugerirPlantilla", "Sugerir según Objetivo");
+            btnQuitarEjercicio.Text = T("btnQuitarEjercicio", "Quitar Ejercicio");
+            lblTituloMapa.Text = T("lblTituloMapa", "Mapa de Calor Muscular (Volumen)");
+            this.Text = T("titGestionRutinas", "Gestión de Rutinas");
+            if (dgvRutinas.Columns["CodigoRutina"] != null) dgvRutinas.Columns["CodigoRutina"].HeaderText = T("colCod", "Código");
+            if (dgvRutinas.Columns["FechaCreacion"] != null) dgvRutinas.Columns["FechaCreacion"].HeaderText = T("colFecha", "Fecha Alta");
+            if (dgvRutinas.Columns["ObjetivoFisico"] != null) dgvRutinas.Columns["ObjetivoFisico"].HeaderText = T("colObj", "Objetivo");
+            if (dgvRutinas.Columns["FrecuenciaSemanal"] != null) dgvRutinas.Columns["FrecuenciaSemanal"].HeaderText = T("colFrec", "Frec. (Días)");
+            if (dgvRutinas.Columns["EstadoVigencia"] != null) dgvRutinas.Columns["EstadoVigencia"].HeaderText = T("colEstadoVigencia", "Estado");
+            if (dgvEjercicios.Columns["Nombre"] != null) dgvEjercicios.Columns["Nombre"].HeaderText = T("colNombre", "Ejercicio");
+            if (dgvEjercicios.Columns["GrupoMuscular"] != null) dgvEjercicios.Columns["GrupoMuscular"].HeaderText = T("colGrupoMuscular", "Grupo Muscular");
+            if (dgvEjercicios.Columns["Series"] != null) dgvEjercicios.Columns["Series"].HeaderText = T("colSeries", "Series");
+            if (dgvEjercicios.Columns["Repeticiones"] != null) dgvEjercicios.Columns["Repeticiones"].HeaderText = T("colRepeticiones", "Repeticiones");
+            if (dgvEjercicios.Columns["TiempoDescansoSegundos"] != null) dgvEjercicios.Columns["TiempoDescansoSegundos"].HeaderText = T("colTiempoDescansoSegundos", "Descanso (seg)");
+            if (dgvEjercicios.Columns["CargaSugeridaKg"] != null) dgvEjercicios.Columns["CargaSugeridaKg"].HeaderText = T("colCargaSugeridaKg", "Carga Sug. (Kg)");
+            if (rutinaSeleccionada != null)
             {
-                _textoBaseDetalle = traducciones["lblDetalle"];
-                lblDetalle.Text = _textoBaseDetalle;
+                ConfigurarModoSegunVigencia(rutinaSeleccionada.EsVigente);
             }
-            if (traducciones.ContainsKey("btnModificar")) btnModificar.Text = traducciones["btnModificar"];
-            if (traducciones.ContainsKey("btnEliminar")) btnEliminar.Text = traducciones["btnEliminar"];
-            this.Text = traducciones.ContainsKey("titGestionRutinas") ? traducciones["titGestionRutinas"] : "Gestión de Rutinas";
-            if (dgvRutinas.Columns["CodigoRutina"] != null && traducciones.ContainsKey("colCod")) dgvRutinas.Columns["CodigoRutina"].HeaderText = traducciones["colCod"];
-            if (dgvRutinas.Columns["FechaCreacion"] != null && traducciones.ContainsKey("colFecha")) dgvRutinas.Columns["FechaCreacion"].HeaderText = traducciones["colFecha"];
-            if (dgvRutinas.Columns["ObjetivoFisico"] != null && traducciones.ContainsKey("colObj")) dgvRutinas.Columns["ObjetivoFisico"].HeaderText = traducciones["colObj"];
-            if (dgvRutinas.Columns["FrecuenciaSemanal"] != null && traducciones.ContainsKey("colFrec")) dgvRutinas.Columns["FrecuenciaSemanal"].HeaderText = traducciones["colFrec"];
-            if (dgvRutinas.Columns["EstadoVigencia"] != null) dgvRutinas.Columns["EstadoVigencia"].HeaderText = "Estado";
+            ActualizarTagSinergiaNutricional();
+            pnlGraficoFuerza.Invalidate();
+            pnlMapaCalor.Invalidate();
         }
 
         private void ActualizarTagSinergiaNutricional()
@@ -174,7 +192,7 @@ namespace GUI
             }
             if (idSocio <= 0)
             {
-                lblAlertaNutricional.Text = "ℹ️ SINERGIA INTER-ÁREAS: Busque las rutinas de un socio para consultar su estado clínico-nutricional.";
+                lblAlertaNutricional.Text = T("lblSinergiaInicial", "ℹ️ SINERGIA INTER-ÁREAS: Busque las rutinas de un socio para consultar su estado clínico-nutricional.");
                 lblAlertaNutricional.BackColor = Color.FromArgb(241, 245, 249);
                 lblAlertaNutricional.ForeColor = Color.FromArgb(71, 85, 105);
                 return;
@@ -248,17 +266,17 @@ namespace GUI
             btnEliminar.Enabled = permitirEdicion;
             if (!cuotaAlDia && socioConsultado != null)
             {
-                lblDetalle.Text = $"{_textoBaseDetalle} — [EDICIÓN BLOQUEADA: {msgVigencia}]";
+                lblDetalle.Text = $"{_textoBaseDetalle} — {T("lblModoBloqueado", "[EDICIÓN BLOQUEADA: Suscripción Vencida]")}";
                 lblDetalle.ForeColor = Color.FromArgb(185, 28, 28);
             }
             else if (esRutinaVigente)
             {
-                lblDetalle.Text = $"{_textoBaseDetalle} — [RUTINA VIGENTE: Edición Habilitada]";
+                lblDetalle.Text = $"{_textoBaseDetalle} — {T("lblModoVigente", "[RUTINA VIGENTE: Edición Habilitada]")}";
                 lblDetalle.ForeColor = Color.FromArgb(22, 101, 52);
             }
             else
             {
-                lblDetalle.Text = $"{_textoBaseDetalle} — [RUTINA HISTÓRICA INMUTABLE: Solo Lectura para Trazabilidad]";
+                lblDetalle.Text = $"{_textoBaseDetalle} — {T("lblModoHistorico", "[RUTINA HISTÓRICA INMUTABLE: Solo Lectura para Trazabilidad]")}";
                 lblDetalle.ForeColor = Color.FromArgb(180, 83, 9);
             }
         }
@@ -409,10 +427,10 @@ namespace GUI
             using (Pen penEje = new Pen(Color.FromArgb(148, 163, 184), 1.2f))
             using (Pen penCurva = new Pen(Color.FromArgb(16, 185, 129), 2.5f))
             {
-                g.DrawString("Evolución de Fuerza (Carga Promedio en kg)", fontTitulo, brushTexto, 12, 8);
+                g.DrawString(T("titGraficoFuerza", "Evolución de Fuerza (Carga Promedio en kg)"), fontTitulo, brushTexto, 12, 8);
                 if (_serieEvolucionFuerza == null || _serieEvolucionFuerza.Count == 0)
                 {
-                    g.DrawString("Busque un socio con rutinas para ver su progreso de fuerza.", fontEje, brushGris, 14, 95);
+                    g.DrawString(T("msgGraficoFuerzaVacio", "Busque un socio con rutinas para ver su progreso de fuerza."), fontEje, brushGris, 14, 95);
                     return;
                 }
                 decimal cargaIni = _serieEvolucionFuerza.First().ValorPrimario;
@@ -515,8 +533,8 @@ namespace GUI
                 int cxDorso = 224;
                 int yBase = 24;
                 StringFormat sfCenter = new StringFormat { Alignment = StringAlignment.Center };
-                g.DrawString("FRENTE", fontSub, brushTexto, cxFrente, 5, sfCenter);
-                g.DrawString("DORSO", fontSub, brushTexto, cxDorso, 5, sfCenter);
+                g.DrawString(T("txtFrente", "FRENTE"), fontSub, brushTexto, cxFrente, 5, sfCenter);
+                g.DrawString(T("txtDorso", "DORSO"), fontSub, brushTexto, cxDorso, 5, sfCenter);
                 g.FillEllipse(brushCabeza, cxFrente - 12, yBase, 24, 24);
                 g.DrawEllipse(penBorde, cxFrente - 12, yBase, 24, 24);
                 g.FillRectangle(brushCabeza, cxFrente - 5, yBase + 23, 10, 7);
@@ -637,13 +655,13 @@ namespace GUI
                 {
                     g.FillRectangle(bRojo, 10, yLeyenda, 10, 10);
                     g.DrawRectangle(penBorde, 10, yLeyenda, 10, 10);
-                    g.DrawString("Primario (≥5s)", fontLeyenda, brushTexto, 23, yLeyenda - 2);
+                    g.DrawString(T("txtPrimario", "Primario (≥5s)"), fontLeyenda, brushTexto, 23, yLeyenda - 2);
                     g.FillRectangle(bNaranja, 106, yLeyenda, 10, 10);
                     g.DrawRectangle(penBorde, 106, yLeyenda, 10, 10);
-                    g.DrawString("Secundario (1-4s)", fontLeyenda, brushTexto, 119, yLeyenda - 2);
+                    g.DrawString(T("txtSecundario", "Secundario (1-4s)"), fontLeyenda, brushTexto, 119, yLeyenda - 2);
                     g.FillRectangle(bGris, 216, yLeyenda, 10, 10);
                     g.DrawRectangle(penBorde, 216, yLeyenda, 10, 10);
-                    g.DrawString("Inactivo", fontLeyenda, brushTexto, 229, yLeyenda - 2);
+                    g.DrawString(T("txtInactivo", "Inactivo"), fontLeyenda, brushTexto, 229, yLeyenda - 2);
                 }
                 string[] ordenGrupos = { "Pecho", "Espalda", "Piernas", "Hombros", "Bíceps", "Tríceps", "Core" };
                 int col = 0;
@@ -686,12 +704,12 @@ namespace GUI
                     .Where(ej => ej != null && !string.IsNullOrWhiteSpace(ej.Nombre))
                     .ToList();
                 rutinaBLL.ModificarRutina(rutinaSeleccionada);
-                MessageBox.Show("Rutina vigente modificada exitosamente.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show(T("msgRutinaModificadaExito", "Rutina vigente modificada exitosamente."), T("titExito", "Éxito"), MessageBoxButtons.OK, MessageBoxIcon.Information);
                 BuscarRutinas();
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(T(ex.Message, ex.Message), T("titError", "Error"), MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -700,17 +718,21 @@ namespace GUI
             try
             {
                 if (rutinaSeleccionada == null) return;
-                var result = MessageBox.Show($"¿Seguro que desea eliminar la rutina vigente #{rutinaSeleccionada.CodigoRutina}?\r\nLa rutina anterior pasará a ser la vigente.", "Confirmar Baja", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                var result = MessageBox.Show(
+                    $"{T("msgConfirmarEliminar", "¿Seguro que desea eliminar la rutina vigente? La rutina anterior pasará a ser la vigente.")}\r\n(#{rutinaSeleccionada.CodigoRutina})",
+                    T("titConfirmarBaja", "Confirmar Baja"),
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Question);
                 if (result == DialogResult.Yes)
                 {
                     rutinaBLL.EliminarRutina(rutinaSeleccionada);
-                    MessageBox.Show("Rutina eliminada exitosamente.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    MessageBox.Show(T("msgRutinaEliminadaExito", "Rutina eliminada exitosamente."), T("titExito", "Éxito"), MessageBoxButtons.OK, MessageBoxIcon.Information);
                     BuscarRutinas();
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(T(ex.Message, ex.Message), T("titError", "Error"), MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 

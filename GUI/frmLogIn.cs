@@ -35,7 +35,13 @@ namespace GUI
             }
             catch (Exception ex)
             {
-                MessageBox.Show(T(ex.Message, ex.Message), T("titErrorAuth", "Error de Autenticación"), MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                string mensajeTraducido = T(ex.Message, ex.Message);
+                if (ex.Message.StartsWith("Usuario o clave incorrectos. Le quedan "))
+                {
+                    string digitos = new string(ex.Message.Where(char.IsDigit).ToArray());
+                    mensajeTraducido = T("msgIntentosRestantes", "Usuario o clave incorrectos. Intentos restantes: ") + digitos;
+                }
+                MessageBox.Show(mensajeTraducido, T("titErrorAuth", "Error de Autenticación"), MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
         }
         private void btnVerClave_Click(object sender, EventArgs e)
@@ -62,6 +68,9 @@ namespace GUI
             if (_traducciones.ContainsKey(this.Name))
                 this.Text = _traducciones[this.Name];
             TraducirControlesRecursivo(this.Controls, _traducciones);
+            btnVerClave.Text = txtClave.PasswordChar == '*'
+                ? T("btnVerClave_Text", "Ver Clave")
+                : T("btnOcultarClave", "Ocultar Clave");
         }
         private void TraducirControlesRecursivo(Control.ControlCollection controles, Dictionary<string, string> traducciones)
         {

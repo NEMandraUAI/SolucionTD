@@ -23,6 +23,10 @@ namespace GUI
         private SocioBLL _socioBLL;
         private PlanNutricionalBLL _planBLL;
         private Dictionary<string, string> _traducciones;
+        private string T(string clave, string textoPorDefecto)
+        {
+            return _traducciones != null && _traducciones.ContainsKey(clave) ? _traducciones[clave] : textoPorDefecto;
+        }
         private SocioBE _socioActual;
         private EvaluacionBiometricaBE _biometriaActual = new EvaluacionBiometricaBE();
         private List<PuntoEvolucionBE> _serieEvolucion = new List<PuntoEvolucionBE>();
@@ -215,10 +219,10 @@ namespace GUI
             using (Pen penEje = new Pen(Color.FromArgb(148, 163, 184), 1.2f))
             using (Pen penCurva = new Pen(Color.FromArgb(37, 99, 235), 2.5f))
             {
-                g.DrawString("Curva de Evolución de Peso Corporal (kg) e IMC", fontTitulo, brushTexto, 12, 8);
+                g.DrawString(T("titGraficoNutricion", "Curva de Evolución de Peso Corporal (kg) e IMC"), fontTitulo, brushTexto, 12, 8);
                 if (_serieEvolucion == null || _serieEvolucion.Count == 0)
                 {
-                    g.DrawString("Busque un socio con evaluaciones biométricas para visualizar su curva de progreso.", fontEje, brushGris, 14, 88);
+                    g.DrawString(T("msgGraficoNutricionVacio", "Busque un socio con evaluaciones biométricas para visualizar su curva de progreso."), fontEje, brushGris, 14, 88);
                     return;
                 }
                 decimal pesoInicial = _serieEvolucion.First().ValorPrimario;
@@ -321,16 +325,20 @@ namespace GUI
                 {
                     BloquearCamposPlan(true);
                     btnExportarPDF.Enabled = true;
-                    MessageBox.Show($"Atención denegada para nueva consulta:\r\nSocio: {_socioActual.Nombre} {_socioActual.Apellido}\r\n{msgVigencia}\r\n\r\nSe habilita únicamente la visualización de su historial clínico. Derívelo a Recepción para renovar su cuota.", "Cuota Vencida", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    MessageBox.Show(
+                        $"{T("msgCuotaVencidaNutricion", "Atención denegada para nueva consulta: el socio posee su cuota vencida. Se habilita únicamente la visualización de su historial clínico.")}\r\n\r\n({_socioActual.Nombre} {_socioActual.Apellido} — {msgVigencia})",
+                        T("titCuotaVencida", "Cuota Vencida"),
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Warning);
                     return;
                 }
                 BloquearCamposPlan(false);
-                MessageBox.Show($"Socio encontrado: {_socioActual.Nombre} {_socioActual.Apellido}\r\n{msgVigencia}", "Socio Habilitado", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show($"{T("msgSocioHabilitado", "Socio encontrado y habilitado: ")}{_socioActual.Nombre} {_socioActual.Apellido}\r\n{msgVigencia}", T("titSocioHabilitado", "Socio Habilitado"), MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
                 BloquearCamposPlan(true);
-                MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show(T(ex.Message, ex.Message), T("titError", "Error"), MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
         }
 
@@ -360,12 +368,12 @@ namespace GUI
                 };
                 nuevoPlan.SincronizarBiometriaAJson();
                 _planBLL.AsignarPlan(nuevoPlan);
-                MessageBox.Show("Plan nutricional y evaluación biométrica guardados correctamente.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show(T("msgPlanGuardadoExito", "Plan nutricional y evaluación biométrica guardados correctamente."), T("titExito", "Éxito"), MessageBoxButtons.OK, MessageBoxIcon.Information);
                 CargarPlanesHistoricos();
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show(T(ex.Message, ex.Message), T("titError", "Error"), MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
         }
 
@@ -382,18 +390,18 @@ namespace GUI
                 using (SaveFileDialog sfd = new SaveFileDialog())
                 {
                     sfd.Filter = "Documento PDF (*.pdf)|*.pdf";
-                    sfd.Title = "Exportar Informe Clínico Nutricional en PDF";
+                    sfd.Title = "PDF";
                     sfd.FileName = $"Informe_Nutricional_{_socioActual.DNI}_{DateTime.Now:yyyyMMdd}.pdf";
                     if (sfd.ShowDialog() == DialogResult.OK)
                     {
                         GenerarArchivoPDFNativo(sfd.FileName, _socioActual, _biometriaActual, habitosReporte);
-                        MessageBox.Show("Informe PDF generado exitosamente.", "Exportación Exitosa", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        MessageBox.Show(T("msgPDFExito", "Informe PDF generado exitosamente."), T("titPDFExito", "Exportación Exitosa"), MessageBoxButtons.OK, MessageBoxIcon.Information);
                     }
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message, "Error al exportar PDF", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show(T(ex.Message, ex.Message), T("titError", "Error"), MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
         }
 
@@ -558,15 +566,28 @@ namespace GUI
             if (idioma == null) return;
             _traducciones = new IdiomaBLL().ObtenerTraducciones(idioma, this.Name);
             TraducirControlesRecursivo(this.Controls);
-            if (_traducciones.ContainsKey("titGestionNutricion")) this.Text = _traducciones["titGestionNutricion"];
+            this.Text = T("titGestionNutricion", "Consultorio Nutricional");
+            pnlGraficoNutricion.Invalidate();
         }
 
         private void TraducirControlesRecursivo(Control.ControlCollection controles)
         {
             foreach (Control c in controles)
             {
-                if (_traducciones.ContainsKey(c.Name)) c.Text = _traducciones[c.Name];
-                if (c.HasChildren) TraducirControlesRecursivo(c.Controls);
+                if (_traducciones != null && _traducciones.ContainsKey(c.Name))
+                    c.Text = _traducciones[c.Name];
+                if (c is DataGridView dgv)
+                {
+                    foreach (DataGridViewColumn col in dgv.Columns)
+                    {
+                        if (_traducciones != null && _traducciones.ContainsKey(col.DataPropertyName))
+                        {
+                            col.HeaderText = _traducciones[col.DataPropertyName];
+                        }
+                    }
+                }
+                if (c.HasChildren)
+                    TraducirControlesRecursivo(c.Controls);
             }
         }
 

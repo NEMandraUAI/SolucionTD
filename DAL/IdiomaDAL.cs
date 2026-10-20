@@ -44,7 +44,9 @@ namespace DAL
                 {
                     while (reader.Read())
                     {
-                        traducciones.Add(reader["NombreControl"].ToString(), reader["Texto"].ToString());
+                        string clave = reader["NombreControl"].ToString();
+                        string texto = reader["Texto"].ToString();
+                        traducciones[clave] = texto;
                     }
                 }
             }

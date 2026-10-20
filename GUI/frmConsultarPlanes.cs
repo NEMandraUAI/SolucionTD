@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Windows.Forms;
 using BE;
 using BLL;
@@ -36,6 +37,16 @@ namespace GUI
             var traducciones = idiomaBLL.ObtenerTraducciones(idioma, this.Name);
             if (traducciones.ContainsKey("btnCerrar")) btnCerrar.Text = traducciones["btnCerrar"];
             this.Text = traducciones.ContainsKey("titCatologoPlanes") ? traducciones["titCatologoPlanes"] : "Catálogo de Planes";
+            if (dgvPlanes.DataSource is List<PlanSuscripcionBE> planes)
+            {
+                foreach (var p in planes)
+                {
+                    if (p.CodigoPlan == 1 && traducciones.ContainsKey("planMensual")) p.Nombre = traducciones["planMensual"];
+                    if (p.CodigoPlan == 2 && traducciones.ContainsKey("planTrimestral")) p.Nombre = traducciones["planTrimestral"];
+                    if (p.CodigoPlan == 3 && traducciones.ContainsKey("planAnual")) p.Nombre = traducciones["planAnual"];
+                }
+                dgvPlanes.Refresh();
+            }
             if (dgvPlanes.Columns["Nombre"] != null && traducciones.ContainsKey("colNombrePlan"))
                 dgvPlanes.Columns["Nombre"].HeaderText = traducciones["colNombrePlan"];
             if (dgvPlanes.Columns["Precio"] != null && traducciones.ContainsKey("colPrecio"))

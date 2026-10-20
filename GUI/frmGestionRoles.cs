@@ -28,6 +28,7 @@ namespace GUI
         {
             InitializeComponent();
             GestorIdioma.Instancia.Suscribir(this);
+            this.FormClosing += (s, e) => GestorIdioma.Instancia.Desuscribir(this);
         }
         private void frmGestionRoles_Load(object sender, EventArgs e)
         {

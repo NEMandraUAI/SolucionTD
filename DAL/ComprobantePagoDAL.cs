@@ -98,15 +98,15 @@ namespace DAL
             using (SqlConnection cx = ConexionDAL.Instancia.ObtenerConexion())
             {
                 cx.Open();
-                SqlCommand cmd = new SqlCommand("SELECT NroComprobante, Fecha, MontoTotal, MetodoPago, ID_Socio, ID_Usuario, DVH FROM ComprobantePago", cx);
+                SqlCommand cmd = new SqlCommand("SELECT NroComprobante, Fecha, MontoTotal, MetodoPago, ID_Socio, ID_Usuario, DVH FROM ComprobantePago ORDER BY NroComprobante ASC", cx);
                 using (SqlDataReader dr = cmd.ExecuteReader())
                 {
                     while (dr.Read())
                     {
                         ComprobantePagoBE comp = new ComprobantePagoBE();
-                        comp.NroComprobante = int.Parse(dr["NroComprobante"].ToString());
-                        comp.Fecha = Convert.ToDateTime(dr["Fecha"].ToString());
-                        comp.MontoTotal = Convert.ToDecimal(dr["MontoTotal"].ToString());
+                        comp.NroComprobante = Convert.ToInt32(dr["NroComprobante"]);
+                        comp.Fecha = Convert.ToDateTime(dr["Fecha"]);
+                        comp.MontoTotal = Convert.ToDecimal(dr["MontoTotal"]);
                         comp.MetodoPago = dr["MetodoPago"].ToString();
                         comp.Socio = new SocioBE { ID_Socio = Convert.ToInt32(dr["ID_Socio"]) };
                         comp.EmpleadoCobrador = new UsuarioBE { ID = Convert.ToInt32(dr["ID_Usuario"]) };

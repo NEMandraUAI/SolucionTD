@@ -57,6 +57,11 @@ namespace GUI
             cmbNutricionista.ValueMember = "ID";
         }
 
+        private string T(string clave, string textoPorDefecto)
+        {
+            return _traducciones != null && _traducciones.ContainsKey(clave) ? _traducciones[clave] : textoPorDefecto;
+        }
+
         private void VincularDatosGrillaAgenda(List<TurnoBE> listaTurnos)
         {
             dgvAgenda.DataSource = null;
@@ -66,6 +71,12 @@ namespace GUI
             if (dgvAgenda.Columns["DVH"] != null) dgvAgenda.Columns["DVH"].Visible = false;
             if (dgvAgenda.Columns["Socio"] != null) dgvAgenda.Columns["Socio"].Visible = false;
             if (dgvAgenda.Columns["Nutricionista"] != null) dgvAgenda.Columns["Nutricionista"].Visible = false;
+            if (dgvAgenda.Columns["NroTurno"] != null) dgvAgenda.Columns["NroTurno"].HeaderText = T("NroTurno", "Nro. Turno");
+            if (dgvAgenda.Columns["FechaHora"] != null) dgvAgenda.Columns["FechaHora"].HeaderText = T("FechaHora", "Fecha y Hora");
+            if (dgvAgenda.Columns["Estado"] != null) dgvAgenda.Columns["Estado"].HeaderText = T("Estado", "Estado");
+            if (dgvAgenda.Columns["DNISocio"] != null) dgvAgenda.Columns["DNISocio"].HeaderText = T("DNISocio", "DNI Socio");
+            if (dgvAgenda.Columns["NombreSocio"] != null) dgvAgenda.Columns["NombreSocio"].HeaderText = T("NombreSocio", "Socio");
+            if (dgvAgenda.Columns["NombreNutricionista"] != null) dgvAgenda.Columns["NombreNutricionista"].HeaderText = T("NombreNutricionista", "Nutricionista");
         }
 
         private void CargarAgenda(DateTime fecha)
@@ -92,7 +103,7 @@ namespace GUI
             {
                 pnlSugerencia.BackColor = Color.FromArgb(241, 245, 249);
                 lblSugerencia.ForeColor = Color.FromArgb(71, 85, 105);
-                lblSugerencia.Text = "💡 AGENDAMIENTO PREDICTIVO:\r\nIngrese el DNI del socio para analizar su historial y sugerir el turno óptimo.";
+                lblSugerencia.Text = T("msgPredictivoInicial", "💡 AGENDAMIENTO PREDICTIVO:\r\nIngrese el DNI del socio para analizar su historial y sugerir el turno óptimo.");
                 return;
             }
             try
@@ -102,7 +113,7 @@ namespace GUI
                 {
                     pnlSugerencia.BackColor = Color.FromArgb(254, 242, 242);
                     lblSugerencia.ForeColor = Color.FromArgb(153, 27, 27);
-                    lblSugerencia.Text = $"❌ Socio no encontrado con DNI {dni}. Verifique el número ingresado.";
+                    lblSugerencia.Text = $"❌ DNI {dni}: Socio no encontrado.";
                     return;
                 }
                 bool planVigenteHoy = _socioBLL.ObtenerEstadoVigenciaPlan(
@@ -115,7 +126,7 @@ namespace GUI
                 {
                     pnlSugerencia.BackColor = Color.FromArgb(254, 226, 226);
                     lblSugerencia.ForeColor = Color.FromArgb(153, 27, 27);
-                    lblSugerencia.Text = $"🚨 SOCIO CON CUOTA VENCIDA / INACTIVO:\r\n{socio.Nombre} {socio.Apellido}\r\n{msgVigencia}\r\nNo puede reservar turnos hasta renovar su plan.";
+                    lblSugerencia.Text = $"🚨 {socio.Nombre} {socio.Apellido}\r\n{msgVigencia}";
                     return;
                 }
                 List<TurnoBE> pendientes = _turnoBLL.ObtenerTurnosPendientesPorSocio(socio.ID_Socio);
@@ -124,7 +135,7 @@ namespace GUI
                     TurnoBE tPend = pendientes.First();
                     pnlSugerencia.BackColor = Color.FromArgb(254, 243, 199);
                     lblSugerencia.ForeColor = Color.FromArgb(146, 64, 14);
-                    lblSugerencia.Text = $"⚠️ Socio: {socio.Nombre} {socio.Apellido} ({msgVigencia})\r\nYa posee un turno PENDIENTE para el {tPend.FechaHora:dd/MM/yyyy HH:mm} hs (Turno #{tPend.NroTurno}).";
+                    lblSugerencia.Text = $"⚠️ {socio.Nombre} {socio.Apellido}\r\nTurno PENDIENTE: {tPend.FechaHora:dd/MM/yyyy HH:mm} hs (#{tPend.NroTurno}).";
                     return;
                 }
                 _sugerenciaActual = _turnoBLL.ObtenerSugerenciaPredictiva(socio.ID_Socio, _listaNutricionistas);
@@ -134,7 +145,7 @@ namespace GUI
                     {
                         pnlSugerencia.BackColor = Color.FromArgb(254, 243, 199);
                         lblSugerencia.ForeColor = Color.FromArgb(146, 64, 14);
-                        lblSugerencia.Text = $"⚠️ Socio: {socio.Nombre} {socio.Apellido}\r\n{msgVigencia}\r\nEl próximo turno habitual ({_sugerenciaActual.FechaHoraSugerida:dd/MM/yyyy}) supera el vencimiento del plan. Agende antes del {fechaVencimiento.Value:dd/MM/yyyy}.";
+                        lblSugerencia.Text = $"⚠️ {socio.Nombre} {socio.Apellido}\r\n{msgVigencia}\r\nPróximo turno ({_sugerenciaActual.FechaHoraSugerida:dd/MM/yyyy}) supera vencimiento ({fechaVencimiento.Value:dd/MM/yyyy}).";
                         btnAplicarSugerencia.Enabled = false;
                     }
                     else
@@ -149,7 +160,7 @@ namespace GUI
                 {
                     pnlSugerencia.BackColor = Color.FromArgb(241, 245, 249);
                     lblSugerencia.ForeColor = Color.FromArgb(71, 85, 105);
-                    lblSugerencia.Text = $"✓ {socio.Nombre} {socio.Apellido} ({msgVigencia})\r\n{(_sugerenciaActual != null ? _sugerenciaActual.Mensaje : "Sin historial previo.")}";
+                    lblSugerencia.Text = $"✓ {socio.Nombre} {socio.Apellido}\r\n{(_sugerenciaActual != null ? _sugerenciaActual.Mensaje : "-")}";
                 }
             }
             catch
@@ -188,7 +199,7 @@ namespace GUI
                 List<TurnoBE> pendientes = _turnoBLL.ObtenerTurnosPendientesPorSocio(socio.ID_Socio);
                 if (pendientes.Count > 0)
                 {
-                    MessageBox.Show("Este socio ya posee un turno en estado 'Pendiente'. No puede agendar uno nuevo hasta que asista o se cancele el actual.", "Reserva Denegada", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    MessageBox.Show(T("msgReservaDenegadaPendiente", "Este socio ya posee un turno en estado 'Pendiente'. No puede agendar uno nuevo hasta que asista o se cancele el actual."), T("titReservaDenegada", "Reserva Denegada"), MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     VincularDatosGrillaAgenda(pendientes);
                     return;
                 }
@@ -197,16 +208,17 @@ namespace GUI
                 {
                     FechaHora = fechaHoraSolicitada,
                     ID_Socio = socio.ID_Socio,
-                    ID_Nutricionista = idNutricionistaElegido
+                    ID_Nutricionista = idNutricionistaElegido,
+                    Socio = socio
                 };
                 _turnoBLL.AsentarReserva(nuevoTurno);
-                MessageBox.Show("Turno reservado con éxito.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show(T("msgTurnoReservadoExito", "Turno reservado con éxito."), T("titExito", "Éxito"), MessageBoxButtons.OK, MessageBoxIcon.Information);
                 CargarAgenda(dtpFechaAgenda.Value);
                 EvaluarSugerenciaSocio();
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show(T(ex.Message, ex.Message), T("titError", "Error"), MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
         }
 
@@ -214,16 +226,16 @@ namespace GUI
         {
             try
             {
-                if (dgvAgenda.CurrentRow == null) throw new Exception("Seleccione un turno de la agenda.");
+                if (dgvAgenda.CurrentRow == null) throw new Exception(T("msgSeleccioneTurno", "Seleccione un turno de la agenda."));
                 TurnoBE turnoSeleccionado = (TurnoBE)dgvAgenda.CurrentRow.DataBoundItem;
                 _turnoBLL.CambiarEstadoTurno(turnoSeleccionado, nuevoEstado);
-                MessageBox.Show($"El turno ha sido marcado como: {nuevoEstado}", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show($"{T("msgEstadoTurnoModificado", "El turno ha sido marcado como: ")}{nuevoEstado}", T("titExito", "Éxito"), MessageBoxButtons.OK, MessageBoxIcon.Information);
                 CargarAgenda(dtpFechaAgenda.Value);
                 EvaluarSugerenciaSocio();
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show(T(ex.Message, ex.Message), T("titError", "Error"), MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
         }
 
@@ -242,14 +254,16 @@ namespace GUI
             if (idioma == null) return;
             _traducciones = new IdiomaBLL().ObtenerTraducciones(idioma, this.Name);
             TraducirControlesRecursivo(this.Controls);
-            if (_traducciones.ContainsKey("titAgendaRecepcion")) this.Text = _traducciones["titAgendaRecepcion"];
+            this.Text = T("titAgendaRecepcion", "Gestión de Agenda - Recepción");
+            CargarAgenda(dtpFechaAgenda.Value);
+            EvaluarSugerenciaSocio();
         }
 
         private void TraducirControlesRecursivo(Control.ControlCollection controles)
         {
             foreach (Control c in controles)
             {
-                if (_traducciones.ContainsKey(c.Name)) c.Text = _traducciones[c.Name];
+                if (_traducciones != null && _traducciones.ContainsKey(c.Name)) c.Text = _traducciones[c.Name];
                 if (c.HasChildren) TraducirControlesRecursivo(c.Controls);
             }
         }

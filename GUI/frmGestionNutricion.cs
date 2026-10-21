@@ -394,7 +394,17 @@ namespace GUI
                     sfd.FileName = $"Informe_Nutricional_{_socioActual.DNI}_{DateTime.Now:yyyyMMdd}.pdf";
                     if (sfd.ShowDialog() == DialogResult.OK)
                     {
-                        GenerarArchivoPDFNativo(sfd.FileName, _socioActual, _biometriaActual, habitosReporte);
+                        string nomNutri = SessionManager.Instancia.UsuarioActual != null
+                            ? SessionManager.Instancia.UsuarioActual.Nombre
+                            : "Nutricionista UAI-FIT";
+                        PdfCorporativoHelper.GenerarInformeNutricionalCorporativoPDF(
+                            sfd.FileName,
+                            _socioActual,
+                            _biometriaActual,
+                            habitosReporte,
+                            nomNutri,
+                            null,
+                            true);
                         MessageBox.Show(T("msgPDFExito", "Informe PDF generado exitosamente."), T("titPDFExito", "Exportación Exitosa"), MessageBoxButtons.OK, MessageBoxIcon.Information);
                     }
                 }

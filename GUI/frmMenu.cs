@@ -291,12 +291,21 @@ namespace GUI
                                       usuario.TienePermiso("CONSULTAR_AGENDA") ||
                                       usuario.TienePermiso("CONSULTAR_PLANES_NUT");
                 btnMenuNutricion.Visible = puedeNutricion;
+                bool puedeVentasMostrador = usuario.TienePermiso("VENDER_PRODUCTO") ||
+                                            usuario.TienePermiso("CONSULTAR_STOCK") ||
+                                            usuario.TienePermiso("GESTION_ROLES");
+                bool puedePrediccionDemanda = usuario.TienePermiso("ANALIZAR_DEMANDA") ||
+                                              usuario.TienePermiso("GESTION_ROLES");
+                btnSubVentasMostrador.Visible = puedeVentasMostrador;
+                btnSubPrediccionDemanda.Visible = puedePrediccionDemanda;
+                btnMenuComercial.Visible = puedeVentasMostrador || puedePrediccionDemanda;
             }
             else
             {
                 btnMenuRecepcion.Visible = false;
                 btnMenuEntrenamiento.Visible = false;
                 btnMenuNutricion.Visible = false;
+                btnMenuComercial.Visible = false;
             }
             OcultarSubMenus();
         }
@@ -382,6 +391,7 @@ namespace GUI
             pnlSubRecepcion.Visible = false;
             pnlSubEntrenamiento.Visible = false;
             pnlSubNutricion.Visible = false;
+            pnlSubComercial.Visible = false;
         }
 
         private void btnMenuRecepcion_Click(object sender, EventArgs e)
@@ -403,6 +413,23 @@ namespace GUI
             OcultarSubMenus();
             frmGestionNutricion frm = new frmGestionNutricion();
             AbrirFormularioHijo(frm);
+        }
+
+        private void btnMenuComercial_Click(object sender, EventArgs e)
+        {
+            OcultarSubMenus();
+            pnlSubComercial.Visible = true;
+            pnlSubComercial.BringToFront();
+        }
+
+        private void btnSubVentasMostrador_Click(object sender, EventArgs e)
+        {
+            AbrirFormularioHijo(new frmVentasMostrador());
+        }
+
+        private void btnSubPrediccionDemanda_Click(object sender, EventArgs e)
+        {
+            AbrirFormularioHijo(new frmPrediccionReabastecimiento());
         }
 
         private void btnMenuCerrarSesion_Click(object sender, EventArgs e)

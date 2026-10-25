@@ -32,6 +32,7 @@
             pnlLateral = new Panel();
             btnMenuCerrarSesion = new Button();
             btnMenuSalir = new Button();
+            btnMenuComercial = new Button();
             btnMenuNutricion = new Button();
             btnMenuEntrenamiento = new Button();
             btnMenuRecepcion = new Button();
@@ -39,6 +40,9 @@
             btnMenuRegistrarse = new Button();
             btnMenuIniciarSesion = new Button();
             pnlCabecera = new Panel();
+            pnlSubComercial = new Panel();
+            btnSubPrediccionDemanda = new Button();
+            btnSubVentasMostrador = new Button();
             pnlSubNutricion = new Panel();
             pnlSubEntrenamiento = new Panel();
             btnSubGestionRutinas = new Button();
@@ -53,6 +57,7 @@
             pnlContenedor = new Panel();
             pnlLateral.SuspendLayout();
             pnlCabecera.SuspendLayout();
+            pnlSubComercial.SuspendLayout();
             pnlSubEntrenamiento.SuspendLayout();
             pnlSubRecepcion.SuspendLayout();
             panelIdioma.SuspendLayout();
@@ -62,6 +67,7 @@
             // 
             pnlLateral.Controls.Add(btnMenuCerrarSesion);
             pnlLateral.Controls.Add(btnMenuSalir);
+            pnlLateral.Controls.Add(btnMenuComercial);
             pnlLateral.Controls.Add(btnMenuNutricion);
             pnlLateral.Controls.Add(btnMenuEntrenamiento);
             pnlLateral.Controls.Add(btnMenuRecepcion);
@@ -105,6 +111,22 @@
             btnMenuSalir.Text = "Salir";
             btnMenuSalir.UseVisualStyleBackColor = false;
             btnMenuSalir.Click += btnSalir_Click;
+            // 
+            // btnMenuComercial
+            // 
+            btnMenuComercial.BackColor = Color.FromArgb(37, 99, 235);
+            btnMenuComercial.Dock = DockStyle.Top;
+            btnMenuComercial.FlatAppearance.BorderSize = 0;
+            btnMenuComercial.FlatStyle = FlatStyle.Flat;
+            btnMenuComercial.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            btnMenuComercial.ForeColor = Color.White;
+            btnMenuComercial.Location = new Point(0, 270);
+            btnMenuComercial.Name = "btnMenuComercial";
+            btnMenuComercial.Size = new Size(250, 45);
+            btnMenuComercial.TabIndex = 9;
+            btnMenuComercial.Text = "Mercado Interno";
+            btnMenuComercial.UseVisualStyleBackColor = false;
+            btnMenuComercial.Click += btnMenuComercial_Click;
             // 
             // btnMenuNutricion
             // 
@@ -204,6 +226,7 @@
             // 
             // pnlCabecera
             // 
+            pnlCabecera.Controls.Add(pnlSubComercial);
             pnlCabecera.Controls.Add(pnlSubNutricion);
             pnlCabecera.Controls.Add(pnlSubEntrenamiento);
             pnlCabecera.Controls.Add(pnlSubRecepcion);
@@ -213,6 +236,48 @@
             pnlCabecera.Name = "pnlCabecera";
             pnlCabecera.Size = new Size(627, 60);
             pnlCabecera.TabIndex = 8;
+            // 
+            // pnlSubComercial
+            // 
+            pnlSubComercial.Controls.Add(btnSubPrediccionDemanda);
+            pnlSubComercial.Controls.Add(btnSubVentasMostrador);
+            pnlSubComercial.Dock = DockStyle.Fill;
+            pnlSubComercial.Location = new Point(0, 0);
+            pnlSubComercial.Name = "pnlSubComercial";
+            pnlSubComercial.Size = new Size(277, 60);
+            pnlSubComercial.TabIndex = 11;
+            // 
+            // btnSubPrediccionDemanda
+            // 
+            btnSubPrediccionDemanda.BackColor = Color.FromArgb(37, 99, 235);
+            btnSubPrediccionDemanda.Dock = DockStyle.Left;
+            btnSubPrediccionDemanda.FlatAppearance.BorderSize = 0;
+            btnSubPrediccionDemanda.FlatStyle = FlatStyle.Flat;
+            btnSubPrediccionDemanda.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            btnSubPrediccionDemanda.ForeColor = Color.White;
+            btnSubPrediccionDemanda.Location = new Point(210, 0);
+            btnSubPrediccionDemanda.Name = "btnSubPrediccionDemanda";
+            btnSubPrediccionDemanda.Size = new Size(220, 60);
+            btnSubPrediccionDemanda.TabIndex = 1;
+            btnSubPrediccionDemanda.Text = "Predicción y Reabastecimiento";
+            btnSubPrediccionDemanda.UseVisualStyleBackColor = false;
+            btnSubPrediccionDemanda.Click += btnSubPrediccionDemanda_Click;
+            // 
+            // btnSubVentasMostrador
+            // 
+            btnSubVentasMostrador.BackColor = Color.FromArgb(37, 99, 235);
+            btnSubVentasMostrador.Dock = DockStyle.Left;
+            btnSubVentasMostrador.FlatAppearance.BorderSize = 0;
+            btnSubVentasMostrador.FlatStyle = FlatStyle.Flat;
+            btnSubVentasMostrador.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            btnSubVentasMostrador.ForeColor = Color.White;
+            btnSubVentasMostrador.Location = new Point(0, 0);
+            btnSubVentasMostrador.Name = "btnSubVentasMostrador";
+            btnSubVentasMostrador.Size = new Size(210, 60);
+            btnSubVentasMostrador.TabIndex = 0;
+            btnSubVentasMostrador.Text = "Punto de Venta y Stock";
+            btnSubVentasMostrador.UseVisualStyleBackColor = false;
+            btnSubVentasMostrador.Click += btnSubVentasMostrador_Click;
             // 
             // pnlSubNutricion
             // 
@@ -390,6 +455,7 @@
             Load += frmMenu_Load;
             pnlLateral.ResumeLayout(false);
             pnlCabecera.ResumeLayout(false);
+            pnlSubComercial.ResumeLayout(false);
             pnlSubEntrenamiento.ResumeLayout(false);
             pnlSubRecepcion.ResumeLayout(false);
             panelIdioma.ResumeLayout(false);
@@ -405,6 +471,7 @@
         private Button btnNuevoIdioma;
         private Button btnMenuIniciarSesion;
         private Button btnMenuSalir;
+        private Button btnMenuComercial;
         private Button btnMenuNutricion;
         private Button btnMenuEntrenamiento;
         private Button btnMenuRecepcion;
@@ -417,6 +484,9 @@
         private Button btnSubGestionRutinas;
         private Button btnSubAsignarRutina;
         private Panel pnlSubNutricion;
+        private Panel pnlSubComercial;
+        private Button btnSubPrediccionDemanda;
+        private Button btnSubVentasMostrador;
         private Button btnMenuCerrarSesion;
         private Button btnMenuInicio;
     }

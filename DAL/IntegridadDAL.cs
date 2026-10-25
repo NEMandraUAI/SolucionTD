@@ -39,6 +39,7 @@ namespace DAL
             }
             return lista;
         }
+
         public string ObtenerDVV(string entidad)
         {
             string dvv = null;
@@ -58,6 +59,7 @@ namespace DAL
             }
             return dvv;
         }
+
         public void ActualizarDVV(string entidad, string nuevoDVV)
         {
             using (SqlConnection cn = ConexionDAL.Instancia.ObtenerConexion())
@@ -76,6 +78,7 @@ namespace DAL
                 }
             }
         }
+
         public void ActualizarDVHRegistro(string nombreTabla, int id, string nuevoDVH)
         {
             string columnaPK = ObtenerNombrePK(nombreTabla);
@@ -91,6 +94,7 @@ namespace DAL
                 }
             }
         }
+
         private string ObtenerNombrePK(string tabla)
         {
             switch (tabla)
@@ -102,6 +106,9 @@ namespace DAL
                 case "PlanNutricional": return "CodigoPlan";
                 case "PlanSuscripcion": return "CodigoPlan";
                 case "RutinaEntrenamiento": return "CodigoRutina";
+                case "Producto": return "CodigoProducto";
+                case "VentaProducto": return "NroVenta";
+                case "OrdenReabastecimiento": return "NroOrden";
                 default: throw new Exception("Tabla no configurada para DVH.");
             }
         }

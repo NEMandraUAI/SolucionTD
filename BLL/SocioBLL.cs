@@ -171,9 +171,25 @@ namespace BLL
             out int alertasEntrenamiento,
             out int alertasNutricion)
         {
+            return ObtenerAlertasDashboard(
+                usuarioActual,
+                out alertasRecepcion,
+                out alertasEntrenamiento,
+                out alertasNutricion,
+                out _);
+        }
+
+        public List<AlertaDashboardBE> ObtenerAlertasDashboard(
+            UsuarioBE usuarioActual,
+            out int alertasRecepcion,
+            out int alertasEntrenamiento,
+            out int alertasNutricion,
+            out int alertasComercial)
+        {
             alertasRecepcion = 0;
             alertasEntrenamiento = 0;
             alertasNutricion = 0;
+            alertasComercial = 0;
             List<AlertaDashboardBE> alertas = new List<AlertaDashboardBE>();
             if (usuarioActual == null) return alertas;
             var dic = ObtenerDiccionarioNegocio();
@@ -400,6 +416,46 @@ namespace BLL
                             alertasNutricion++;
                         }
                     }
+                }
+            }
+            bool veComercial = usuarioActual.TienePermiso("VENDER_PRODUCTO") ||
+                               usuarioActual.TienePermiso("CONSULTAR_STOCK") ||
+                               usuarioActual.TienePermiso("ANALIZAR_DEMANDA") ||
+                               usuarioActual.TienePermiso("GESTION_ROLES");
+            if (veComercial)
+            {
+                string nomAreaCom = TN(dic, "areaComercial", "Mercado Interno");
+                ProductoDAL prodDAL = new ProductoDAL();
+                MercadoInternoDAL mercDAL = new MercadoInternoDAL();
+                var productosActivos = prodDAL.ListarProductosActivos();
+                var enTransito = mercDAL.ObtenerCantidadesEnTransitoPorProducto();
+                var productosCriticos = productosActivos.Where(p => p.StockActual <= p.StockMinimo).OrderBy(p => p.StockActual).ToList();
+                if (productosCriticos.Count > 0)
+                {
+                    foreach (var prod in productosCriticos)
+                    {
+                        int transitoProd = enTransito.ContainsKey(prod.CodigoProducto) ? enTransito[prod.CodigoProducto] : 0;
+                        alertas.Add(new AlertaDashboardBE
+                        {
+                            Area = nomAreaCom,
+                            Prioridad = prod.StockActual == 0 ? "ALTA" : "MEDIA",
+                            Titulo = TN(dic, "alertaStockCritTit", "Alerta de Ruptura de Stock: {0} ({1})", prod.Nombre, prod.CodigoSKU),
+                            Detalle = TN(dic, "alertaStockCritDet", "Stock actual: {0} u. (Mínimo: {1} u. | En tránsito: {2} u.). Evaluar orden de reabastecimiento.", prod.StockActual, prod.StockMinimo, transitoProd),
+                            FechaReferencia = DateTime.Today.ToString("dd/MM/yyyy")
+                        });
+                        alertasComercial++;
+                    }
+                }
+                else
+                {
+                    alertas.Add(new AlertaDashboardBE
+                    {
+                        Area = nomAreaCom,
+                        Prioridad = "INFO",
+                        Titulo = TN(dic, "alertaStockAlDiaTit", "Inventario comercial abastecido"),
+                        Detalle = TN(dic, "alertaStockAlDiaDet", "Todos los artículos activos ({0}) superan el stock mínimo de seguridad.", productosActivos.Count),
+                        FechaReferencia = DateTime.Today.ToString("dd/MM/yyyy")
+                    });
                 }
             }
             return alertas;

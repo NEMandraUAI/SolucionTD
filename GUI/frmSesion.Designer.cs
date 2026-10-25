@@ -36,6 +36,7 @@
             lblKpiRecepcion = new Label();
             lblKpiEntrenamiento = new Label();
             lblKpiNutricion = new Label();
+            lblKpiComercial = new Label();
             btnContactarSocio = new Button();
             btnRefrescarAlertas = new Button();
             dgvAlertas = new DataGridView();
@@ -99,6 +100,7 @@
             pnlDashboardAlertas.Controls.Add(lblKpiRecepcion);
             pnlDashboardAlertas.Controls.Add(lblKpiEntrenamiento);
             pnlDashboardAlertas.Controls.Add(lblKpiNutricion);
+            pnlDashboardAlertas.Controls.Add(lblKpiComercial);
             pnlDashboardAlertas.Controls.Add(btnContactarSocio);
             pnlDashboardAlertas.Controls.Add(btnRefrescarAlertas);
             pnlDashboardAlertas.Controls.Add(dgvAlertas);
@@ -175,6 +177,19 @@
             lblKpiNutricion.TabIndex = 4;
             lblKpiNutricion.Text = "Nutrición: 0";
             lblKpiNutricion.TextAlign = ContentAlignment.MiddleCenter;
+            // 
+            // lblKpiComercial
+            // 
+            lblKpiComercial.BackColor = Color.FromArgb(243, 232, 255);
+            lblKpiComercial.BorderStyle = BorderStyle.FixedSingle;
+            lblKpiComercial.Font = new Font("Segoe UI", 8F, FontStyle.Bold);
+            lblKpiComercial.ForeColor = Color.FromArgb(107, 33, 168);
+            lblKpiComercial.Location = new Point(938, 7);
+            lblKpiComercial.Name = "lblKpiComercial";
+            lblKpiComercial.Size = new Size(168, 26);
+            lblKpiComercial.TabIndex = 8;
+            lblKpiComercial.Text = "Mercado Interno: 0";
+            lblKpiComercial.TextAlign = ContentAlignment.MiddleCenter;
             // 
             // btnContactarSocio
             // 
@@ -527,6 +542,7 @@
         private Label lblKpiRecepcion;
         private Label lblKpiEntrenamiento;
         private Label lblKpiNutricion;
+        private Label lblKpiComercial;
         private Button btnContactarSocio;
         private Button btnRefrescarAlertas;
         private DataGridView dgvAlertas;

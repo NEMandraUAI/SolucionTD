@@ -19,8 +19,12 @@ namespace BLL
             "PlanSuscripcion",
             "RutinaEntrenamiento",
             "Socio",
-            "Turno"
+            "Turno",
+            "Producto",
+            "VentaProducto",
+            "OrdenReabastecimiento"
         };
+
         public void VerificarIntegridadSistema()
         {
             foreach (string tabla in tablasConDV)
@@ -44,6 +48,7 @@ namespace BLL
                 }
             }
         }
+
         public void ActualizarDVVGeneral()
         {
             foreach (string tabla in tablasConDV)
@@ -72,6 +77,7 @@ namespace BLL
                 integridadDAL.ActualizarDVV(tabla, dvvCorrecto);
             }
         }
+
         private List<IEntidadVerificable> ObtenerRegistrosDeTabla(string tabla)
         {
             switch (tabla)
@@ -83,6 +89,9 @@ namespace BLL
                 case "PlanNutricional": return new PlanNutricionalDAL().LeerTodos().Cast<IEntidadVerificable>().ToList();
                 case "PlanSuscripcion": return new PlanSuscripcionDAL().ListarPlanes().Cast<IEntidadVerificable>().ToList();
                 case "RutinaEntrenamiento": return new RutinaEntrenamientoDAL().LeerTodos().Cast<IEntidadVerificable>().ToList();
+                case "Producto": return new ProductoDAL().LeerTodos().Cast<IEntidadVerificable>().ToList();
+                case "VentaProducto": return new MercadoInternoDAL().LeerTodasLasVentas().Cast<IEntidadVerificable>().ToList();
+                case "OrdenReabastecimiento": return new MercadoInternoDAL().LeerTodasLasOrdenes().Cast<IEntidadVerificable>().ToList();
                 default: return new List<IEntidadVerificable>();
             }
         }

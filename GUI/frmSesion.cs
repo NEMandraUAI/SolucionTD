@@ -209,7 +209,8 @@ namespace GUI
                 usuarioActual,
                 out int cantRec,
                 out int cantEnt,
-                out int cantNut);
+                out int cantNut,
+                out int cantCom);
             bool tienePermisoChurn = usuarioActual.TienePermiso("GESTION_SOCIOS_RIESGO");
             if (!tienePermisoChurn && _mostrandoVistaChurn)
             {
@@ -243,6 +244,45 @@ namespace GUI
             lblKpiRecepcion.Text = T("kpiRecepcionBase", "Recepción: ") + cantRec + sufijo;
             lblKpiEntrenamiento.Text = T("kpiEntrenamientoBase", "Entrenamiento: ") + cantEnt + sufijo;
             lblKpiNutricion.Text = T("kpiNutricionBase", "Nutrición: ") + cantNut + sufijo;
+            lblKpiComercial.Text = T("kpiComercialBase", "Mercado Interno: ") + cantCom + sufijo;
+            ReorganizarBarraKpisDashboard();
+        }
+
+        private void ReorganizarBarraKpisDashboard()
+        {
+            if (usuarioActual == null) return;
+            bool veGestionRoles = usuarioActual.TienePermiso("GESTION_ROLES");
+            bool veRec = usuarioActual.TienePermiso("VENDER_PLAN") || usuarioActual.TienePermiso("ASENTAR_TURNO") || usuarioActual.TienePermiso("REVISAR_AGENDA") || usuarioActual.TienePermiso("CONSULTAR_COMPROBANTES") || veGestionRoles;
+            bool veEnt = usuarioActual.TienePermiso("ASIGNAR_RUTINA") || usuarioActual.TienePermiso("CONSULTAR_SOCIO") || veGestionRoles;
+            bool veNut = usuarioActual.TienePermiso("ASIGNAR_PLAN_NUTRICIONAL") || usuarioActual.TienePermiso("CONSULTAR_AGENDA") || usuarioActual.TienePermiso("CONSULTAR_PLANES_NUT") || veGestionRoles;
+            bool veCom = usuarioActual.TienePermiso("VENDER_PRODUCTO") || usuarioActual.TienePermiso("CONSULTAR_STOCK") || usuarioActual.TienePermiso("ANALIZAR_DEMANDA") || veGestionRoles;
+            bool veSociosRiesgo = usuarioActual.TienePermiso("GESTION_SOCIOS_RIESGO");
+            btnVistaChurn.Visible = veSociosRiesgo;
+            btnVistaChurn.Enabled = veSociosRiesgo;
+            bool mostrarKpisOperativos = !_mostrandoVistaChurn;
+            lblKpiRecepcion.Visible = mostrarKpisOperativos && veRec;
+            lblKpiEntrenamiento.Visible = mostrarKpisOperativos && veEnt;
+            lblKpiNutricion.Visible = mostrarKpisOperativos && veNut;
+            lblKpiComercial.Visible = mostrarKpisOperativos && veCom;
+            int xActual = 12;
+            btnVistaAlertas.Width = Math.Max(168, TextRenderer.MeasureText(btnVistaAlertas.Text, btnVistaAlertas.Font).Width + 20);
+            btnVistaAlertas.Location = new Point(xActual, 6);
+            xActual += btnVistaAlertas.Width + 6;
+            if (btnVistaChurn.Visible)
+            {
+                btnVistaChurn.Width = Math.Max(195, TextRenderer.MeasureText(btnVistaChurn.Text, btnVistaChurn.Font).Width + 20);
+                btnVistaChurn.Location = new Point(xActual, 6);
+                xActual += btnVistaChurn.Width + 8;
+            }
+            Label[] kpis = { lblKpiRecepcion, lblKpiEntrenamiento, lblKpiNutricion, lblKpiComercial };
+            foreach (Label lbl in kpis)
+            {
+                if (!lbl.Visible) continue;
+                int anchoTexto = TextRenderer.MeasureText(lbl.Text, lbl.Font).Width + 18;
+                lbl.Width = Math.Max(136, anchoTexto);
+                lbl.Location = new Point(xActual, 7);
+                xActual += lbl.Width + 6;
+            }
         }
 
         private void btnVistaAlertas_Click(object sender, EventArgs e)
@@ -417,14 +457,6 @@ namespace GUI
             panel1.Visible = veBitacora;
             dgvLogs.Visible = veBitacora;
             btnBackup.Visible = veBackup;
-            bool veRec = usuarioActual.TienePermiso("VENDER_PLAN") || usuarioActual.TienePermiso("ASENTAR_TURNO") || usuarioActual.TienePermiso("REVISAR_AGENDA") || usuarioActual.TienePermiso("CONSULTAR_COMPROBANTES") || veGestionRoles;
-            bool veEnt = usuarioActual.TienePermiso("ASIGNAR_RUTINA") || usuarioActual.TienePermiso("CONSULTAR_SOCIO") || veGestionRoles;
-            bool veNut = usuarioActual.TienePermiso("ASIGNAR_PLAN_NUTRICIONAL") || usuarioActual.TienePermiso("CONSULTAR_AGENDA") || usuarioActual.TienePermiso("CONSULTAR_PLANES_NUT") || veGestionRoles;
-            lblKpiRecepcion.Visible = veRec;
-            lblKpiEntrenamiento.Visible = veEnt;
-            lblKpiNutricion.Visible = veNut;
-            btnVistaChurn.Visible = veSociosRiesgo;
-            btnVistaChurn.Enabled = veSociosRiesgo;
             if (!veSociosRiesgo)
             {
                 btnContactarSocio.Visible = false;
@@ -434,6 +466,7 @@ namespace GUI
                     MostrarVistaAlertasOperativas();
                 }
             }
+            ReorganizarBarraKpisDashboard();
             if (veBitacora)
             {
                 pnlDashboardAlertas.Location = new Point(28, 68);

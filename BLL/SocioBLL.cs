@@ -1,4 +1,4 @@
-﻿using BE;
+using BE;
 using DAL;
 using Seguridad;
 using System;
@@ -11,23 +11,58 @@ namespace BLL
 {
     public class SocioBLL
     {
-        SocioDAL dal = new SocioDAL();
-        PlanSuscripcionDAL planSuscripcionDAL = new PlanSuscripcionDAL();
-        ComprobantePagoDAL comprobanteDAL = new ComprobantePagoDAL();
+        private readonly UnidadTrabajoSeguridadDAL? unidad;
+        SocioDAL dal;
+        public SocioBLL(UnidadTrabajoSeguridadDAL? unidad = null)
+        {
+            this.unidad = unidad;
+            dal = new SocioDAL(unidad);
+            planSuscripcionDAL = new PlanSuscripcionDAL(unidad);
+            comprobanteDAL = new ComprobantePagoDAL(unidad);
+            intDal = new IntegridadDAL(unidad);
+            regBll = new RegistroBLL(unidad);
+        }
+        PlanSuscripcionDAL planSuscripcionDAL;
+        ComprobantePagoDAL comprobanteDAL;
         TurnoDAL turnoDAL = new TurnoDAL();
         RutinaEntrenamientoDAL rutinaDAL = new RutinaEntrenamientoDAL();
         PlanNutricionalDAL planNutricionalDAL = new PlanNutricionalDAL();
-        IntegridadDAL intDal = new IntegridadDAL();
+        IntegridadDAL intDal;
         IdiomaDAL idiomaDAL = new IdiomaDAL();
-        RegistroBLL regBll = new RegistroBLL();
+        RegistroBLL regBll;
 
         public SocioBE ConsultarSocio(string dni)
         {
             return dal.ObtenerPorDNI(dni);
         }
 
+        private void ValidarPermisoRecepcionVenta()
+        {
+            UsuarioBE sesion = SessionManager.Instancia.UsuarioActual;
+            UsuarioBE actual = sesion == null ? null : new UsuarioDAL(unidad).ObtenerPorID(sesion.ID);
+            if (actual != null)
+            {
+                var permisos = new PermisoDAL(unidad);
+                actual.Permisos = permisos.ObtenerPermisosDeUsuario(actual.ID, permisos.ObtenerArbolCompleto());
+            }
+            if (actual == null || actual.Bloqueado || (!actual.TienePermiso("VENDER_PLAN") && !actual.TienePermiso("GESTION_ROLES")))
+            {
+                throw new Exception("Operación denegada: No posee el permiso requerido (VENDER_PLAN) para registrar socios o planes de suscripción.");
+            }
+        }
+
         public void RegistrarSocio(SocioBE socio)
         {
+            if (unidad == null)
+            {
+                using var trabajo = new UnidadTrabajoSeguridadDAL();
+                int anterior = socio?.ID_Socio ?? 0;
+                try { new SocioBLL(trabajo).RegistrarSocio(socio); trabajo.Confirmar(); }
+                catch { if (socio != null) socio.ID_Socio = anterior; throw; }
+                return;
+            }
+            ValidarPermisoRecepcionVenta();
+            IntegridadTransaccionalDAL.VerificarDVV(unidad!, "Socio");
             if (socio == null || string.IsNullOrWhiteSpace(socio.DNI))
                 throw new Exception("El DNI es un campo obligatorio.");
             string dniLimpio = socio.DNI.Trim();
@@ -39,6 +74,7 @@ namespace BLL
             if (dal.ObtenerPorDNI(socio.DNI) != null)
                 throw new Exception("Ya existe un socio registrado con este DNI.");
             socio.EstadoActivo = true;
+            socio.PlanAsociado = null;
             socio.DVH = string.Empty;
             dal.InsertarSocio(socio);
             socio.DVH = DVManager.CalcularDVH(socio);
@@ -49,30 +85,47 @@ namespace BLL
 
         public void ActualizarPlanSocio(SocioBE socio, PlanSuscripcionBE nuevoPlan)
         {
-            if (socio != null && socio.ID_Socio > 0)
+            if (unidad == null)
             {
-                if (ObtenerEstadoVigenciaPlan(socio, out DateTime? fechaVenc, out string nomPlanActual, out int diasRest, out _))
-                {
-                    throw new Exception($"El socio {socio.Nombre} {socio.Apellido} (DNI {socio.DNI}) ya posee un plan vigente activo ({nomPlanActual}) con cobertura hasta el {fechaVenc:dd/MM/yyyy} ({diasRest} día(s) restantes).\r\n\r\nNo se permite abonar ni superponer un nuevo plan hasta que venza el actual.");
-                }
+                using var trabajo = new UnidadTrabajoSeguridadDAL();
+                new SocioBLL(trabajo).ActualizarPlanSocio(socio, nuevoPlan);
+                trabajo.Confirmar();
+                return;
             }
-            socio.PlanAsociado = nuevoPlan;
-            socio.EstadoActivo = true;
-            socio.DVH = DVManager.CalcularDVH(socio);
-            dal.ActualizarSocio(socio);
+            ValidarPermisoRecepcionVenta();
+            IntegridadTransaccionalDAL.VerificarDVV(unidad!, "Socio");
+            if (socio == null || socio.ID_Socio <= 0 || nuevoPlan == null)
+                throw new ArgumentException("Debe seleccionar un socio y un plan válidos.");
+            var persistido = dal.ObtenerPorID(socio.ID_Socio)
+                ?? throw new InvalidOperationException("El socio seleccionado ya no existe.");
+            var plan = planSuscripcionDAL.ListarPlanes().SingleOrDefault(p => p.CodigoPlan == nuevoPlan.CodigoPlan)
+                ?? throw new InvalidOperationException("El plan seleccionado ya no existe.");
+            if (ObtenerEstadoVigenciaPlan(persistido, out DateTime? fechaVenc, out string nomPlanActual, out int diasRest, out _))
+                throw new InvalidOperationException($"El socio ya posee cobertura vigente hasta el {fechaVenc:dd/MM/yyyy}; no se permite superponer planes.");
+            persistido.PlanAsociado = plan;
+            persistido.EstadoActivo = true;
+            persistido.DVH = DVManager.CalcularDVH(persistido);
+            dal.ActualizarSocio(persistido);
             RecalcularDVVSocio();
-            regBll.RegistrarEvento($"Se vinculó un nuevo plan al socio DNI: {socio.DNI}", SessionManager.Instancia.UsuarioActual, "INFO");
+            regBll.RegistrarEvento($"Configuración de plan del socio #{persistido.ID_Socio}; esta operación no registra un pago.", SessionManager.Instancia.UsuarioActual, "INFO");
+            socio.PlanAsociado = plan;
+            socio.EstadoActivo = true;
+            socio.DVH = persistido.DVH;
         }
-
-        private void RecalcularDVVSocio()
+        public void RecalcularDVVSocio()
         {
-            List<string> listaDVH = dal.ObtenerTodosLosDVH();
-            string nuevoDVV = DVManager.CalcularDVV(listaDVH);
-            intDal.ActualizarDVV("Socio", nuevoDVV);
+            if (unidad != null)
+            {
+                IntegridadTransaccionalDAL.ActualizarDVV(unidad, "Socio");
+                return;
+            }
+            using var trabajo = new UnidadTrabajoSeguridadDAL();
+            IntegridadTransaccionalDAL.ActualizarDVV(trabajo, "Socio");
+            trabajo.Confirmar();
         }
-
         private Dictionary<string, string> ObtenerDiccionarioNegocio()
         {
+            if (unidad != null) return new Dictionary<string, string>();
             int idIdioma = (GestorIdioma.Instancia != null && GestorIdioma.Instancia.IdiomaActual != null && GestorIdioma.Instancia.IdiomaActual.ID > 0)
                 ? GestorIdioma.Instancia.IdiomaActual.ID
                 : 1;
@@ -114,26 +167,37 @@ namespace BLL
                 mensajeEstado = TN(dic, "vigSocioInactivo", "El socio se encuentra dado de baja / inactivo en el padrón.");
                 return false;
             }
-            List<PlanSuscripcionBE> catalogoPlanes = planSuscripcionDAL.ListarPlanes();
-            int codPlan = socio.PlanAsociado != null ? socio.PlanAsociado.CodigoPlan : 0;
-            PlanSuscripcionBE plan = catalogoPlanes.FirstOrDefault(p => p.CodigoPlan == codPlan);
-            int duracionDias = plan != null ? plan.DuracionDias : 30;
-            nombrePlan = plan != null ? plan.Nombre : TN(dic, "vigPlanEstandar", "Plan Estándar");
-            List<ComprobantePagoBE> pagosSocio = comprobanteDAL.ConsultarComprobantesFiltros(
-                new DateTime(2000, 1, 1),
-                DateTime.Now.AddYears(5),
-                socio.DNI)
-                .Where(c => c.Socio != null && c.Socio.ID_Socio == socio.ID_Socio)
-                .OrderByDescending(c => c.Fecha)
-                .ThenByDescending(c => c.NroComprobante)
-                .ToList();
-            if (pagosSocio.Count == 0)
+            var persistido = dal.ObtenerPorID(socio.ID_Socio);
+            if (persistido == null || !persistido.EstadoActivo)
+            {
+                mensajeEstado = TN(dic, "vigSocioInactivo", "El socio no existe o se encuentra inactivo en el padrón.");
+                return false;
+            }
+            var ultimoPago = comprobanteDAL.ObtenerUltimoPorSocio(persistido.ID_Socio);
+            if (ultimoPago == null)
             {
                 mensajeEstado = TN(dic, "vigSinPagos", "El socio no registra comprobantes de pago de suscripción.");
                 return false;
             }
-            ComprobantePagoBE ultimoPago = pagosSocio.First();
-            DateTime venc = ultimoPago.Fecha.Date.AddDays(duracionDias);
+            DateTime venc;
+            if (ultimoPago.FechaCoberturaHasta.HasValue)
+            {
+                venc = ultimoPago.FechaCoberturaHasta.Value.Date;
+                nombrePlan = ultimoPago.NombrePlanVendido ?? "Plan contratado";
+            }
+            else
+            {
+                // Compatibilidad explícita con pagos anteriores a los snapshots.
+                // No se inventa una duración estándar ni se modifica el comprobante.
+                var planAnterior = planSuscripcionDAL.ListarPlanes().FirstOrDefault(p => p.CodigoPlan == persistido.PlanAsociado?.CodigoPlan);
+                if (planAnterior == null || planAnterior.DuracionDias < 1 || planAnterior.DuracionDias > 36500)
+                {
+                    mensajeEstado = "La cobertura histórica no está disponible. Requiere revisión administrativa.";
+                    return false;
+                }
+                venc = ultimoPago.Fecha.Date.AddDays(planAnterior.DuracionDias);
+                nombrePlan = planAnterior.Nombre + " (vigencia estimada de registro anterior)";
+            }
             fechaVencimiento = venc;
             diasRestantes = (int)(venc - DateTime.Today).TotalDays;
             if (diasRestantes < 0)

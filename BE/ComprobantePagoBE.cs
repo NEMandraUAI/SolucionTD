@@ -32,6 +32,21 @@ namespace BE
 
         public string DVH { get; set; }
 
+        [DigitoVerificador(7)]
+        public int? CodigoPlanVendido { get; set; }
+
+        [DigitoVerificador(8)]
+        public string? NombrePlanVendido { get; set; }
+
+        [DigitoVerificador(9)]
+        public int? DuracionDiasVendida { get; set; }
+
+        [DigitoVerificador(10)]
+        public DateTime? FechaCoberturaDesde { get; set; }
+
+        [DigitoVerificador(11)]
+        public DateTime? FechaCoberturaHasta { get; set; }
+
         public string ObtenerID()
         {
             return NroComprobante.ToString();

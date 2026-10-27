@@ -10,7 +10,14 @@ namespace BLL
 {
     public class RegistroBLL
     {
-        private RegistroDAL registroDAL = new RegistroDAL();
+        private readonly RegistroDAL registroDAL;
+
+        public RegistroBLL() : this(null) { }
+
+        internal RegistroBLL(UnidadTrabajoSeguridadDAL? unidad)
+        {
+            registroDAL = new RegistroDAL(unidad);
+        }
         public void RegistrarEvento(string evento, UsuarioBE pUsuario, string criticidad = "INFO")
         {
             RegistroBE registro = new RegistroBE();

@@ -32,12 +32,30 @@ namespace Seguridad
         }
         public void Cerrar()
         {
-            UsuarioActual = null;
+            lock (candado) UsuarioActual = null;
+            NotificarPermisosActualizados();
         }
         public void ActualizarUsuarioEnSesion(UsuarioBE usuarioActualizado)
         {
-            UsuarioActual = usuarioActualizado;
-            PermisosActualizados?.Invoke(this, EventArgs.Empty);
+            lock (candado)
+            {
+                if (UsuarioActual == null || UsuarioActual.ID != usuarioActualizado.ID) return;
+                UsuarioActual = usuarioActualizado;
+            }
+            NotificarPermisosActualizados();
+        }
+        private void NotificarPermisosActualizados()
+        {
+            var observadores = PermisosActualizados;
+            if (observadores == null) return;
+            foreach (EventHandler handler in observadores.GetInvocationList())
+            {
+                try { handler(this, EventArgs.Empty); }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Trace.TraceError("Error al notificar cambios de sesión: {0}", ex);
+                }
+            }
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -134,12 +134,28 @@ namespace BLL
             return sb.ToString();
         }
 
-        public void AsignarPlan(PlanNutricionalBE plan)
+        public void AsignarPlan(PlanNutricionalBE plan, int? nroTurnoAtendido = null)
         {
-            if (plan == null)
-                throw new Exception("El plan nutricional no puede ser nulo.");
-            SocioBE socio = _socioDAL.LeerTodos().FirstOrDefault(s => s.ID_Socio == plan.ID_Socio);
-            _socioBLL.ValidarPlanVigenteAlDiaDeHoy(socio, "confeccionar y asignar un nuevo Plan Nutricional");
+            ArgumentNullException.ThrowIfNull(plan);
+            using var unidad = new UnidadTrabajoSeguridadDAL();
+            var usuarioActual = TurnoBLL.ValidarActor(unidad, "ASIGNAR_PLAN_NUTRICIONAL");
+            IntegridadTransaccionalDAL.VerificarDVV(unidad, "PlanNutricional");
+            var solicitado = plan;
+            plan = new PlanNutricionalBE { ID_Socio=solicitado.ID_Socio, ID_Nutricionista=usuarioActual.ID,
+                FechaCreacion=solicitado.FechaCreacion, EvaluacionAntropometrica=solicitado.EvaluacionAntropometrica,
+                DetalleHabitos=solicitado.DetalleHabitos, DatosBiometricos=solicitado.DatosBiometricos };
+            var socio = new SocioDAL(unidad).LeerTodos().SingleOrDefault(s => s.ID_Socio == plan.ID_Socio);
+            TurnoBLL.ValidarDVHSocio(socio);
+            new SocioBLL(unidad).ValidarPlanVigenteAlDiaDeHoy(socio, "confeccionar y asignar un nuevo Plan Nutricional");
+            if (nroTurnoAtendido.HasValue)
+            {
+                var turno = new TurnoDAL(unidad).ObtenerPorID(nroTurnoAtendido.Value)
+                    ?? throw new ArgumentException("El turno atendido no existe.");
+                if (turno.ID_Socio != plan.ID_Socio || turno.ID_Nutricionista != usuarioActual.ID || turno.FechaHora.Date != DateTime.Today)
+                    throw new UnauthorizedAccessException("El turno seleccionado no corresponde a esta consulta, socio y profesional.");
+                if (turno.Estado != "Pendiente" || turno.FechaHora > DateTime.Now)
+                    throw new InvalidOperationException("El turno seleccionado no está pendiente o todavía no comenzó.");
+            }
             if (plan.DatosBiometricos != null && plan.DatosBiometricos.PesoKg > 0 && plan.DatosBiometricos.AlturaCm > 0)
             {
                 if (plan.DatosBiometricos.PesoKg < 25m || plan.DatosBiometricos.PesoKg > 300m)
@@ -160,14 +176,18 @@ namespace BLL
                 throw new Exception("La evaluación biométrica y los detalles de hábitos son obligatorios.");
             DateTime f = plan.FechaCreacion == default ? DateTime.Now : plan.FechaCreacion;
             plan.FechaCreacion = new DateTime(f.Year, f.Month, f.Day, f.Hour, f.Minute, f.Second);
-            plan.CodigoPlan = _planDAL.InsertarPlan(plan);
+            var dal = new PlanNutricionalDAL(unidad);
+            plan.CodigoPlan = dal.InsertarPlan(plan);
             plan.DVH = DVManager.CalcularDVH(plan);
-            _planDAL.ActualizarDVH(plan.CodigoPlan, plan.DVH);
-            List<string> listaDVH = _planDAL.ObtenerTodosLosDVH();
-            string nuevoDVV = DVManager.CalcularDVV(listaDVH);
-            _integridadDAL.ActualizarDVV("PlanNutricional", nuevoDVV);
-            UsuarioBE usuarioActual = SessionManager.Instancia.UsuarioActual;
-            _registroBLL.RegistrarEvento($"Plan Nutricional asignado (Cod: {plan.CodigoPlan}) al socio ID {plan.ID_Socio}", usuarioActual, "INFO");
+            dal.ActualizarDVH(plan.CodigoPlan, plan.DVH);
+            IntegridadTransaccionalDAL.ActualizarDVV(unidad, "PlanNutricional");
+            new RegistroBLL(unidad).RegistrarEvento($"Plan Nutricional asignado (Cod: {plan.CodigoPlan}) al socio ID {plan.ID_Socio}", usuarioActual);
+            if (nroTurnoAtendido.HasValue)
+                TurnoBLL.CambiarEstadoEnUnidad(unidad, nroTurnoAtendido.Value, "Asistió", usuarioActual);
+            unidad.Confirmar();
+            solicitado.CodigoPlan=plan.CodigoPlan; solicitado.DVH=plan.DVH;
+            solicitado.FechaCreacion=plan.FechaCreacion; solicitado.ID_Nutricionista=plan.ID_Nutricionista;
+            solicitado.EvaluacionAntropometrica=plan.EvaluacionAntropometrica;
         }
 
         public List<PlanNutricionalBE> ObtenerPlanesSocio(int idSocio)

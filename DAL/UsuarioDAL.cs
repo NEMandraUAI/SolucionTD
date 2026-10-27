@@ -1,4 +1,4 @@
-﻿using Microsoft.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,13 +10,20 @@ namespace DAL
 {
     public class UsuarioDAL
     {
+        private readonly UnidadTrabajoSeguridadDAL? unidad;
+
+        public UsuarioDAL(UnidadTrabajoSeguridadDAL? unidad = null)
+        {
+            this.unidad = unidad;
+        }
+
         public UsuarioBE ObtenerPorUsername(string nombreUsuario)
         {
             UsuarioBE usuario = null;
-            using (SqlConnection cn = ConexionDAL.Instancia.ObtenerConexion())
+            using (var acceso = new AccesoSeguridadDAL(unidad))
             {
-                cn.Open();
-                using (SqlCommand cmd = new SqlCommand("sp_Usuario_ObtenerPorUsername", cn))
+                SqlConnection cn = acceso.Conexion;
+                using (SqlCommand cmd = acceso.CrearComando("sp_Usuario_ObtenerPorUsername"))
                 {
                     cmd.CommandType = System.Data.CommandType.StoredProcedure;
                     cmd.Parameters.AddWithValue("@Nombre", nombreUsuario);
@@ -41,10 +48,10 @@ namespace DAL
         }
         public void ActualizarEstadoUsuario(UsuarioBE usuario)
         {
-            using (SqlConnection cn = ConexionDAL.Instancia.ObtenerConexion())
+            using (var acceso = new AccesoSeguridadDAL(unidad))
             {
-                cn.Open();
-                using (SqlCommand cmd = new SqlCommand("sp_Usuario_ActualizarEstado", cn))
+                SqlConnection cn = acceso.Conexion;
+                using (SqlCommand cmd = acceso.CrearComando("sp_Usuario_ActualizarEstado"))
                 {
                     cmd.CommandType = System.Data.CommandType.StoredProcedure;
                     cmd.Parameters.AddWithValue("@Intentos", usuario.IntentosFallidos);
@@ -58,11 +65,11 @@ namespace DAL
         public List<UsuarioBE> ListarTodos()
         {
             List<UsuarioBE> lista = new List<UsuarioBE>();
-            using (SqlConnection cn = ConexionDAL.Instancia.ObtenerConexion())
+            using (var acceso = new AccesoSeguridadDAL(unidad))
             {
-                cn.Open();
+                SqlConnection cn = acceso.Conexion;
                 string consulta = "SELECT ID, Nombre, Clave, IntentosFallidos, Bloqueado, DVH, ID_Idioma, NivelJerarquia FROM Usuario ORDER BY ID ASC";
-                using (SqlCommand cmd = new SqlCommand(consulta, cn))
+                using (SqlCommand cmd = acceso.CrearComando(consulta))
                 {
                     using (SqlDataReader reader = cmd.ExecuteReader())
                     {
@@ -87,11 +94,11 @@ namespace DAL
         public int CrearUsuario(UsuarioBE nuevoUsuario)
         {
             int nuevoID = 0;
-            using (SqlConnection cn = ConexionDAL.Instancia.ObtenerConexion())
+            using (var acceso = new AccesoSeguridadDAL(unidad))
             {
-                cn.Open();
+                SqlConnection cn = acceso.Conexion;
                 string consulta = "INSERT INTO Usuario (Nombre, Clave, IntentosFallidos, Bloqueado, NivelJerarquia) VALUES (@Nombre, @Clave, 0, 0, 1); SELECT SCOPE_IDENTITY();";
-                using (SqlCommand cmd = new SqlCommand(consulta, cn))
+                using (SqlCommand cmd = acceso.CrearComando(consulta))
                 {
                     cmd.Parameters.AddWithValue("@Nombre", nuevoUsuario.Nombre);
                     cmd.Parameters.AddWithValue("@Clave", nuevoUsuario.Clave);
@@ -102,11 +109,11 @@ namespace DAL
         }
         public void ActualizarDVH(int idUsuario, string dvh)
         {
-            using (SqlConnection cn = ConexionDAL.Instancia.ObtenerConexion())
+            using (var acceso = new AccesoSeguridadDAL(unidad))
             {
-                cn.Open();
+                SqlConnection cn = acceso.Conexion;
                 string consulta = "UPDATE Usuario SET DVH = @DVH WHERE ID = @ID";
-                using (SqlCommand cmd = new SqlCommand(consulta, cn))
+                using (SqlCommand cmd = acceso.CrearComando(consulta))
                 {
                     cmd.Parameters.AddWithValue("@DVH", dvh);
                     cmd.Parameters.AddWithValue("@ID", idUsuario);
@@ -117,11 +124,11 @@ namespace DAL
         public UsuarioBE ObtenerPorID(int idUsuario)
         {
             UsuarioBE usuario = null;
-            using (SqlConnection cn = ConexionDAL.Instancia.ObtenerConexion())
+            using (var acceso = new AccesoSeguridadDAL(unidad))
             {
-                cn.Open();
+                SqlConnection cn = acceso.Conexion;
                 string consulta = "SELECT ID, Nombre, Clave, IntentosFallidos, Bloqueado, DVH, ID_Idioma, NivelJerarquia FROM Usuario WHERE ID = @ID";
-                using (SqlCommand cmd = new SqlCommand(consulta, cn))
+                using (SqlCommand cmd = acceso.CrearComando(consulta))
                 {
                     cmd.Parameters.AddWithValue("@ID", idUsuario);
                     using (SqlDataReader reader = cmd.ExecuteReader())
@@ -147,13 +154,13 @@ namespace DAL
         }
         public void GuardarEstadoHistorico(UsuarioHistoricoBE historico)
         {
-            using (SqlConnection cn = ConexionDAL.Instancia.ObtenerConexion())
+            using (var acceso = new AccesoSeguridadDAL(unidad))
             {
-                cn.Open();
+                SqlConnection cn = acceso.Conexion;
                 string consulta = @"INSERT INTO Usuario_Historico 
                                     (ID_Usuario, Nombre, Clave, IntentosFallidos, Bloqueado, ID_Usuario_Autor, FechaHora, Accion, NivelJerarquia) 
                                     VALUES (@ID_Usu, @Nombre, @Clave, @Intentos, @Bloqueado, @ID_Autor, @Fecha, @Accion, @NivelJerarquia)";
-                using (SqlCommand cmd = new SqlCommand(consulta, cn))
+                using (SqlCommand cmd = acceso.CrearComando(consulta))
                 {
                     cmd.Parameters.AddWithValue("@ID_Usu", historico.ID);
                     cmd.Parameters.AddWithValue("@Nombre", historico.Nombre);
@@ -172,14 +179,14 @@ namespace DAL
         public List<UsuarioHistoricoBE> ListarHistorial(int idUsuario)
         {
             List<UsuarioHistoricoBE> lista = new List<UsuarioHistoricoBE>();
-            using (SqlConnection cn = ConexionDAL.Instancia.ObtenerConexion())
+            using (var acceso = new AccesoSeguridadDAL(unidad))
             {
-                cn.Open();
+                SqlConnection cn = acceso.Conexion;
                 string consulta = @"SELECT h.*, u.Nombre AS NombreAutor 
                                      FROM Usuario_Historico h
                                      INNER JOIN Usuario u ON h.ID_Usuario_Autor = u.ID
                                      WHERE h.ID_Usuario = @ID_Usuario ORDER BY h.FechaHora DESC";
-                using (SqlCommand cmd = new SqlCommand(consulta, cn))
+                using (SqlCommand cmd = acceso.CrearComando(consulta))
                 {
                     cmd.Parameters.AddWithValue("@ID_Usuario", idUsuario);
                     using (SqlDataReader reader = cmd.ExecuteReader())
@@ -208,9 +215,9 @@ namespace DAL
         }
         public void ActualizarUsuarioCompleto(UsuarioBE usuario)
         {
-            using (SqlConnection cn = ConexionDAL.Instancia.ObtenerConexion())
+            using (var acceso = new AccesoSeguridadDAL(unidad))
             {
-                cn.Open();
+                SqlConnection cn = acceso.Conexion;
                 string consulta = @"UPDATE Usuario 
                                     SET Nombre = @Nombre, 
                                     Clave = @Clave, 
@@ -220,7 +227,7 @@ namespace DAL
                                     ID_Idioma = @ID_Idioma,
                                     NivelJerarquia = @NivelJerarquia
                                     WHERE ID = @ID";
-                using (SqlCommand cmd = new SqlCommand(consulta, cn))
+                using (SqlCommand cmd = acceso.CrearComando(consulta))
                 {
                     cmd.Parameters.AddWithValue("@Nombre", usuario.Nombre);
                     cmd.Parameters.AddWithValue("@Clave", usuario.Clave);
@@ -236,11 +243,11 @@ namespace DAL
         }
         public void ActualizarIdioma(int idUsuario, int idIdioma)
         {
-            using (SqlConnection cn = ConexionDAL.Instancia.ObtenerConexion())
+            using (var acceso = new AccesoSeguridadDAL(unidad))
             {
-                cn.Open();
+                SqlConnection cn = acceso.Conexion;
                 string query = "UPDATE Usuario SET ID_Idioma = @ID_Idioma WHERE ID = @ID";
-                using (SqlCommand cmd = new SqlCommand(query, cn))
+                using (SqlCommand cmd = acceso.CrearComando(query))
                 {
                     cmd.Parameters.AddWithValue("@ID_Idioma", idIdioma);
                     cmd.Parameters.AddWithValue("@ID", idUsuario);
@@ -250,11 +257,11 @@ namespace DAL
         }
         public void ActualizarJerarquiaYDVH(int idUsuario, int nivelJerarquia, string dvh)
         {
-            using (SqlConnection cn = ConexionDAL.Instancia.ObtenerConexion())
+            using (var acceso = new AccesoSeguridadDAL(unidad))
             {
-                cn.Open();
+                SqlConnection cn = acceso.Conexion;
                 string consulta = "UPDATE Usuario SET NivelJerarquia = @Nivel, DVH = @DVH WHERE ID = @ID";
-                using (SqlCommand cmd = new SqlCommand(consulta, cn))
+                using (SqlCommand cmd = acceso.CrearComando(consulta))
                 {
                     cmd.Parameters.AddWithValue("@Nivel", nivelJerarquia);
                     cmd.Parameters.AddWithValue("@DVH", dvh);

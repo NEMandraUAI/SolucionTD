@@ -1,10 +1,7 @@
 ﻿using Microsoft.Data.SqlClient;
-using System.Configuration;
 using System;
-using System.Collections.Generic;
-using System.Linq;
+using System.IO;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace DAL
 {
@@ -12,10 +9,17 @@ namespace DAL
     {
         private static ConexionDAL instancia;
         private static readonly object candado = new object();
+        public const string PlaceholderConfig = "DB_CONNECTION_STRING_PLACEHOLDER";
+        private const string FallbackDefaultConn = @"Server=(localdb)\UAIFIT;Database=ProyectoCampo;Trusted_Connection=True;TrustServerCertificate=True;";
         public static string ConnectionStringTemporal { get; set; }
+        public static string ConnectionStringResuelta { get; set; }
+        public static string RutaConfigUsuario =>
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "UAI-FIT", "dbconfig.cfg");
+
         private ConexionDAL()
         {
         }
+
         public static ConexionDAL Instancia
         {
             get
@@ -30,26 +34,58 @@ namespace DAL
                 }
             }
         }
+
+        public static string ObtenerConnectionStringConfigurada()
+        {
+            if (!string.IsNullOrWhiteSpace(ConnectionStringResuelta))
+            {
+                return ConnectionStringResuelta;
+            }
+            try
+            {
+                if (File.Exists(RutaConfigUsuario))
+                {
+                    string localConn = File.ReadAllText(RutaConfigUsuario, Encoding.UTF8).Trim();
+                    if (string.IsNullOrWhiteSpace(localConn) || string.Equals(localConn, PlaceholderConfig, StringComparison.OrdinalIgnoreCase))
+                        throw new InvalidOperationException("El archivo de conexión está vacío o no fue configurado.");
+                    if (!string.IsNullOrWhiteSpace(localConn) &&
+                        !string.Equals(localConn, PlaceholderConfig, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return new SqlConnectionStringBuilder(localConn).ConnectionString;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new InvalidOperationException("No se pudo leer una configuración SQL válida en " + RutaConfigUsuario + ". Repare la configuración desde el instalador.", ex);
+            }
+            return FallbackDefaultConn;
+        }
+
         public SqlConnection ObtenerConexion()
         {
-            string connectionString;
-            if (!string.IsNullOrEmpty(ConnectionStringTemporal))
-            {
-                connectionString = ConnectionStringTemporal;
-            }
-            else
-            {
-                string configConn = ConfigurationManager.ConnectionStrings["DefaultConnection"]?.ConnectionString;
-                if (string.IsNullOrWhiteSpace(configConn) || configConn == "DB_CONNECTION_STRING_PLACEHOLDER")
-                {
-                    connectionString = "Server=.;Database=ProyectoCampo;Trusted_Connection=True;TrustServerCertificate=True;";
-                }
-                else
-                {
-                    connectionString = configConn;
-                }
-            }
+            string connectionString = !string.IsNullOrWhiteSpace(ConnectionStringTemporal)
+                ? ConnectionStringTemporal
+                : ObtenerConnectionStringConfigurada();
             return new SqlConnection(connectionString);
+        }
+
+        public static void GuardarConnectionStringEnConfig(string nuevaConnectionString)
+        {
+            string limpia = new SqlConnectionStringBuilder(nuevaConnectionString).ConnectionString;
+            string dir = Path.GetDirectoryName(RutaConfigUsuario)!;
+            Directory.CreateDirectory(dir);
+            string temporal = Path.Combine(dir, "dbconfig-" + Guid.NewGuid().ToString("N") + ".tmp");
+            try
+            {
+                File.WriteAllText(temporal, limpia, new UTF8Encoding(false));
+                File.Move(temporal, RutaConfigUsuario, true);
+                ConnectionStringResuelta = limpia;
+            }
+            finally
+            {
+                if (File.Exists(temporal)) File.Delete(temporal);
+            }
         }
     }
 }

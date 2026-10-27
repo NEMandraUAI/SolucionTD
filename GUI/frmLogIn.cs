@@ -31,7 +31,16 @@ namespace GUI
             try
             {
                 UsuarioBE usuarioLogueado = usuarioBLL.IniciarSesion(txtUsuario.Text, txtClave.Text);
-                LoginExitoso?.Invoke(this, new LogInEventArgs(usuarioLogueado));
+                try
+                {
+                    LoginExitoso?.Invoke(this, new LogInEventArgs(usuarioLogueado));
+                }
+                catch (Exception ex)
+                {
+                    SessionManager.Instancia.Cerrar();
+                    InstaladorBLL.RegistrarLog("La autenticacion se confirmo, pero fallo la pantalla de sesion: " + ex.Message);
+                    throw new InvalidOperationException("No se pudo abrir la pantalla de sesion. La sesion se cerro; vuelva a intentarlo.", ex);
+                }
             }
             catch (Exception ex)
             {

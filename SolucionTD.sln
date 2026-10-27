@@ -13,6 +13,12 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BLL", "BLL\BLL.csproj", "{A
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Seguridad", "Seguridad\Seguridad.csproj", "{943214DD-2EBF-423E-B655-11DC3482968A}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Elementos de la solución", "Elementos de la solución", "{E3420BC5-14CA-4582-8967-241319183CAC}"
+	ProjectSection(SolutionItems) = preProject
+		Generar_InitDB.ps1 = Generar_InitDB.ps1
+		Script_EsquemaDatos_BD.txt = Script_EsquemaDatos_BD.txt
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

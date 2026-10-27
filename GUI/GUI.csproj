@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
+    <Version>4.1.0</Version>
     <TargetFramework>net9.0-windows7.0</TargetFramework>
     <Nullable>enable</Nullable>
     <UseWindowsForms>true</UseWindowsForms>
@@ -32,6 +33,8 @@
   <ItemGroup>
     <None Update="InitDB.sql">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToPublishDirectory>Always</CopyToPublishDirectory>
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
     </None>
   </ItemGroup>
 

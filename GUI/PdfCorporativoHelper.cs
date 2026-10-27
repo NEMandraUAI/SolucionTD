@@ -1,4 +1,4 @@
-﻿using BE;
+using BE;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using System;
@@ -177,16 +177,18 @@ namespace GUI
             DateTime fechaEmision = comprobante != null && comprobante.Fecha != default ? comprobante.Fecha : DateTime.Now;
             decimal monto = comprobante != null ? comprobante.MontoTotal : (plan != null ? plan.Precio : 0m);
             string metodoPago = comprobante != null && !string.IsNullOrWhiteSpace(comprobante.MetodoPago) ? comprobante.MetodoPago : "Efectivo";
-            string nombrePlan = plan != null && !string.IsNullOrWhiteSpace(plan.Nombre) ? plan.Nombre : "Plan de Suscripción";
-            int duracionDias = plan != null && plan.DuracionDias > 0 ? plan.DuracionDias : 30;
-            DateTime fechaVenc = fechaEmision.Date.AddDays(duracionDias);
-            decimal costoDiario = duracionDias > 0 ? Math.Round(monto / duracionDias, 2) : monto;
+            string nombrePlan = comprobante?.NombrePlanVendido ?? "Plan histórico no disponible";
+            int? duracionDias = comprobante?.DuracionDiasVendida;
+            DateTime? fechaInicio = comprobante?.FechaCoberturaDesde;
+            DateTime? fechaVenc = comprobante?.FechaCoberturaHasta;
+            bool coberturaConocida = duracionDias > 0 && fechaInicio.HasValue && fechaVenc.HasValue;
+            decimal? costoDiario = duracionDias > 0 ? Math.Round(monto / duracionDias.Value, 2) : null;
             string nomSocio = socio != null ? $"{socio.Nombre} {socio.Apellido}".Trim() : "-";
             string dniSocio = socio != null && !string.IsNullOrWhiteSpace(socio.DNI) ? socio.DNI : "-";
             string telSocio = socio != null && !string.IsNullOrWhiteSpace(socio.Telefono) ? socio.Telefono : "No informado";
             string emailSocio = socio != null && !string.IsNullOrWhiteSpace(socio.Email) ? socio.Email : "No informado";
             string cajero = !string.IsNullOrWhiteSpace(nombreCobrador) ? nombreCobrador : "Administración";
-            string dvh = comprobante != null && !string.IsNullOrWhiteSpace(comprobante.DVH) ? comprobante.DVH : "VERIFICADO-SISTEMA-UAIFIT";
+            string dvh = comprobante?.DVH ?? string.Empty;
             var doc = Document.Create(document =>
             {
                 document.Page(page =>
@@ -230,7 +232,7 @@ namespace GUI
                                     info.Item().Text(t => { t.Span("Nro. Operación: ").Bold().FontColor(ColorGrisTextoSecundario); t.Span($"#{nroComp:D6}").Bold().FontColor(ColorAzulPrimario); });
                                     info.Item().Text(t => { t.Span("Medio de Pago: ").Bold().FontColor(ColorGrisTextoSecundario); t.Span(metodoPago).Bold(); });
                                     info.Item().Text(t => { t.Span("Cajero / Emisor: ").Bold().FontColor(ColorGrisTextoSecundario); t.Span(cajero); });
-                                    info.Item().Text(t => { t.Span("Estado de Acceso: ").Bold().FontColor(ColorGrisTextoSecundario); t.Span("HABILITADO — CUOTA AL DÍA").Bold().FontColor(ColorVerdeExito); });
+                                    info.Item().Text(t => { t.Span("Estado de Acceso: ").Bold().FontColor(ColorGrisTextoSecundario); t.Span("PAGO REGISTRADO").Bold().FontColor(ColorVerdeExito); });
                                 });
                             });
                         });
@@ -258,13 +260,13 @@ namespace GUI
                                 c.Item().Text(nombrePlan).FontSize(10f).Bold();
                                 c.Item().Text("Acceso libre a salón de musculación, cardio, rutinas y consultorio nutricional").FontSize(8f).FontColor(ColorGrisTextoSecundario);
                             });
-                            table.Cell().BorderBottom(1).BorderColor(ColorGrisBorde).Padding(8).AlignCenter().AlignMiddle().Text($"{duracionDias} días");
-                            table.Cell().BorderBottom(1).BorderColor(ColorGrisBorde).Padding(8).AlignCenter().AlignMiddle().Text($"{fechaEmision:dd/MM/yyyy}");
-                            table.Cell().BorderBottom(1).BorderColor(ColorGrisBorde).Padding(8).AlignCenter().AlignMiddle().Text($"{fechaVenc:dd/MM/yyyy}").Bold().FontColor(ColorVerdeExito);
+                            table.Cell().BorderBottom(1).BorderColor(ColorGrisBorde).Padding(8).AlignCenter().AlignMiddle().Text(duracionDias.HasValue ? $"{duracionDias} días" : "No disponible");
+                            table.Cell().BorderBottom(1).BorderColor(ColorGrisBorde).Padding(8).AlignCenter().AlignMiddle().Text(fechaInicio.HasValue ? $"{fechaInicio:dd/MM/yyyy}" : "No disponible");
+                            table.Cell().BorderBottom(1).BorderColor(ColorGrisBorde).Padding(8).AlignCenter().AlignMiddle().Text(fechaVenc.HasValue ? $"{fechaVenc:dd/MM/yyyy}" : "No disponible").Bold().FontColor(ColorVerdeExito);
                             table.Cell().BorderBottom(1).BorderColor(ColorGrisBorde).Padding(8).AlignRight().AlignMiddle().Text($"$ {monto:N2}").FontSize(10f).Bold();
                         });
                         col.Item().Background(ColorGrisCebra).Border(1).BorderColor(ColorGrisBorde).Padding(8)
-                            .Text($"Tarifa diaria promedio: $ {costoDiario:N2} / día  |  Incluye seguimiento personalizado de entrenamiento y nutrición clínica.")
+                            .Text(costoDiario.HasValue ? $"Tarifa diaria del período abonado: $ {costoDiario:N2} / día." : "Este comprobante histórico no conserva las condiciones de cobertura del plan.")
                             .FontSize(8.5f).FontColor(ColorGrisTextoSecundario);
                         col.Item().AlignRight().Width(240).Border(1.5f).BorderColor(ColorAzulPrimario).Background(ColorAzulClaroFondo)
                             .Padding(12).Row(row =>
@@ -279,10 +281,10 @@ namespace GUI
                         col.Item().Border(1).BorderColor("#86EFAC").Background(ColorVerdeClaroFondo).Padding(12).Column(cert =>
                         {
                             cert.Spacing(4);
-                            cert.Item().Text("CONSTANCIA DE HABILITACIÓN INMEDIATA").FontSize(9.5f).Bold().FontColor(ColorVerdeExito);
-                            cert.Item().Text($"1. El socio titular {nomSocio} (DNI {dniSocio}) se encuentra habilitado para ingresar desde el {fechaEmision:dd/MM/yyyy} hasta el {fechaVenc:dd/MM/yyyy} inclusive.").FontSize(8.5f);
-                            cert.Item().Text("2. Esta membresía habilita la asignación y actualización de rutinas en el área de Entrenamiento.").FontSize(8.5f);
-                            cert.Item().Text("3. Habilita la reserva de turnos, controles antropométricos y compras en el Mercado Interno de UAI-FIT.").FontSize(8.5f);
+                            cert.Item().Text("CONSTANCIA DEL PAGO REGISTRADO").FontSize(9.5f).Bold().FontColor(ColorVerdeExito);
+                            cert.Item().Text(coberturaConocida ? $"1. Este pago corresponde al período desde el {fechaInicio:dd/MM/yyyy} hasta el {fechaVenc:dd/MM/yyyy} inclusive." : "1. La duración y cobertura histórica no están disponibles; no se deducen del catálogo actual.").FontSize(8.5f);
+                            cert.Item().Text("2. Para habilitar servicios, consulte la vigencia actual del socio en UAI-FIT.").FontSize(8.5f);
+                            cert.Item().Text("3. La reimpresión de este recibo no habilita ni renueva una suscripción.").FontSize(8.5f);
                         });
                         col.Item().PaddingTop(30).AlignRight().Width(200).Column(firma =>
                         {

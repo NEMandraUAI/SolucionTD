@@ -364,7 +364,7 @@ namespace GUI
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message, "Error en Motor Predictivo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show(T(ex.Message, ex.Message), T("titErrorMotor", "Error en Motor Predictivo"), MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
         }
 
@@ -427,7 +427,7 @@ namespace GUI
         private void dgvPredicciones_DataError(object sender, DataGridViewDataErrorEventArgs e)
         {
             e.ThrowException = false;
-            MessageBox.Show("Ingrese un número entero válido mayor o igual a cero para la cantidad a comprar.", "Valor Inválido", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            MessageBox.Show(T("msgValorInvalidoCant", "Ingrese un número entero válido mayor o igual a cero para la cantidad a comprar."), T("titValorInvalido", "Valor Inválido"), MessageBoxButtons.OK, MessageBoxIcon.Warning);
         }
 
         private void dgvPredicciones_SelectionChanged(object sender, EventArgs e)
@@ -541,6 +541,24 @@ namespace GUI
             }
         }
 
+        private string TraducirEstadoOrden(string estadoOriginal)
+        {
+            if (string.IsNullOrWhiteSpace(estadoOriginal)) return string.Empty;
+            if (estadoOriginal.Equals("Pendiente", StringComparison.OrdinalIgnoreCase))
+                return T("estPendiente", "Pendiente");
+            if (estadoOriginal.Equals("Recibida", StringComparison.OrdinalIgnoreCase))
+                return T("estRecibida", "Recibida");
+            return estadoOriginal;
+        }
+
+        private string TraducirModeloOrden(string modeloOriginal)
+        {
+            if (string.IsNullOrWhiteSpace(modeloOriginal)) return string.Empty;
+            if (modeloOriginal.IndexOf("Holt", StringComparison.OrdinalIgnoreCase) >= 0)
+                return T("metHolt", "Tendencia Lineal de Holt");
+            return T("metWMA", "Promedio Móvil Ponderado (WMA)");
+        }
+
         private void CargarOrdenesReabastecimiento()
         {
             _ordenesActuales = _mercadoBLL.ListarOrdenesReabastecimiento();
@@ -549,8 +567,8 @@ namespace GUI
             {
                 o.NroOrden,
                 Fecha = o.FechaGeneracion,
-                o.Estado,
-                Modelo = o.MetodoPrediccion,
+                Estado = TraducirEstadoOrden(o.Estado),
+                Modelo = TraducirModeloOrden(o.MetodoPrediccion),
                 Items = o.Detalles != null ? string.Join(", ", o.Detalles.Select(d => $"{d.CantidadAprobadaAdmin}x {d.CodigoSKU}")) : "-",
                 CostoTotal = o.CostoTotalOrden
             }).ToList();
@@ -579,13 +597,21 @@ namespace GUI
                 var aComprar = _prediccionesActuales.Where(x => x.CantidadAComprarAdmin > 0).ToList();
                 if (aComprar.Count == 0)
                 {
-                    MessageBox.Show("No hay productos con cantidad a comprar mayor a cero. Ajuste la columna '✏️ A Comprar (Admin)' antes de emitir la orden.", "Atención", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    MessageBox.Show(
+                        T("msgSinItemsAComprar", "No hay productos con cantidad a comprar mayor a cero. Ajuste la columna '✏️ A Comprar (Admin)' antes de emitir la orden."),
+                        T("titAtencion", "Atención"),
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Warning);
                     return;
                 }
                 decimal totalOrden = aComprar.Sum(x => x.CostoTotalReposicion);
                 DialogResult dr = MessageBox.Show(
-                    $"¿Confirma la emisión de una nueva Orden de Reabastecimiento con {aComprar.Count} producto(s) ({aComprar.Sum(x => x.CantidadAComprarAdmin)} unidades en total) por una inversión estimada de $ {totalOrden:N2}?",
-                    "Confirmar Decisión de Reabastecimiento",
+                    string.Format(
+                        T("msgConfirmarEmisionOrden", "¿Confirma la emisión de una nueva Orden de Reabastecimiento con {0} producto(s) ({1} unidades en total) por una inversión estimada de $ {2}?"),
+                        aComprar.Count,
+                        aComprar.Sum(x => x.CantidadAComprarAdmin),
+                        totalOrden.ToString("N2")),
+                    T("titConfirmarOrden", "Confirmar Decisión de Reabastecimiento"),
                     MessageBoxButtons.YesNo,
                     MessageBoxIcon.Question);
                 if (dr != DialogResult.Yes) return;
@@ -599,9 +625,10 @@ namespace GUI
                     horizonte,
                     "Orden generada desde el Tablero Predictivo de Mercado Interno.");
                 MessageBox.Show(
-                    $"Orden de Reabastecimiento #{nuevaOrden.NroOrden:D5} emitida correctamente en estado 'Pendiente'.\r\n\r\n" +
-                    $"Las unidades solicitadas ya figuran como 'En Tránsito' para evitar pedidos duplicados. Cuando ingrese la mercadería física, seleccione la orden y presione '✅ Marcar Orden Recibida'.",
-                    "Orden Emitida",
+                    string.Format(
+                        T("msgOrdenEmitidaExito", "Orden de Reabastecimiento #{0} emitida correctamente en estado 'Pendiente'.\r\n\r\nLas unidades solicitadas ya figuran como 'En Tránsito' para evitar pedidos duplicados. Cuando ingrese la mercadería física, seleccione la orden y presione '✅ Marcar Orden Recibida'."),
+                        nuevaOrden.NroOrden.ToString("D5")),
+                    T("titOrdenEmitida", "Orden Emitida"),
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Information);
                 EjecutarProyeccionDemanda();
@@ -609,7 +636,7 @@ namespace GUI
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message, "Error al Emitir Orden", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show(T(ex.Message, ex.Message), T("titError", "Error"), MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
         }
 
@@ -619,7 +646,11 @@ namespace GUI
             {
                 if (dgvOrdenesReab.CurrentRow == null || _ordenesActuales.Count == 0)
                 {
-                    MessageBox.Show("Seleccione una Orden de Reabastecimiento en estado 'Pendiente' de la grilla inferior derecha.", "Atención", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    MessageBox.Show(
+                        T("msgSeleccioneOrdenPend", "Seleccione una Orden de Reabastecimiento en estado 'Pendiente' de la grilla inferior derecha."),
+                        T("titAtencion", "Atención"),
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Warning);
                     return;
                 }
                 int nroOrden = Convert.ToInt32(dgvOrdenesReab.CurrentRow.Cells["NroOrden"].Value);
@@ -627,20 +658,27 @@ namespace GUI
                 if (ordSel == null) return;
                 if (!string.Equals(ordSel.Estado, "Pendiente", StringComparison.OrdinalIgnoreCase))
                 {
-                    MessageBox.Show($"La Orden #{nroOrden:D5} ya se encuentra en estado '{ordSel.Estado}'.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    MessageBox.Show(
+                        string.Format(T("msgOrdenYaRecibida", "La Orden #{0} ya se encuentra en estado '{1}'."), nroOrden.ToString("D5"), TraducirEstadoOrden(ordSel.Estado)),
+                        T("titAviso", "Aviso"),
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Information);
                     return;
                 }
                 DialogResult dr = MessageBox.Show(
-                    $"¿Confirma la recepción física de la Orden #{nroOrden:D5}?\r\n" +
-                    $"Se incrementará automáticamente el Stock Disponible de los artículos recibidos y se recalcularán los Dígitos Verificadores.",
-                    "Confirmar Ingreso de Mercadería",
+                    string.Format(
+                        T("msgConfirmarRecepcionOrd", "¿Confirma la recepción física de la Orden #{0}?\r\nSe incrementará automáticamente el Stock Disponible de los artículos recibidos y se recalcularán los Dígitos Verificadores."),
+                        nroOrden.ToString("D5")),
+                    T("titConfirmarRecepcion", "Confirmar Ingreso de Mercadería"),
                     MessageBoxButtons.YesNo,
                     MessageBoxIcon.Question);
                 if (dr != DialogResult.Yes) return;
                 _mercadoBLL.RecibirOrdenReabastecimiento(nroOrden);
                 MessageBox.Show(
-                    $"La Orden #{nroOrden:D5} fue recepcionada con éxito y las unidades ingresaron al inventario físico disponible.",
-                    "Stock Actualizado",
+                    string.Format(
+                        T("msgOrdenRecibidaExito", "La Orden #{0} fue recepcionada con éxito y las unidades ingresaron al inventario físico disponible."),
+                        nroOrden.ToString("D5")),
+                    T("titStockActualizado", "Stock Actualizado"),
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Information);
                 EjecutarProyeccionDemanda();
@@ -648,7 +686,7 @@ namespace GUI
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message, "Error al Recepcionar Orden", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show(T(ex.Message, ex.Message), T("titError", "Error"), MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
         }
 
@@ -660,8 +698,8 @@ namespace GUI
                 if (_prediccionesActuales == null || _prediccionesActuales.Count == 0) return;
                 using (SaveFileDialog sfd = new SaveFileDialog())
                 {
-                    sfd.Filter = "Documento PDF (*.pdf)|*.pdf";
-                    sfd.Title = "Exportar Reporte Ejecutivo de Predicción y Reabastecimiento (QuestPDF)";
+                    sfd.Filter = T("filtroPDF", "Documento PDF (*.pdf)|*.pdf");
+                    sfd.Title = T("titGuardarPDFPred", "Exportar Reporte Ejecutivo de Predicción y Reabastecimiento (QuestPDF)");
                     sfd.FileName = $"Reporte_Prediccion_Reabastecimiento_{DateTime.Now:yyyyMMdd_HHmm}.pdf";
                     if (sfd.ShowDialog() == DialogResult.OK)
                     {
@@ -683,7 +721,7 @@ namespace GUI
                         PdfCorporativoHelper.GenerarReportePrediccionYReabastecimientoPDF(
                             sfd.FileName,
                             _prediccionesActuales,
-                            metodo,
+                            TraducirModeloOrden(metodo),
                             horizonte,
                             chkIncluirSinergia.Checked,
                             _facturacionPeriodo,
@@ -693,13 +731,17 @@ namespace GUI
                             ultimaOrden,
                             paquete.HashIntegridadSHA256,
                             true);
-                        MessageBox.Show("Reporte Ejecutivo PDF generado exitosamente mediante QuestPDF.", "Exportación PDF Exitosa", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        MessageBox.Show(
+                            T("msgPDFPredExito", "Reporte Ejecutivo PDF generado exitosamente mediante QuestPDF."),
+                            T("titPDFPredExito", "Exportación PDF Exitosa"),
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Information);
                     }
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error al generar el reporte PDF: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(T(ex.Message, ex.Message), T("titError", "Error"), MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -711,8 +753,8 @@ namespace GUI
                 if (_prediccionesActuales == null || _prediccionesActuales.Count == 0) return;
                 using (SaveFileDialog sfd = new SaveFileDialog())
                 {
-                    sfd.Filter = "Archivo Serializado JSON (*.json)|*.json";
-                    sfd.Title = "Exportar Planificación Comercial Serializada en JSON";
+                    sfd.Filter = T("filtroJSON", "Archivo Serializado JSON (*.json)|*.json");
+                    sfd.Title = T("titGuardarJSON", "Exportar Planificación Comercial Serializada en JSON");
                     sfd.FileName = $"PlanReabastecimiento_UAIFIT_{DateTime.Now:yyyyMMdd_HHmmss}.json";
                     if (sfd.ShowDialog() == DialogResult.OK)
                     {
@@ -733,10 +775,11 @@ namespace GUI
                             ultimaOrden?.NroOrden);
                         _mercadoBLL.ExportarPlanReabastecimientoJson(sfd.FileName, paquete);
                         MessageBox.Show(
-                            $"Archivo serializado JSON generado y firmado criptográficamente con éxito.\r\n\r\n" +
-                            $"Ruta: {sfd.FileName}\r\n" +
-                            $"Sello SHA-256: {paquete.HashIntegridadSHA256}",
-                            "Serialización JSON Exitosa",
+                            string.Format(
+                                T("msgJSONExportExito", "Archivo serializado JSON generado y firmado criptográficamente con éxito.\r\n\r\nRuta: {0}\r\nSello SHA-256: {1}"),
+                                sfd.FileName,
+                                paquete.HashIntegridadSHA256),
+                            T("titJSONExportExito", "Serialización JSON Exitosa"),
                             MessageBoxButtons.OK,
                             MessageBoxIcon.Information);
                     }
@@ -744,7 +787,7 @@ namespace GUI
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message, "Error al Serializar JSON", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(T(ex.Message, ex.Message), T("titError", "Error"), MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -754,8 +797,8 @@ namespace GUI
             {
                 using (OpenFileDialog ofd = new OpenFileDialog())
                 {
-                    ofd.Filter = "Archivo Serializado JSON (*.json)|*.json";
-                    ofd.Title = "Importar y Auditar Archivo Serializado JSON de Reabastecimiento";
+                    ofd.Filter = T("filtroJSON", "Archivo Serializado JSON (*.json)|*.json");
+                    ofd.Title = T("titAbrirJSON", "Importar y Auditar Archivo Serializado JSON de Reabastecimiento");
                     if (ofd.ShowDialog() != DialogResult.OK) return;
                     var paquete = _mercadoBLL.ImportarYVerificarPlanReabastecimientoJson(
                         ofd.FileName,
@@ -764,15 +807,14 @@ namespace GUI
                     if (!estructuraValida || !integridadValida)
                     {
                         string motivoCorrupcion = !estructuraValida
-                            ? "La estructura sintáctica del archivo JSON está dañada, incompleta o truncada."
-                            : "El contenido del archivo fue alterado manualmente por fuera del sistema (el sello criptográfico SHA-256 no coincide con las cantidades, costos o proyecciones del documento).";
+                            ? T("msgCorrupcionSintaxis", "La estructura sintáctica del archivo JSON está dañada, incompleta o truncada.")
+                            : T("msgCorrupcionHash", "El contenido del archivo fue alterado manualmente por fuera del sistema (el sello criptográfico SHA-256 no coincide con las cantidades, costos o proyecciones del documento).");
                         DialogResult recuperar = MessageBox.Show(
-                            $"🚨 CORRUPCIÓN DETECTADA EN EL ARCHIVO '{Path.GetFileName(ofd.FileName)}'\r\n\r\n" +
-                            $"Diagnóstico: {motivoCorrupcion}\r\n\r\n" +
-                            $"🛠️ SOLUCIÓN DE RECUPERACIÓN DISPONIBLE:\r\n" +
-                            $"¿Desea que el sistema SANEE los datos contra el catálogo oficial de la Base de Datos, recalcule la estructura y RESELLE criptográficamente (SHA-256) el archivo ahora mismo (SÍ)?\r\n\r\n" +
-                            $"Presione NO para cancelar y descartar la importación.",
-                            "Asistente de Reparación de Archivo Serializado JSON",
+                            string.Format(
+                                T("msgAsistenteRepararJSON", "🚨 CORRUPCIÓN DETECTADA EN EL ARCHIVO '{0}'\r\n\r\nDiagnóstico: {1}\r\n\r\n🛠️ SOLUCIÓN DE RECUPERACIÓN DISPONIBLE:\r\n¿Desea que el sistema SANEE los datos contra el catálogo oficial de la Base de Datos, recalcule la estructura y RESELLE criptográficamente (SHA-256) el archivo ahora mismo (SÍ)?\r\n\r\nPresione NO para cancelar y descartar la importación."),
+                                Path.GetFileName(ofd.FileName),
+                                motivoCorrupcion),
+                            T("titAsistenteRepararJSON", "Asistente de Reparación de Archivo Serializado JSON"),
                             MessageBoxButtons.YesNo,
                             MessageBoxIcon.Warning);
                         if (recuperar != DialogResult.Yes) return;
@@ -793,26 +835,28 @@ namespace GUI
                             _resumenSinergiaGimnasio,
                             out string detalleReparacion);
                         MessageBox.Show(
-                            $"✅ ARCHIVO JSON REPARADO Y RESELLADO CON ÉXITO\r\n\r\n" +
-                            $"• Acción ejecutada: {detalleReparacion}\r\n" +
-                            $"• Nuevo Sello SHA-256: {paquete.HashIntegridadSHA256}\r\n\r\n" +
-                            $"A continuación se cargarán los valores saneados en la grilla.",
-                            "Recuperación Exitosa",
+                            string.Format(
+                                T("msgJSONReparadoExito", "✅ ARCHIVO JSON REPARADO Y RESELLADO CON ÉXITO\r\n\r\n• Acción ejecutada: {0}\r\n• Nuevo Sello SHA-256: {1}\r\n\r\nA continuación se cargarán los valores saneados en la grilla."),
+                                detalleReparacion,
+                                paquete.HashIntegridadSHA256),
+                            T("titRecuperacionExito", "Recuperación Exitosa"),
                             MessageBoxButtons.OK,
                             MessageBoxIcon.Information);
                     }
                     else
                     {
                         MessageBox.Show(
-                            $"✅ AUDITORÍA EXITOSA — ARCHIVO SERIALIZADO ÍNTEGRO Y VERIFICADO\r\n\r\n" +
-                            $"• Fecha de Generación: {paquete.FechaGeneracion:dd/MM/yyyy HH:mm:ss}\r\n" +
-                            $"• Administrador Autor: {paquete.UsuarioAdministrador}\r\n" +
-                            $"• Modelo Predictivo: {paquete.MetodoPrediccionUtilizado} (Horizonte: {paquete.HorizontePlanificacionDias} días)\r\n" +
-                            $"• Productos Evaluados: {paquete.ProductosEvaluados.Count} SKUs\r\n" +
-                            $"• Unidades Aprobadas: {paquete.UnidadesTotalesReabastecer} u. ($ {paquete.InversionTotalEstimadaReabastecimiento:N2})\r\n" +
-                            $"• Sello SHA-256: {paquete.HashIntegridadSHA256}\r\n\r\n" +
-                            $"Las cantidades decididas en el archivo han sido cargadas en la grilla actual.",
-                            "Verificación de Archivo Serializado JSON",
+                            string.Format(
+                                T("msgJSONAuditoriaExito", "✅ AUDITORÍA EXITOSA — ARCHIVO SERIALIZADO ÍNTEGRO Y VERIFICADO\r\n\r\n• Fecha de Generación: {0}\r\n• Administrador Autor: {1}\r\n• Modelo Predictivo: {2} (Horizonte: {3} días)\r\n• Productos Evaluados: {4} SKUs\r\n• Unidades Aprobadas: {5} u. ($ {6})\r\n• Sello SHA-256: {7}\r\n\r\nLas cantidades decididas en el archivo han sido cargadas en la grilla actual."),
+                                paquete.FechaGeneracion.ToString("dd/MM/yyyy HH:mm:ss"),
+                                paquete.UsuarioAdministrador,
+                                TraducirModeloOrden(paquete.MetodoPrediccionUtilizado),
+                                paquete.HorizontePlanificacionDias,
+                                paquete.ProductosEvaluados.Count,
+                                paquete.UnidadesTotalesReabastecer,
+                                paquete.InversionTotalEstimadaReabastecimiento.ToString("N2"),
+                                paquete.HashIntegridadSHA256),
+                            T("titAuditoriaJSON", "Verificación de Archivo Serializado JSON"),
                             MessageBoxButtons.OK,
                             MessageBoxIcon.Information);
                     }
@@ -830,7 +874,7 @@ namespace GUI
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message, "Error al Importar JSON", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show(T(ex.Message, ex.Message), T("titError", "Error"), MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
         }
 
@@ -840,8 +884,10 @@ namespace GUI
             if (dgvPredicciones.CurrentRow != null && dgvPredicciones.CurrentRow.DataBoundItem is PrediccionProductoBE filaSel)
             {
                 DialogResult modo = MessageBox.Show(
-                    $"¿Desea registrar un NUEVO producto en el catálogo (SÍ) o EDITAR el producto seleccionado '{filaSel.Producto}' (NO)?\r\n\r\nPresione Cancelar para salir.",
-                    "Gestión de Catálogo de Productos",
+                    string.Format(
+                        T("msgModoCatalogoProd", "¿Desea registrar un NUEVO producto en el catálogo (SÍ) o EDITAR el producto seleccionado '{0}' (NO)?\r\n\r\nPresione Cancelar para salir."),
+                        filaSel.Producto),
+                    T("titGestionCatalogo", "Gestión de Catálogo de Productos"),
                     MessageBoxButtons.YesNoCancel,
                     MessageBoxIcon.Question);
                 if (modo == DialogResult.Cancel) return;
@@ -856,9 +902,12 @@ namespace GUI
         private void MostrarDialogoABMProducto(ProductoBE existente)
         {
             bool esEdicion = existente != null && existente.CodigoProducto > 0;
+            int? stockOriginal = esEdicion ? existente.StockActual : null;
             using (Form dlg = new Form())
             {
-                dlg.Text = esEdicion ? $"Editar Producto [{existente.CodigoSKU}]" : "Nuevo Producto del Mercado Interno";
+                dlg.Text = esEdicion
+                    ? string.Format(T("dlgTitEditarProd", "Editar Producto [{0}]"), existente.CodigoSKU)
+                    : T("dlgTitNuevoProd", "Nuevo Producto del Mercado Interno");
                 dlg.Size = new Size(460, 480);
                 dlg.FormBorderStyle = FormBorderStyle.FixedDialog;
                 dlg.StartPosition = FormStartPosition.CenterParent;
@@ -874,7 +923,7 @@ namespace GUI
                 cmbCat.SelectedIndex = esEdicion && cmbCat.Items.Contains(existente.Categoria) ? cmbCat.Items.IndexOf(existente.Categoria) : 0;
                 NumericUpDown nudPrecio = new NumericUpDown { Left = 200, Top = 126, Width = 220, Maximum = 9999999, DecimalPlaces = 2, Value = esEdicion ? existente.PrecioVenta : 15000 };
                 NumericUpDown nudCosto = new NumericUpDown { Left = 200, Top = 162, Width = 220, Maximum = 9999999, DecimalPlaces = 2, Value = esEdicion ? existente.CostoCompra : 9000 };
-                NumericUpDown nudStock = new NumericUpDown { Left = 200, Top = 198, Width = 220, Maximum = 10000, Value = esEdicion ? existente.StockActual : 10 };
+                NumericUpDown nudStock = new NumericUpDown { Left = 200, Top = 198, Width = 220, Maximum = int.MaxValue, Value = esEdicion ? existente.StockActual : 10 };
                 NumericUpDown nudMin = new NumericUpDown { Left = 200, Top = 234, Width = 220, Maximum = 10000, Value = esEdicion ? existente.StockMinimo : 5 };
                 NumericUpDown nudLead = new NumericUpDown { Left = 200, Top = 270, Width = 220, Minimum = 1, Maximum = 90, Value = esEdicion ? existente.TiempoReposicionDias : 5 };
                 ComboBox cmbAfinFis = new ComboBox { Left = 200, Top = 306, Width = 220, DropDownStyle = ComboBoxStyle.DropDownList };
@@ -885,7 +934,7 @@ namespace GUI
                 cmbAfinNut.SelectedIndex = esEdicion && cmbAfinNut.Items.Contains(existente.ObjetivoNutricionalAfin) ? cmbAfinNut.Items.IndexOf(existente.ObjetivoNutricionalAfin) : 0;
                 Button btnGuardar = new Button
                 {
-                    Text = "💾 Guardar Producto",
+                    Text = T("dlgBtnGuardar", "💾 Guardar Producto"),
                     Left = 200,
                     Top = 388,
                     Width = 220,
@@ -901,7 +950,7 @@ namespace GUI
                 {
                     try
                     {
-                        ProductoBE p = esEdicion ? existente : new ProductoBE();
+                        ProductoBE p = new ProductoBE { CodigoProducto = esEdicion ? existente.CodigoProducto : 0 };
                         p.CodigoSKU = txtSku.Text;
                         p.Nombre = txtNom.Text;
                         p.Categoria = cmbCat.SelectedItem.ToString();
@@ -913,27 +962,27 @@ namespace GUI
                         p.ObjetivoFisicoAfin = cmbAfinFis.SelectedItem.ToString();
                         p.ObjetivoNutricionalAfin = cmbAfinNut.SelectedItem.ToString();
                         p.Activo = true;
-                        _mercadoBLL.GuardarProducto(p);
+                        _mercadoBLL.GuardarProducto(p, stockOriginal);
                         dlg.DialogResult = DialogResult.OK;
                         dlg.Close();
                     }
                     catch (Exception ex)
                     {
-                        MessageBox.Show(ex.Message, "Validación de Producto", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        MessageBox.Show(T(ex.Message, ex.Message), T("titValidacionProd", "Validación de Producto"), MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     }
                 };
                 dlg.Controls.AddRange(new Control[]
                 {
-                    Lbl("Código SKU:", 20), txtSku,
-                    Lbl("Nombre del Artículo:", 56), txtNom,
-                    Lbl("Categoría:", 92), cmbCat,
-                    Lbl("Precio de Venta ($):", 128), nudPrecio,
-                    Lbl("Costo de Compra ($):", 164), nudCosto,
-                    Lbl("Stock Físico Actual:", 200), nudStock,
-                    Lbl("Stock Mínimo (Seguridad):", 236), nudMin,
-                    Lbl("Lead Time Proveedor (Días):", 272), nudLead,
-                    Lbl("Objetivo Físico Afín:", 308), cmbAfinFis,
-                    Lbl("Objetivo Nutricional Afín:", 344), cmbAfinNut,
+                    Lbl(T("dlgLblSKU", "Código SKU:"), 20), txtSku,
+                    Lbl(T("dlgLblNombre", "Nombre del Artículo:"), 56), txtNom,
+                    Lbl(T("dlgLblCategoria", "Categoría:"), 92), cmbCat,
+                    Lbl(T("dlgLblPrecio", "Precio de Venta ($):"), 128), nudPrecio,
+                    Lbl(T("dlgLblCosto", "Costo de Compra ($):"), 164), nudCosto,
+                    Lbl(T("dlgLblStock", "Stock Físico Actual:"), 200), nudStock,
+                    Lbl(T("dlgLblMinimo", "Stock Mínimo (Seguridad):"), 236), nudMin,
+                    Lbl(T("dlgLblLeadTime", "Lead Time Proveedor (Días):"), 272), nudLead,
+                    Lbl(T("dlgLblAfinFis", "Objetivo Físico Afín:"), 308), cmbAfinFis,
+                    Lbl(T("dlgLblAfinNut", "Objetivo Nutricional Afín:"), 344), cmbAfinNut,
                     btnGuardar
                 });
                 if (dlg.ShowDialog(this) == DialogResult.OK)

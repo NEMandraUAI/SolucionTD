@@ -13,6 +13,7 @@ namespace Seguridad
         private static readonly object _candado = new object();
         private List<IObserverIdioma> observadores = new List<IObserverIdioma>();
         public IdiomaBE IdiomaActual { get; private set; }
+        public IReadOnlyList<Exception> UltimosErroresNotificacion { get; private set; } = Array.Empty<Exception>();
         private GestorIdioma()
         {
             IdiomaActual = new IdiomaBE { ID = 1, Nombre = "Español" };
@@ -31,6 +32,7 @@ namespace Seguridad
         }
         public void CambiarIdioma(IdiomaBE nuevoIdioma)
         {
+            ArgumentNullException.ThrowIfNull(nuevoIdioma);
             IdiomaActual = nuevoIdioma;
             Notificar();
         }
@@ -47,10 +49,17 @@ namespace Seguridad
         public void Notificar()
         {
             var copiaObservadores = new List<IObserverIdioma>(observadores);
+            var errores = new List<Exception>();
             foreach (var obs in copiaObservadores)
             {
-                obs.ActualizarIdioma(IdiomaActual);
+                try { obs.ActualizarIdioma(IdiomaActual); }
+                catch (Exception ex)
+                {
+                    errores.Add(ex);
+                    System.Diagnostics.Trace.TraceError("Error al actualizar idioma: {0}", ex);
+                }
             }
+            UltimosErroresNotificacion = errores.AsReadOnly();
         }
     }
 }

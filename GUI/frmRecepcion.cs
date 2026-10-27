@@ -343,8 +343,14 @@ namespace GUI
             }
         }
 
+        private bool confirmandoSuscripcion;
+        private bool suscripcionConfirmada;
+
         private void btnConfirmarVenta_Click(object sender, EventArgs e)
         {
+            if (confirmandoSuscripcion || suscripcionConfirmada) return;
+            confirmandoSuscripcion = true;
+            btnConfirmarVenta.Enabled = false;
             try
             {
                 if (socioActual == null)
@@ -375,25 +381,23 @@ namespace GUI
                     socioActual.DNI = txtDNI.Text.Trim();
                     socioActual.Nombre = txtNombre.Text.Trim();
                     socioActual.Apellido = txtApellido.Text.Trim();
-                    socioActual.Telefono = txtTelefono.Text.Trim();
-                    socioActual.Email = txtEmail.Text.Trim();
-                    socioBLL.RegistrarSocio(socioActual);
                 }
-                else
-                {
-                    socioActual.Telefono = txtTelefono.Text.Trim();
-                    socioActual.Email = txtEmail.Text.Trim();
-                }
+                socioActual.Telefono = txtTelefono.Text.Trim();
+                socioActual.Email = txtEmail.Text.Trim();
                 PlanSuscripcionBE planSeleccionado = (PlanSuscripcionBE)cmbPlanes.SelectedItem;
-                socioBLL.ActualizarPlanSocio(socioActual, planSeleccionado);
-                ComprobantePagoBE comprobante = new ComprobantePagoBE();
-                comprobante.Fecha = DateTime.Now;
-                comprobante.MontoTotal = planSeleccionado.Precio;
-                comprobante.MetodoPago = metodoPago;
-                comprobante.Socio = socioActual;
-                comprobante.EmpleadoCobrador = SessionManager.Instancia.UsuarioActual;
-                comprobanteBLL.RegistrarVenta(comprobante);
+                ComprobantePagoBE comprobante = new ComprobantePagoBE
+                {
+                    Fecha = DateTime.Now,
+                    MontoTotal = planSeleccionado.Precio,
+                    MetodoPago = metodoPago,
+                    Socio = socioActual,
+                    EmpleadoCobrador = SessionManager.Instancia.UsuarioActual
+                };
+                comprobanteBLL.RegistrarVentaSuscripcionCompleta(socioActual, planSeleccionado, comprobante);
+                suscripcionConfirmada = true;
                 MessageBox.Show(T("msgVentaExito", "Venta registrada y permisos de acceso habilitados con éxito."), T("titExito", "Éxito"), MessageBoxButtons.OK, MessageBoxIcon.Information);
+                try
+                {
                 if (chkEmitirReciboPDF.Checked)
                 {
                     using (SaveFileDialog sfd = new SaveFileDialog())
@@ -410,17 +414,29 @@ namespace GUI
                                 sfd.FileName,
                                 comprobante,
                                 socioActual,
-                                planSeleccionado,
+                                socioActual.PlanAsociado,
                                 cobrador,
                                 true);
                         }
                     }
+                }
+                }
+                catch (Exception ex)
+                {
+                    InstaladorBLL.RegistrarLog("Suscripción confirmada; fallo PDF: " + ex.Message);
+                    MessageBox.Show($"El pago #{comprobante.NroComprobante} ya está guardado. No vuelva a cobrarlo. Reimprima desde Consultar Comprobantes.\r\n\r\n{ex.Message}",
+                        "Recibo pendiente", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 }
                 this.Close();
             }
             catch (Exception ex)
             {
                 MessageBox.Show(T(ex.Message, ex.Message), T("titError", "Error"), MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                confirmandoSuscripcion = false;
+                btnConfirmarVenta.Enabled = !suscripcionConfirmada;
             }
         }
 

@@ -1,4 +1,4 @@
-﻿using Microsoft.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,13 +10,20 @@ namespace DAL
 {
     public class RegistroDAL
     {
+        private readonly UnidadTrabajoSeguridadDAL? unidad;
+
+        public RegistroDAL(UnidadTrabajoSeguridadDAL? unidad = null)
+        {
+            this.unidad = unidad;
+        }
+
         public void GuardarRegistro(RegistroBE pRegistro, UsuarioBE pUsuario)
         {
-            using (SqlConnection cn = ConexionDAL.Instancia.ObtenerConexion())
+            using (var acceso = new AccesoSeguridadDAL(unidad))
             {
-                cn.Open();
+                SqlConnection cn = acceso.Conexion;
                 string consulta = "INSERT INTO Bitacora (ID_Usuario, FechaHora, Evento, Criticidad) VALUES (@ID_Usuario, @FechaHora, @Evento, @Criticidad)";
-                using (SqlCommand cmd = new SqlCommand(consulta, cn))
+                using (SqlCommand cmd = acceso.CrearComando(consulta))
                 {
                     cmd.Parameters.AddWithValue("@ID_Usuario", pUsuario.ID);
                     cmd.Parameters.AddWithValue("@FechaHora", pRegistro.FechaHora);
@@ -29,15 +36,15 @@ namespace DAL
         public List<RegistroBE> ConsultaLogsFiltros(DateTime desde, DateTime hasta, string criticidad, int? idUsuario, string palabraClave)
         {
             List<RegistroBE> lr = new List<RegistroBE>();
-            using (SqlConnection cn = ConexionDAL.Instancia.ObtenerConexion())
+            using (var acceso = new AccesoSeguridadDAL(unidad))
             {
-                cn.Open();
+                SqlConnection cn = acceso.Conexion;
                 StringBuilder consulta = new StringBuilder(@"
                 SELECT b.ID_Reg, b.ID_Usuario, b.FechaHora, b.Evento, b.Criticidad, u.Nombre as NombreUsuario 
                 FROM Bitacora b 
                 INNER JOIN Usuario u ON b.ID_Usuario = u.ID 
                 WHERE 1=1");
-                using (SqlCommand cmd = new SqlCommand())
+                using (SqlCommand cmd = acceso.CrearComando())
                 {
                     consulta.Append(" AND b.FechaHora >= @Desde AND b.FechaHora <= @Hasta");
                     cmd.Parameters.AddWithValue("@Desde", desde.Date);

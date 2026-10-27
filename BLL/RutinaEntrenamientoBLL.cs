@@ -1,4 +1,4 @@
-﻿using BE;
+using BE;
 using DAL;
 using Seguridad;
 using System;
@@ -297,31 +297,48 @@ namespace BLL
             }
         }
 
-        public void AsignarRutina(RutinaEntrenamientoBE rutina)
+        private void ValidarPermisoEntrenador()
         {
-            if (string.IsNullOrWhiteSpace(rutina.ObjetivoFisico))
-                throw new Exception("Debe especificar el objetivo físico del socio.");
-            if (rutina.FrecuenciaSemanal <= 0 || rutina.FrecuenciaSemanal > 7)
-                throw new Exception("La frecuencia semanal debe estar entre 1 y 7 días.");
-            ValidarYSincronizarEjercicios(rutina);
-            if (string.IsNullOrWhiteSpace(rutina.DetalleEjercicios))
-                throw new Exception("El detalle de los ejercicios no puede estar vacío.");
-            if (rutina.Socio == null || rutina.Socio.ID_Socio == 0)
-                throw new Exception("La rutina debe estar asociada a un socio válido.");
-            SocioBE socioCompleto = !string.IsNullOrWhiteSpace(rutina.Socio.DNI) ? socioDAL.ObtenerPorDNI(rutina.Socio.DNI) : socioDAL.LeerTodos().FirstOrDefault(s => s.ID_Socio == rutina.Socio.ID_Socio);
-            socioBLL.ValidarPlanVigenteAlDiaDeHoy(socioCompleto, "asignar una nueva rutina de entrenamiento");
-            DateTime f = rutina.FechaCreacion == default ? DateTime.Now : rutina.FechaCreacion;
-            rutina.FechaCreacion = new DateTime(f.Year, f.Month, f.Day, f.Hour, f.Minute, f.Second);
-            rutina.DVH = string.Empty;
-            dal.InsertarRutina(rutina);
-            rutina.DVH = DVManager.CalcularDVH(rutina);
-            dal.ActualizarRutina(rutina);
-            List<string> listaDVH = dal.ObtenerTodosLosDVH();
-            string nuevoDVV = DVManager.CalcularDVV(listaDVH);
-            intDal.ActualizarDVV("RutinaEntrenamiento", nuevoDVV);
-            regBll.RegistrarEvento($"Rutina asignada al socio DNI: {rutina.Socio.DNI} por el entrenador.", SessionManager.Instancia.UsuarioActual, "INFO");
+            UsuarioBE actual = SessionManager.Instancia.UsuarioActual;
+            if (actual == null || (!actual.TienePermiso("ASIGNAR_RUTINA") && !actual.TienePermiso("GESTION_ROLES")))
+            {
+                throw new Exception("Operación denegada: No posee el permiso requerido (ASIGNAR_RUTINA) para gestionar rutinas de entrenamiento.");
+            }
         }
 
+        public void AsignarRutina(RutinaEntrenamientoBE rutina)
+        {
+            ArgumentNullException.ThrowIfNull(rutina);
+            using var unidad = new UnidadTrabajoSeguridadDAL();
+            var autor = TurnoBLL.ValidarActor(unidad, "ASIGNAR_RUTINA");
+            IntegridadTransaccionalDAL.VerificarDVV(unidad, "RutinaEntrenamiento");
+            var socio = new SocioDAL(unidad).LeerTodos().SingleOrDefault(s => s.ID_Socio == rutina.ID_SocioParaDVH)
+                ?? throw new ArgumentException("El socio seleccionado no existe.");
+            TurnoBLL.ValidarDVHSocio(socio);
+            new SocioBLL(unidad).ValidarPlanVigenteAlDiaDeHoy(socio, "asignar una nueva rutina de entrenamiento");
+            var f = rutina.FechaCreacion == default ? DateTime.Now : rutina.FechaCreacion;
+            var confirmado = new RutinaEntrenamientoBE { FechaCreacion=new DateTime(f.Year,f.Month,f.Day,f.Hour,f.Minute,f.Second),
+                ObjetivoFisico=rutina.ObjetivoFisico, FrecuenciaSemanal=rutina.FrecuenciaSemanal,
+                DetalleEjercicios=rutina.DetalleEjercicios, Ejercicios=rutina.Ejercicios, Socio=socio, Entrenador=autor };
+            ValidarContenidoRutina(confirmado);
+            var dal = new RutinaEntrenamientoDAL(unidad);
+            dal.InsertarRutina(confirmado);
+            confirmado.DVH=DVManager.CalcularDVH(confirmado);
+            dal.ActualizarRutina(confirmado);
+            IntegridadTransaccionalDAL.ActualizarDVV(unidad, "RutinaEntrenamiento");
+            new RegistroBLL(unidad).RegistrarEvento($"Rutina asignada al socio ID {socio.ID_Socio} por el entrenador.", autor);
+            unidad.Confirmar();
+            rutina.CodigoRutina=confirmado.CodigoRutina; rutina.DVH=confirmado.DVH;
+            rutina.FechaCreacion=confirmado.FechaCreacion; rutina.Socio=socio; rutina.Entrenador=autor;
+        }
+
+        private void ValidarContenidoRutina(RutinaEntrenamientoBE rutina)
+        {
+            if (string.IsNullOrWhiteSpace(rutina.ObjetivoFisico)) throw new ArgumentException("Debe especificar el objetivo físico.");
+            if (rutina.FrecuenciaSemanal < 1 || rutina.FrecuenciaSemanal > 7) throw new ArgumentException("La frecuencia debe estar entre 1 y 7 días.");
+            ValidarYSincronizarEjercicios(rutina);
+            if (string.IsNullOrWhiteSpace(rutina.DetalleEjercicios)) throw new ArgumentException("El detalle de ejercicios no puede estar vacío.");
+        }
         public List<RutinaEntrenamientoBE> ConsultarRutinasPorDNI(string dni)
         {
             if (string.IsNullOrWhiteSpace(dni))
@@ -344,56 +361,52 @@ namespace BLL
             return lista;
         }
 
-        private void ValidarQueSeaRutinaVigente(RutinaEntrenamientoBE rutina, string operacion)
+        private RutinaEntrenamientoBE ObtenerRutinaVigente(UnidadTrabajoSeguridadDAL unidad, int codigo, string operacion)
         {
-            if (rutina == null || rutina.CodigoRutina <= 0)
-                throw new Exception("Debe seleccionar una rutina válida.");
-            int idSocio = rutina.Socio != null ? rutina.Socio.ID_Socio : 0;
-            SocioBE socioCompleto = socioDAL.LeerTodos().FirstOrDefault(s => s.ID_Socio == idSocio);
-            socioBLL.ValidarPlanVigenteAlDiaDeHoy(socioCompleto, $"{operacion} una rutina de entrenamiento");
-            var todasLasRutinas = dal.LeerTodos()
-                .Where(r => r.Socio != null && r.Socio.ID_Socio == idSocio)
-                .OrderByDescending(r => r.FechaCreacion)
-                .ThenByDescending(r => r.CodigoRutina)
-                .ToList();
-            if (todasLasRutinas.Count == 0)
-                throw new Exception("No se encontraron rutinas registradas para este socio.");
-            RutinaEntrenamientoBE rutinaMasReciente = todasLasRutinas.First();
-            if (rutinaMasReciente.CodigoRutina != rutina.CodigoRutina)
-            {
-                throw new Exception($"Operación denegada: No se puede {operacion} la rutina #{rutina.CodigoRutina} ({rutina.FechaCreacion:dd/MM/yyyy}) porque es un registro histórico.\r\n\r\n" +
-                                    $"Por trazabilidad deportiva, solo se permite modificar o eliminar la rutina vigente actual (#{rutinaMasReciente.CodigoRutina} del {rutinaMasReciente.FechaCreacion:dd/MM/yyyy}).");
-            }
+            var todas = new RutinaEntrenamientoDAL(unidad).LeerTodos();
+            var actual = todas.SingleOrDefault(r => r.CodigoRutina == codigo)
+                ?? throw new ArgumentException("La rutina seleccionada no existe.");
+            if (actual.DVH != DVManager.CalcularDVH(actual)) throw new InvalidOperationException("La rutina fue alterada externamente. Se requiere revisión de integridad.");
+            var socio = new SocioDAL(unidad).LeerTodos().SingleOrDefault(s => s.ID_Socio == actual.ID_SocioParaDVH);
+            TurnoBLL.ValidarDVHSocio(socio);
+            new SocioBLL(unidad).ValidarPlanVigenteAlDiaDeHoy(socio, operacion + " una rutina de entrenamiento");
+            var vigente = todas.Where(r => r.ID_SocioParaDVH == actual.ID_SocioParaDVH)
+                .OrderByDescending(r => r.FechaCreacion).ThenByDescending(r => r.CodigoRutina).First();
+            if (vigente.CodigoRutina != codigo) throw new InvalidOperationException("Solo puede modificar o eliminar la rutina vigente del socio.");
+            return actual;
         }
 
         public void ModificarRutina(RutinaEntrenamientoBE rutina)
         {
-            ValidarQueSeaRutinaVigente(rutina, "modificar");
-            if (string.IsNullOrWhiteSpace(rutina.ObjetivoFisico))
-                throw new Exception("El objetivo físico no puede estar vacío.");
-            if (rutina.FrecuenciaSemanal <= 0 || rutina.FrecuenciaSemanal > 7)
-                throw new Exception("La frecuencia debe ser de 1 a 7 días.");
-            ValidarYSincronizarEjercicios(rutina);
-            if (string.IsNullOrWhiteSpace(rutina.DetalleEjercicios))
-                throw new Exception("El detalle de ejercicios no puede estar vacío.");
-            rutina.DVH = DVManager.CalcularDVH(rutina);
-            dal.ActualizarRutina(rutina);
-            List<string> listaDVH = dal.ObtenerTodosLosDVH();
-            string nuevoDVV = DVManager.CalcularDVV(listaDVH);
-            intDal.ActualizarDVV("RutinaEntrenamiento", nuevoDVV);
-            regBll.RegistrarEvento($"Rutina {rutina.CodigoRutina} modificada.", SessionManager.Instancia.UsuarioActual, "INFO");
+            ArgumentNullException.ThrowIfNull(rutina);
+            using var unidad = new UnidadTrabajoSeguridadDAL();
+            var autor = TurnoBLL.ValidarActor(unidad, "ASIGNAR_RUTINA");
+            IntegridadTransaccionalDAL.VerificarDVV(unidad, "RutinaEntrenamiento");
+            var confirmado = ObtenerRutinaVigente(unidad, rutina.CodigoRutina, "modificar");
+            confirmado.ObjetivoFisico=rutina.ObjetivoFisico; confirmado.FrecuenciaSemanal=rutina.FrecuenciaSemanal;
+            confirmado.DetalleEjercicios=rutina.DetalleEjercicios; confirmado.Ejercicios=rutina.Ejercicios;
+            ValidarContenidoRutina(confirmado);
+            confirmado.DVH=DVManager.CalcularDVH(confirmado);
+            new RutinaEntrenamientoDAL(unidad).ActualizarRutina(confirmado);
+            IntegridadTransaccionalDAL.ActualizarDVV(unidad, "RutinaEntrenamiento");
+            new RegistroBLL(unidad).RegistrarEvento($"Rutina {confirmado.CodigoRutina} modificada.", autor);
+            unidad.Confirmar();
+            rutina.DVH=confirmado.DVH; rutina.FechaCreacion=confirmado.FechaCreacion;
+            rutina.Socio=confirmado.Socio; rutina.Entrenador=confirmado.Entrenador;
         }
 
         public void EliminarRutina(RutinaEntrenamientoBE rutina)
         {
-            ValidarQueSeaRutinaVigente(rutina, "eliminar");
-            dal.EliminarRutina(rutina.CodigoRutina);
-            List<string> listaDVH = dal.ObtenerTodosLosDVH();
-            string nuevoDVV = DVManager.CalcularDVV(listaDVH);
-            intDal.ActualizarDVV("RutinaEntrenamiento", nuevoDVV);
-            regBll.RegistrarEvento($"Rutina {rutina.CodigoRutina} eliminada del sistema.", SessionManager.Instancia.UsuarioActual, "ALTA");
+            ArgumentNullException.ThrowIfNull(rutina);
+            using var unidad = new UnidadTrabajoSeguridadDAL();
+            var autor = TurnoBLL.ValidarActor(unidad, "ASIGNAR_RUTINA");
+            IntegridadTransaccionalDAL.VerificarDVV(unidad, "RutinaEntrenamiento");
+            var confirmado = ObtenerRutinaVigente(unidad, rutina.CodigoRutina, "eliminar");
+            new RutinaEntrenamientoDAL(unidad).EliminarRutina(confirmado.CodigoRutina);
+            IntegridadTransaccionalDAL.ActualizarDVV(unidad, "RutinaEntrenamiento");
+            new RegistroBLL(unidad).RegistrarEvento($"Rutina {confirmado.CodigoRutina} eliminada del sistema.", autor, "ALTA");
+            unidad.Confirmar();
         }
-
         public string EvaluarSinergiaNutricional(int idSocio, string objetivoFisico, int frecuenciaSemanal, out int nivelSeveridad)
         {
             nivelSeveridad = 0;

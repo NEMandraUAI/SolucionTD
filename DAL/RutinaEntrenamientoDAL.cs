@@ -1,4 +1,4 @@
-﻿using BE;
+using BE;
 using Microsoft.Data.SqlClient;
 using System;
 using System.Collections.Generic;
@@ -10,12 +10,15 @@ namespace DAL
 {
     public class RutinaEntrenamientoDAL
     {
+        private readonly UnidadTrabajoSeguridadDAL? unidad;
+        public RutinaEntrenamientoDAL(UnidadTrabajoSeguridadDAL? unidad = null) { this.unidad = unidad; }
+
         public void InsertarRutina(RutinaEntrenamientoBE rutina)
         {
-            using (SqlConnection cx = ConexionDAL.Instancia.ObtenerConexion())
+            using (var acceso = new AccesoSeguridadDAL(unidad))
             {
-                cx.Open();
-                SqlCommand cmd = new SqlCommand("INSERT INTO RutinaEntrenamiento (FechaCreacion, ObjetivoFisico, FrecuenciaSemanal, DetalleEjercicios, ID_Socio, ID_Usuario, DVH) OUTPUT INSERTED.CodigoRutina VALUES (@FechaCreacion, @ObjetivoFisico, @FrecuenciaSemanal, @DetalleEjercicios, @ID_Socio, @ID_Usuario, @DVH)", cx);
+                SqlConnection cx = acceso.Conexion;
+                SqlCommand cmd = acceso.CrearComando("INSERT INTO RutinaEntrenamiento (FechaCreacion, ObjetivoFisico, FrecuenciaSemanal, DetalleEjercicios, ID_Socio, ID_Usuario, DVH) OUTPUT INSERTED.CodigoRutina VALUES (@FechaCreacion, @ObjetivoFisico, @FrecuenciaSemanal, @DetalleEjercicios, @ID_Socio, @ID_Usuario, @DVH)");
                 cmd.Parameters.AddWithValue("@FechaCreacion", rutina.FechaCreacion);
                 cmd.Parameters.AddWithValue("@ObjetivoFisico", rutina.ObjetivoFisico);
                 cmd.Parameters.AddWithValue("@FrecuenciaSemanal", rutina.FrecuenciaSemanal);
@@ -30,10 +33,10 @@ namespace DAL
         public List<string> ObtenerTodosLosDVH()
         {
             List<string> lista = new List<string>();
-            using (SqlConnection cx = ConexionDAL.Instancia.ObtenerConexion())
+            using (var acceso = new AccesoSeguridadDAL(unidad))
             {
-                cx.Open();
-                SqlCommand cmd = new SqlCommand("SELECT DVH FROM RutinaEntrenamiento ORDER BY CodigoRutina", cx);
+                SqlConnection cx = acceso.Conexion;
+                SqlCommand cmd = acceso.CrearComando("SELECT DVH FROM RutinaEntrenamiento ORDER BY CodigoRutina");
                 using (SqlDataReader dr = cmd.ExecuteReader())
                 {
                     while (dr.Read())
@@ -48,14 +51,14 @@ namespace DAL
         public List<RutinaEntrenamientoBE> ObtenerRutinasPorDNI(string dni)
         {
             List<RutinaEntrenamientoBE> lista = new List<RutinaEntrenamientoBE>();
-            using (SqlConnection cx = ConexionDAL.Instancia.ObtenerConexion())
+            using (var acceso = new AccesoSeguridadDAL(unidad))
             {
-                cx.Open();
+                SqlConnection cx = acceso.Conexion;
                 string sql = @"SELECT r.CodigoRutina, r.FechaCreacion, r.ObjetivoFisico, r.FrecuenciaSemanal, r.DetalleEjercicios, r.ID_Socio, r.ID_Usuario, r.DVH, s.DNI 
                        FROM RutinaEntrenamiento r 
                        INNER JOIN Socio s ON r.ID_Socio = s.ID_Socio 
                        WHERE s.DNI = @DNI";
-                SqlCommand cmd = new SqlCommand(sql, cx);
+                SqlCommand cmd = acceso.CrearComando(sql);
                 cmd.Parameters.AddWithValue("@DNI", dni);
                 using (SqlDataReader dr = cmd.ExecuteReader())
                 {
@@ -79,10 +82,10 @@ namespace DAL
 
         public void ActualizarRutina(RutinaEntrenamientoBE rutina)
         {
-            using (SqlConnection cx = ConexionDAL.Instancia.ObtenerConexion())
+            using (var acceso = new AccesoSeguridadDAL(unidad))
             {
-                cx.Open();
-                SqlCommand cmd = new SqlCommand("UPDATE RutinaEntrenamiento SET ObjetivoFisico = @Obj, FrecuenciaSemanal = @Frec, DetalleEjercicios = @Det, DVH = @DVH WHERE CodigoRutina = @Id", cx);
+                SqlConnection cx = acceso.Conexion;
+                SqlCommand cmd = acceso.CrearComando("UPDATE RutinaEntrenamiento SET ObjetivoFisico = @Obj, FrecuenciaSemanal = @Frec, DetalleEjercicios = @Det, DVH = @DVH WHERE CodigoRutina = @Id");
                 cmd.Parameters.AddWithValue("@Obj", rutina.ObjetivoFisico);
                 cmd.Parameters.AddWithValue("@Frec", rutina.FrecuenciaSemanal);
                 cmd.Parameters.AddWithValue("@Det", rutina.DetalleEjercicios);
@@ -94,10 +97,10 @@ namespace DAL
 
         public void EliminarRutina(int codigoRutina)
         {
-            using (SqlConnection cx = ConexionDAL.Instancia.ObtenerConexion())
+            using (var acceso = new AccesoSeguridadDAL(unidad))
             {
-                cx.Open();
-                SqlCommand cmd = new SqlCommand("DELETE FROM RutinaEntrenamiento WHERE CodigoRutina = @Id", cx);
+                SqlConnection cx = acceso.Conexion;
+                SqlCommand cmd = acceso.CrearComando("DELETE FROM RutinaEntrenamiento WHERE CodigoRutina = @Id");
                 cmd.Parameters.AddWithValue("@Id", codigoRutina);
                 cmd.ExecuteNonQuery();
             }
@@ -106,11 +109,11 @@ namespace DAL
         public List<RutinaEntrenamientoBE> LeerTodos()
         {
             List<RutinaEntrenamientoBE> lista = new List<RutinaEntrenamientoBE>();
-            using (SqlConnection cx = ConexionDAL.Instancia.ObtenerConexion())
+            using (var acceso = new AccesoSeguridadDAL(unidad))
             {
-                cx.Open();
+                SqlConnection cx = acceso.Conexion;
                 string sql = @"SELECT CodigoRutina, FechaCreacion, ObjetivoFisico, FrecuenciaSemanal, DetalleEjercicios, ID_Socio, ID_Usuario, DVH FROM RutinaEntrenamiento ORDER BY CodigoRutina ASC";
-                SqlCommand cmd = new SqlCommand(sql, cx);
+                SqlCommand cmd = acceso.CrearComando(sql);
                 using (SqlDataReader dr = cmd.ExecuteReader())
                 {
                     while (dr.Read())

@@ -1,4 +1,4 @@
-﻿using BE;
+using BE;
 using Microsoft.Data.SqlClient;
 using System;
 using System.Collections.Generic;
@@ -10,14 +10,21 @@ namespace DAL
 {
     public class IntegridadDAL
     {
+        private readonly UnidadTrabajoSeguridadDAL? unidad;
+
+        public IntegridadDAL(UnidadTrabajoSeguridadDAL? unidad = null)
+        {
+            this.unidad = unidad;
+        }
+
         public List<UsuarioBE> LeerTodosLosUsuariosCrudo()
         {
             List<UsuarioBE> lista = new List<UsuarioBE>();
-            using (SqlConnection cn = ConexionDAL.Instancia.ObtenerConexion())
+            using (var acceso = new AccesoSeguridadDAL(unidad))
             {
-                cn.Open();
+                SqlConnection cn = acceso.Conexion;
                 string consulta = "SELECT ID, Nombre, Clave, IntentosFallidos, Bloqueado, DVH, NivelJerarquia FROM Usuario ORDER BY ID";
-                using (SqlCommand cmd = new SqlCommand(consulta, cn))
+                using (SqlCommand cmd = acceso.CrearComando(consulta))
                 {
                     using (SqlDataReader reader = cmd.ExecuteReader())
                     {
@@ -43,11 +50,11 @@ namespace DAL
         public string ObtenerDVV(string entidad)
         {
             string dvv = null;
-            using (SqlConnection cn = ConexionDAL.Instancia.ObtenerConexion())
+            using (var acceso = new AccesoSeguridadDAL(unidad))
             {
-                cn.Open();
+                SqlConnection cn = acceso.Conexion;
                 string consulta = "SELECT DVV FROM DigitoVerificador WHERE Entidad = @Entidad";
-                using (SqlCommand cmd = new SqlCommand(consulta, cn))
+                using (SqlCommand cmd = acceso.CrearComando(consulta))
                 {
                     cmd.Parameters.AddWithValue("@Entidad", entidad);
                     object result = cmd.ExecuteScalar();
@@ -62,15 +69,15 @@ namespace DAL
 
         public void ActualizarDVV(string entidad, string nuevoDVV)
         {
-            using (SqlConnection cn = ConexionDAL.Instancia.ObtenerConexion())
+            using (var acceso = new AccesoSeguridadDAL(unidad))
             {
-                cn.Open();
+                SqlConnection cn = acceso.Conexion;
                 string consulta = @"
                     IF EXISTS (SELECT 1 FROM DigitoVerificador WHERE Entidad = @Entidad)
                         UPDATE DigitoVerificador SET DVV = @DVV WHERE Entidad = @Entidad
                     ELSE
                         INSERT INTO DigitoVerificador (Entidad, DVV) VALUES (@Entidad, @DVV)";
-                using (SqlCommand cmd = new SqlCommand(consulta, cn))
+                using (SqlCommand cmd = acceso.CrearComando(consulta))
                 {
                     cmd.Parameters.AddWithValue("@Entidad", entidad);
                     cmd.Parameters.AddWithValue("@DVV", nuevoDVV);
@@ -83,13 +90,13 @@ namespace DAL
         {
             string columnaPK = ObtenerNombrePK(nombreTabla);
             string query = $"UPDATE {nombreTabla} SET DVH = @DVH WHERE {columnaPK} = @ID";
-            using (SqlConnection cx = ConexionDAL.Instancia.ObtenerConexion())
+            using (var acceso = new AccesoSeguridadDAL(unidad))
             {
-                using (SqlCommand cmd = new SqlCommand(query, cx))
+                SqlConnection cx = acceso.Conexion;
+                using (SqlCommand cmd = acceso.CrearComando(query))
                 {
                     cmd.Parameters.AddWithValue("@DVH", nuevoDVH);
                     cmd.Parameters.AddWithValue("@ID", id);
-                    cx.Open();
                     cmd.ExecuteNonQuery();
                 }
             }

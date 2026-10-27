@@ -1,4 +1,4 @@
-﻿using BE;
+using BE;
 using Microsoft.Data.SqlClient;
 using System;
 using System.Collections.Generic;
@@ -10,13 +10,15 @@ namespace DAL
 {
     public class PlanSuscripcionDAL
     {
+        private readonly UnidadTrabajoSeguridadDAL? unidad;
+        public PlanSuscripcionDAL(UnidadTrabajoSeguridadDAL? unidad = null) { this.unidad = unidad; }
         public List<PlanSuscripcionBE> ListarPlanes()
         {
             List<PlanSuscripcionBE> lista = new List<PlanSuscripcionBE>();
-            using (SqlConnection cx = ConexionDAL.Instancia.ObtenerConexion())
+            using (var acceso = new AccesoSeguridadDAL(unidad))
             {
-                cx.Open();
-                SqlCommand cmd = new SqlCommand("SELECT CodigoPlan, Nombre, Precio, DuracionDias, DVH FROM PlanSuscripcion ORDER BY CodigoPlan ASC", cx);
+                SqlConnection cx = acceso.Conexion;
+                using SqlCommand cmd = acceso.CrearComando("SELECT CodigoPlan, Nombre, Precio, DuracionDias, DVH FROM PlanSuscripcion ORDER BY CodigoPlan ASC");
                 using (SqlDataReader dr = cmd.ExecuteReader())
                 {
                     while (dr.Read())

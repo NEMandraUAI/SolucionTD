@@ -1,4 +1,4 @@
-﻿using BE;
+using BE;
 using Microsoft.Data.SqlClient;
 using System;
 using System.Collections.Generic;
@@ -10,16 +10,19 @@ namespace DAL
 {
     public class PlanNutricionalDAL
     {
+        private readonly UnidadTrabajoSeguridadDAL? unidad;
+        public PlanNutricionalDAL(UnidadTrabajoSeguridadDAL? unidad = null) { this.unidad = unidad; }
+
         public int InsertarPlan(PlanNutricionalBE plan)
         {
             int idGenerado = 0;
-            using (SqlConnection cx = ConexionDAL.Instancia.ObtenerConexion())
+            using (var acceso = new AccesoSeguridadDAL(unidad))
             {
-                cx.Open();
+                SqlConnection cx = acceso.Conexion;
                 string sql = @"INSERT INTO PlanNutricional (FechaCreacion, EvaluacionAntropometrica, DetalleHabitos, ID_Socio, ID_Nutricionista) 
                                VALUES (@fecha, @evaluacion, @habitos, @idSocio, @idNutri);
                                SELECT CAST(SCOPE_IDENTITY() AS INT);";
-                using (SqlCommand cmd = new SqlCommand(sql, cx))
+                using (SqlCommand cmd = acceso.CrearComando(sql))
                 {
                     cmd.Parameters.AddWithValue("@fecha", plan.FechaCreacion);
                     cmd.Parameters.AddWithValue("@evaluacion", plan.EvaluacionAntropometrica);
@@ -34,11 +37,11 @@ namespace DAL
 
         public void ActualizarDVH(int codigoPlan, string dvh)
         {
-            using (SqlConnection cx = ConexionDAL.Instancia.ObtenerConexion())
+            using (var acceso = new AccesoSeguridadDAL(unidad))
             {
-                cx.Open();
+                SqlConnection cx = acceso.Conexion;
                 string sql = "UPDATE PlanNutricional SET DVH = @dvh WHERE CodigoPlan = @id";
-                using (SqlCommand cmd = new SqlCommand(sql, cx))
+                using (SqlCommand cmd = acceso.CrearComando(sql))
                 {
                     cmd.Parameters.AddWithValue("@dvh", dvh);
                     cmd.Parameters.AddWithValue("@id", codigoPlan);
@@ -50,11 +53,11 @@ namespace DAL
         public List<string> ObtenerTodosLosDVH()
         {
             List<string> listaDVH = new List<string>();
-            using (SqlConnection cx = ConexionDAL.Instancia.ObtenerConexion())
+            using (var acceso = new AccesoSeguridadDAL(unidad))
             {
-                cx.Open();
+                SqlConnection cx = acceso.Conexion;
                 string sql = "SELECT DVH FROM PlanNutricional ORDER BY CodigoPlan ASC";
-                using (SqlCommand cmd = new SqlCommand(sql, cx))
+                using (SqlCommand cmd = acceso.CrearComando(sql))
                 {
                     using (SqlDataReader dr = cmd.ExecuteReader())
                     {
@@ -71,9 +74,9 @@ namespace DAL
         public List<PlanNutricionalBE> ConsultarPlanesPorSocio(int idSocio)
         {
             List<PlanNutricionalBE> planes = new List<PlanNutricionalBE>();
-            using (SqlConnection cx = ConexionDAL.Instancia.ObtenerConexion())
+            using (var acceso = new AccesoSeguridadDAL(unidad))
             {
-                cx.Open();
+                SqlConnection cx = acceso.Conexion;
                 string sql = @"SELECT p.CodigoPlan, p.FechaCreacion, p.EvaluacionAntropometrica, p.DetalleHabitos, 
                                       p.ID_Socio, p.ID_Nutricionista, p.DVH,
                                       s.DNI, s.Nombre as SocioNombre, s.Apellido as SocioApellido,
@@ -83,7 +86,7 @@ namespace DAL
                                INNER JOIN Usuario u ON p.ID_Nutricionista = u.ID
                                WHERE p.ID_Socio = @idSocio 
                                ORDER BY p.FechaCreacion DESC";
-                using (SqlCommand cmd = new SqlCommand(sql, cx))
+                using (SqlCommand cmd = acceso.CrearComando(sql))
                 {
                     cmd.Parameters.AddWithValue("@idSocio", idSocio);
                     using (SqlDataReader dr = cmd.ExecuteReader())
@@ -122,11 +125,11 @@ namespace DAL
         public List<PlanNutricionalBE> LeerTodos()
         {
             List<PlanNutricionalBE> planes = new List<PlanNutricionalBE>();
-            using (SqlConnection cx = ConexionDAL.Instancia.ObtenerConexion())
+            using (var acceso = new AccesoSeguridadDAL(unidad))
             {
-                cx.Open();
+                SqlConnection cx = acceso.Conexion;
                 string sql = @"SELECT CodigoPlan, FechaCreacion, EvaluacionAntropometrica, DetalleHabitos, ID_Socio, ID_Nutricionista, DVH FROM PlanNutricional ORDER BY CodigoPlan ASC";
-                using (SqlCommand cmd = new SqlCommand(sql, cx))
+                using (SqlCommand cmd = acceso.CrearComando(sql))
                 {
                     using (SqlDataReader dr = cmd.ExecuteReader())
                     {

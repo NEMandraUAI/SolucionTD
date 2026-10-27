@@ -1,4 +1,4 @@
-﻿using BE;
+using BE;
 using BLL;
 using GUI.Eventos;
 using Seguridad;
@@ -12,6 +12,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using Microsoft.Data.SqlClient;
 
 namespace GUI
 {
@@ -50,74 +51,100 @@ namespace GUI
             formHijo.Show();
         }
 
+        private bool recuperacionEnCurso;
+
         private void FrmMenu_KeyDown(object sender, KeyEventArgs e)
         {
-            if (e.Control && e.Alt && e.KeyCode == Keys.R)
+            if (!e.Control || !e.Alt || e.KeyCode != Keys.R) return;
+            e.Handled = true;
+            e.SuppressKeyPress = true;
+            if (recuperacionEnCurso) return;
+            recuperacionEnCurso = true;
+            try
             {
+                var backup = new BackupBLL();
+                backup.AutorizarRecuperacionAdministrativa();
                 try
                 {
-                    IntegridadBLL integridadBLL = new IntegridadBLL();
-                    integridadBLL.VerificarIntegridadSistema();
-                    return;
+                    new IntegridadBLL().VerificarIntegridadSistema();
+                    InstaladorBLL.RegistrarLog("Recuperación solicitada con integridad actualmente válida.");
                 }
-                catch { }
-                string claveIngresada = SolicitarClaveEmergencia();
-                if (!string.IsNullOrEmpty(claveIngresada))
+                catch (SqlException) { throw; }
+                catch (Exception ex)
                 {
-                    string hashClaveMaestra = "3b612c75a7b5048a435fb6ec81e52ff92d6d795a8b5a9c17070f6a63c97a53b2";
-                    if (CryptoManager.Comparar(claveIngresada, hashClaveMaestra))
-                    {
-                        DialogResult opcion = MessageBox.Show(
-                        T("msgDialogoRecuperacion", "Autenticación Maestra correcta.\n\n¿Desea RECALCULAR toda la estructura de dígitos (SÍ) o RESTAURAR un archivo de Backup (NO)?\n\nPresione Cancelar para abortar la operación."),
-                        T("titDialogoRecuperacion", "Opciones de Recuperación de Emergencia"),
-                        MessageBoxButtons.YesNoCancel,
-                        MessageBoxIcon.Question);
-                        if (opcion == DialogResult.Yes)
-                        {
-                            try
-                            {
-                                IntegridadBLL integridadBLL = new IntegridadBLL();
-                                integridadBLL.ForzarRecalculoDeTodaLaBase();
-                                MessageBox.Show(T("msgRecuperacionExito", "Integridad restaurada exitosamente. Los dígitos verificadores han sido recalculados."), T("titRecuperacionExito", "Recuperación Exitosa"), MessageBoxButtons.OK, MessageBoxIcon.Information);
-                                if (SessionManager.Instancia.UsuarioActual == null)
-                                {
-                                    AbrirLogin();
-                                }
-                            }
-                            catch (Exception ex)
-                            {
-                                MessageBox.Show(T("msgRecuperacionError", "Ocurrió un error al intentar recalcular: ") + ex.Message, T("titErrorCritico", "Error Crítico"), MessageBoxButtons.OK, MessageBoxIcon.Error);
-                            }
-                        }
-                        else if (opcion == DialogResult.No)
-                        {
-                            OpenFileDialog ofd = new OpenFileDialog();
-                            ofd.Filter = T("FiltroRestore", "Archivos de Backup SQL (*.bak)|*.bak");
-                            ofd.Title = T("titRestore", "Seleccione el archivo de respaldo para restaurar");
-                            if (ofd.ShowDialog() == DialogResult.OK)
-                            {
-                                try
-                                {
-                                    BackupBLL backupBLL = new BackupBLL();
-                                    backupBLL.RestaurarBackup(ofd.FileName);
-                                    MessageBox.Show(T("msgRestauracionExito", "El sistema se ha restaurado correctamente al punto en el tiempo seleccionado. Por favor, inicie sesión nuevamente."), T("titRestauracionExito", "Restauración Exitosa"), MessageBoxButtons.OK, MessageBoxIcon.Information);
-                                    if (SessionManager.Instancia.UsuarioActual == null)
-                                    {
-                                        AbrirLogin();
-                                    }
-                                }
-                                catch (Exception ex)
-                                {
-                                    MessageBox.Show(T("msgRestauracionError", "Ocurrió un error al intentar restaurar la base de datos: ") + ex.Message, T("titErrorCritico", "Error Crítico"), MessageBoxButtons.OK, MessageBoxIcon.Error);
-                                }
-                            }
-                        }
-                    }
-                    else
-                    {
-                        MessageBox.Show(T("msgClaveIncorrecta", "Clave maestra incorrecta. Acceso denegado."), T("titSeguridad", "Seguridad"), MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                    }
+                    InstaladorBLL.RegistrarLog("Diagnóstico previo a recuperación administrativa: " + ex.Message);
                 }
+
+                var opcion = MessageBox.Show(
+                    "Recuperación administrativa. Antes de continuar debe conservar un respaldo de la base actual.\r\n\r\n" +
+                    "SÍ: recalcular los dígitos después de una intervención técnica legítima. Esta acción acepta los datos actuales como válidos.\r\n" +
+                    "NO: seleccionar un backup para restaurar; reemplazará los datos actuales.\r\n\r\n" +
+                    "Cancelar: salir sin cambios.",
+                    "Recuperación administrativa", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Warning);
+                if (opcion == DialogResult.Cancel) return;
+
+                string? rutaBackup = null;
+                if (opcion == DialogResult.No)
+                {
+                    using var ofd = new OpenFileDialog
+                    {
+                        Filter = "Archivos de Backup SQL (*.bak)|*.bak",
+                        Title = "Seleccione el respaldo que reemplazará la base configurada",
+                        CheckFileExists = true
+                    };
+                    if (ofd.ShowDialog(this) != DialogResult.OK) return;
+                    rutaBackup = ofd.FileName;
+                }
+                string confirmacion = opcion == DialogResult.Yes
+                    ? "¿Confirma que los datos actuales fueron revisados y autoriza recalcular su integridad?"
+                    : "¿Confirma la sustitución de la base configurada por el backup seleccionado? Los cambios posteriores al backup se perderán.";
+                if (MessageBox.Show(confirmacion, "Confirmar recuperación", MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2) != DialogResult.Yes) return;
+
+                SessionManager.Instancia.Cerrar();
+                CerrarTodosLosFormularios();
+                AplicarPermisosUI();
+                EvaluarPermisosIdioma();
+                if (opcion == DialogResult.Yes) backup.RecalcularIntegridadAdministrativamente();
+                else backup.RestaurarBackup(rutaBackup!);
+                MessageBox.Show("Recuperación completada y verificada. Inicie sesión nuevamente.",
+                    "Recuperación administrativa", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                AbrirLogin();
+            }
+            catch (Exception ex)
+            {
+                InstaladorBLL.RegistrarLog("Recuperación administrativa no completada: " + ex.Message);
+                MessageBox.Show(ex.Message, "Recuperación administrativa no completada",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                recuperacionEnCurso = false;
+            }
+        }
+
+        private void ManejarErrorConexionSQL(SqlException sqlEx)
+        {
+            CerrarTodosLosFormularios();
+            InstaladorBLL.RegistrarLog($"SqlException capturada en frmMenu (Number={sqlEx.Number}): {sqlEx.Message}");
+            if (sqlEx.Number == 207 || sqlEx.Number == 208 || sqlEx.Number == 2812)
+            {
+                if (InstaladorBLL.RepararEsquemaBaseDeDatosInteractivo())
+                {
+                    AbrirLogin();
+                }
+                return;
+            }
+            DialogResult reintentar = MessageBox.Show(
+                "No se pudo establecer comunicación con el motor de base de datos SQL Server.\r\n\r\n" +
+                $"Detalle técnico (Código {sqlEx.Number}): {sqlEx.Message}\r\n\r\n" +
+                "¿Desea ejecutar el Asistente de Diagnóstico de Servicio e Instancias SQL Server para restablecer la conexión?",
+                "Error de Conexión al Motor SQL Server",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Warning);
+            if (reintentar == DialogResult.Yes && InstaladorBLL.AsegurarConexionYBaseDisponibleEnArranque())
+            {
+                AbrirLogin();
             }
         }
 
@@ -130,6 +157,10 @@ namespace GUI
                 frmLogIn login = new frmLogIn();
                 login.LoginExitoso += OnLoginExitoso;
                 AbrirFormularioHijo(login);
+            }
+            catch (SqlException sqlEx)
+            {
+                ManejarErrorConexionSQL(sqlEx);
             }
             catch (Exception ex)
             {
@@ -148,34 +179,18 @@ namespace GUI
             AplicarPermisosUI();
         }
 
-        private string SolicitarClaveEmergencia()
-        {
-            Form prompt = new Form()
-            {
-                Width = 350,
-                Height = 150,
-                FormBorderStyle = FormBorderStyle.FixedDialog,
-                Text = T("titPromptRecuperacion", "Recuperación de Emergencia del Sistema"),
-                StartPosition = FormStartPosition.CenterScreen,
-                MaximizeBox = false,
-                MinimizeBox = false
-            };
-            Label lblTexto = new Label() { Left = 20, Top = 20, Width = 300, Text = T("lblPromptRecuperacion", "Ingrese la Clave Maestra de Administrador:") };
-            TextBox txtClave = new TextBox() { Left = 20, Top = 50, Width = 290, PasswordChar = '*' };
-            Button btnAceptar = new Button() { Text = T("btnPromptAceptar", "Aceptar"), Left = 210, Width = 100, Top = 80, DialogResult = DialogResult.OK };
-            prompt.Controls.Add(lblTexto);
-            prompt.Controls.Add(txtClave);
-            prompt.Controls.Add(btnAceptar);
-            prompt.AcceptButton = btnAceptar;
-            if (prompt.ShowDialog() == DialogResult.OK)
-            {
-                return txtClave.Text;
-            }
-            return "";
-        }
-
         private void frmMenu_Load(object sender, EventArgs e)
         {
+            if (!InstaladorBLL.AsegurarConexionYBaseDisponibleEnArranque())
+            {
+                Application.Exit();
+                return;
+            }
+            if (SchemaMigradorBLL.InicializacionPendiente(DAL.ConexionDAL.ObtenerConnectionStringConfigurada()))
+            {
+                using var inicial = new frmAdministradorInicial();
+                if (inicial.ShowDialog(this) != DialogResult.OK) { Application.Exit(); return; }
+            }
             IdiomaBLL idiomaBLL = new IdiomaBLL();
             cmbIdiomas.SelectedIndexChanged -= cmbIdiomas_SelectedIndexChanged;
             cmbIdiomas.DataSource = idiomaBLL.ObtenerIdiomas();
@@ -342,6 +357,10 @@ namespace GUI
                 OcultarSubMenus();
                 AbrirLogin();
             }
+            catch (SqlException sqlEx)
+            {
+                ManejarErrorConexionSQL(sqlEx);
+            }
             catch (Exception ex)
             {
                 MessageBox.Show(T(ex.Message, ex.Message) + T("msgCorrupcion", "\nEl sistema se bloqueará por seguridad. Contacte al administrador."), T("titCorrupcion", "Corrupción de Datos"), MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -363,6 +382,10 @@ namespace GUI
                 OcultarSubMenus();
                 frmRegistro registro = new frmRegistro();
                 AbrirFormularioHijo(registro);
+            }
+            catch (SqlException sqlEx)
+            {
+                ManejarErrorConexionSQL(sqlEx);
             }
             catch (Exception ex)
             {
@@ -452,6 +475,10 @@ namespace GUI
                     integridadBLL.VerificarIntegridadSistema();
                     MessageBox.Show(T("msgSesionCerrada", "La sesión se cerró correctamente."), T("titSesionCerrada", "Sesión Cerrada"), MessageBoxButtons.OK, MessageBoxIcon.Information);
                     AbrirLogin();
+                }
+                catch (SqlException sqlEx)
+                {
+                    ManejarErrorConexionSQL(sqlEx);
                 }
                 catch (Exception ex)
                 {

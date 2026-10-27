@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -33,6 +33,8 @@ namespace GUI
 
         private void frmAgendaRecepcion_Load(object sender, EventArgs e)
         {
+            try
+            {
             dtpHoraTurno.Value = DateTime.Today.AddHours(12);
             ActualizarIdioma(GestorIdioma.Instancia.IdiomaActual);
             CargarNutricionistas();
@@ -43,6 +45,16 @@ namespace GUI
             btnAsistio.Enabled = puedeAsentar;
             btnAusente.Enabled = puedeAsentar;
             txtDNI.Enabled = puedeAsentar;
+            }
+            catch (Exception ex) { MostrarErrorConsulta(ex); }
+        }
+
+        private void MostrarErrorConsulta(Exception ex)
+        {
+            InstaladorBLL.RegistrarLog("Error de agenda nutricional: " + ex.Message);
+            btnReservar.Enabled=false; btnAsistio.Enabled=false; btnAusente.Enabled=false;
+            MessageBox.Show("No se pudo completar la consulta. Actualice la pantalla cuando se restablezca la conexión.\r\n" + ex.Message,
+                "Agenda no disponible", MessageBoxButtons.OK, MessageBoxIcon.Warning);
         }
 
         private void CargarNutricionistas()
@@ -53,7 +65,7 @@ namespace GUI
             foreach (var usu in todosLosUsuarios)
             {
                 permisoBLL.LlenarPermisosDeUsuario(usu);
-                if (usu.TienePermiso("ASIGNAR_PLAN_NUTRICIONAL"))
+                if (!usu.Bloqueado && usu.TienePermiso("ASIGNAR_PLAN_NUTRICIONAL"))
                 {
                     _listaNutricionistas.Add(usu);
                 }
@@ -92,7 +104,8 @@ namespace GUI
 
         private void dtpFechaAgenda_ValueChanged(object sender, EventArgs e)
         {
-            CargarAgenda(dtpFechaAgenda.Value);
+            try { CargarAgenda(dtpFechaAgenda.Value); }
+            catch (Exception ex) { MostrarErrorConsulta(ex); }
         }
 
         private void txtDNI_TextChanged(object sender, EventArgs e)
@@ -185,7 +198,8 @@ namespace GUI
             {
                 cmbNutricionista.SelectedValue = _sugerenciaActual.ID_NutricionistaSugerido;
             }
-            CargarAgenda(dtpFechaAgenda.Value);
+            try { CargarAgenda(dtpFechaAgenda.Value); }
+            catch (Exception ex) { MostrarErrorConsulta(ex); }
         }
 
         private void btnReservar_Click(object sender, EventArgs e)

@@ -1,5 +1,6 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using BE;
 using Microsoft.Data.SqlClient;
 
@@ -7,16 +8,47 @@ namespace DAL
 {
     public class MercadoInternoDAL
     {
+        private readonly UnidadTrabajoSeguridadDAL? unidadLectura;
+        public MercadoInternoDAL(UnidadTrabajoSeguridadDAL? unidad = null) { unidadLectura = unidad; }
+        internal static UsuarioBE ValidarAutor(UnidadTrabajoSeguridadDAL unidad, int idUsuario, params string[] codigosPermitidos)
+        {
+            var usuario = new UsuarioDAL(unidad).ObtenerPorID(idUsuario);
+            if (usuario == null || usuario.Bloqueado)
+                throw new UnauthorizedAccessException("La cuenta del operador no está habilitada.");
+            var permisos = new PermisoDAL(unidad);
+            usuario.Permisos = permisos.ObtenerPermisosDeUsuario(usuario.ID, permisos.ObtenerArbolCompleto());
+            if (!codigosPermitidos.Any(usuario.TienePermiso))
+                throw new UnauthorizedAccessException("La cuenta ya no posee permisos para completar esta operación.");
+            return usuario;
+        }
+
+        internal static void RegistrarEvento(UnidadTrabajoSeguridadDAL unidad, UsuarioBE autor, string evento, string criticidad)
+        {
+            new RegistroDAL(unidad).GuardarRegistro(new RegistroBE
+            {
+                ID_Usuario = autor.ID, FechaHora = DateTime.Now, Evento = evento, Criticidad = criticidad
+            }, autor);
+        }
+
         public void RegistrarVentaProductoTransaccional(VentaProductoBE venta, Func<object, string> calcularDVH)
         {
-            using (SqlConnection cx = ConexionDAL.Instancia.ObtenerConexion())
+            if (venta.NroVenta != 0) throw new InvalidOperationException("Esta venta ya tiene un número asignado y no puede registrarse nuevamente.");
+            using (var unidad = new UnidadTrabajoSeguridadDAL())
             {
-                cx.Open();
-                using (SqlTransaction tx = cx.BeginTransaction())
+                SqlConnection cx = unidad.Conexion;
+                SqlTransaction tx = unidad.Transaccion;
                 {
                     try
                     {
-                        foreach (var det in venta.Detalles)
+                        var vendedor = ValidarAutor(unidad, venta.ID_UsuarioParaDVH, "VENDER_PRODUCTO", "GESTION_ROLES");
+                        IntegridadTransaccionalDAL.VerificarDVV(unidad, "Producto", "VentaProducto");
+                        using (var socio = new SqlCommand("SELECT EstadoActivo FROM dbo.Socio WHERE ID_Socio=@id", cx, tx))
+                        {
+                            socio.Parameters.AddWithValue("@id", venta.ID_SocioParaDVH);
+                            if (socio.ExecuteScalar() is not bool activo || !activo)
+                                throw new InvalidOperationException("El socio no existe o ya no se encuentra activo.");
+                        }
+                        foreach (var det in venta.Detalles.OrderBy(d => d.CodigoProducto))
                         {
                             ProductoBE prod = null;
                             string sqlProd = @"SELECT CodigoProducto, CodigoSKU, Nombre, Categoria, PrecioVenta, CostoCompra,
@@ -44,7 +76,8 @@ namespace DAL
                                             TiempoReposicionDias = Convert.ToInt32(dr["TiempoReposicionDias"]),
                                             ObjetivoFisicoAfin = dr["ObjetivoFisicoAfin"] != DBNull.Value ? dr["ObjetivoFisicoAfin"].ToString() : "Todos",
                                             ObjetivoNutricionalAfin = dr["ObjetivoNutricionalAfin"] != DBNull.Value ? dr["ObjetivoNutricionalAfin"].ToString() : "Todos",
-                                            Activo = Convert.ToBoolean(dr["Activo"])
+                                            Activo = Convert.ToBoolean(dr["Activo"]),
+                                            DVH = dr["DVH"].ToString() ?? string.Empty
                                         };
                                     }
                                 }
@@ -53,6 +86,10 @@ namespace DAL
                                 throw new Exception($"El producto con código #{det.CodigoProducto} no existe o se encuentra inactivo.");
                             if (prod.StockActual < det.Cantidad)
                                 throw new Exception($"Stock insuficiente para '{prod.Nombre}' (Disponible: {prod.StockActual} u. | Solicitado: {det.Cantidad} u.).");
+                            if (det.Cantidad <= 0) throw new InvalidOperationException("Las cantidades deben ser mayores a cero.");
+                            if (prod.DVH != calcularDVH(prod)) throw new InvalidOperationException("La integridad del producto requiere revisión administrativa.");
+                            if (det.PrecioUnitario != prod.PrecioVenta)
+                                throw new InvalidOperationException($"El precio de '{prod.Nombre}' cambió desde que se agregó al carrito. Actualice el carrito y confirme el nuevo importe.");
                             det.PrecioUnitario = prod.PrecioVenta;
                             det.CostoUnitario = prod.CostoCompra;
                             det.Subtotal = Math.Round(prod.PrecioVenta * det.Cantidad, 2);
@@ -67,6 +104,8 @@ namespace DAL
                                 cmdUpd.ExecuteNonQuery();
                             }
                         }
+                        venta.MontoTotal = Math.Round(venta.Detalles.Sum(d => d.Subtotal), 2);
+                        venta.CostoTotalEstimado = Math.Round(venta.Detalles.Sum(d => d.Cantidad * d.CostoUnitario), 2);
                         string sqlInsVenta = @"INSERT INTO VentaProducto (Fecha, MontoTotal, CostoTotalEstimado, MetodoPago, ID_Socio, ID_Usuario, DVH)
                                                OUTPUT INSERTED.NroVenta
                                                VALUES (@fecha, @monto, @costo, @metodo, @idSocio, @idUsuario, NULL)";
@@ -103,11 +142,15 @@ namespace DAL
                                 cmdDet.ExecuteNonQuery();
                             }
                         }
-                        tx.Commit();
+                        IntegridadTransaccionalDAL.ActualizarDVV(unidad, "Producto", "VentaProducto");
+                        RegistrarEvento(unidad, vendedor, $"Venta de mostrador registrada (Op. #{venta.NroVenta:D5}) por $ {venta.MontoTotal:N2}.", "INFO");
+                        unidad.Confirmar();
                     }
                     catch
                     {
-                        tx.Rollback();
+                        venta.NroVenta = 0;
+                        venta.DVH = string.Empty;
+                        foreach (var detalle in venta.Detalles) detalle.NroVenta = 0;
                         throw;
                     }
                 }
@@ -117,9 +160,9 @@ namespace DAL
         public List<VentaProductoBE> ConsultarVentasFiltros(DateTime desde, DateTime hasta, string dniSocio, string metodoPago)
         {
             List<VentaProductoBE> lista = new List<VentaProductoBE>();
-            using (SqlConnection cx = ConexionDAL.Instancia.ObtenerConexion())
+            using (var acceso = new AccesoSeguridadDAL(unidadLectura))
             {
-                cx.Open();
+                SqlConnection cx = acceso.Conexion;
                 string sql = @"SELECT v.NroVenta, v.Fecha, v.MontoTotal, v.CostoTotalEstimado, v.MetodoPago,
                                       v.ID_Socio, v.ID_Usuario, v.DVH,
                                       s.DNI, s.Nombre AS SocioNombre, s.Apellido AS SocioApellido,
@@ -133,7 +176,7 @@ namespace DAL
                 if (!string.IsNullOrWhiteSpace(metodoPago) && metodoPago != "Todos")
                     sql += " AND v.MetodoPago = @metodo";
                 sql += " ORDER BY v.Fecha DESC, v.NroVenta DESC";
-                using (SqlCommand cmd = new SqlCommand(sql, cx))
+                using (SqlCommand cmd = new SqlCommand(sql, cx, unidadLectura?.Transaccion))
                 {
                     cmd.Parameters.AddWithValue("@desde", desde.Date);
                     cmd.Parameters.AddWithValue("@hasta", hasta.Date.AddDays(1).AddSeconds(-1));
@@ -183,9 +226,9 @@ namespace DAL
 
         public List<DetalleVentaProductoBE> ObtenerDetallesDeVenta(int nroVenta)
         {
-            using (SqlConnection cx = ConexionDAL.Instancia.ObtenerConexion())
+            using (var acceso = new AccesoSeguridadDAL(unidadLectura))
             {
-                cx.Open();
+                SqlConnection cx = acceso.Conexion;
                 return ObtenerDetallesDeVentaInterno(cx, nroVenta);
             }
         }
@@ -200,7 +243,7 @@ namespace DAL
                            INNER JOIN Producto p ON d.CodigoProducto = p.CodigoProducto
                            WHERE d.NroVenta = @nro
                            ORDER BY d.ID_DetalleVenta ASC";
-            using (SqlCommand cmd = new SqlCommand(sql, cx))
+            using (SqlCommand cmd = new SqlCommand(sql, cx, unidadLectura?.Transaccion))
             {
                 cmd.Parameters.AddWithValue("@nro", nroVenta);
                 using (SqlDataReader dr = cmd.ExecuteReader())
@@ -229,13 +272,13 @@ namespace DAL
         public List<VentaProductoBE> LeerTodasLasVentas()
         {
             List<VentaProductoBE> lista = new List<VentaProductoBE>();
-            using (SqlConnection cx = ConexionDAL.Instancia.ObtenerConexion())
+            using (var acceso = new AccesoSeguridadDAL(unidadLectura))
             {
-                cx.Open();
+                SqlConnection cx = acceso.Conexion;
                 string sql = @"SELECT NroVenta, Fecha, MontoTotal, CostoTotalEstimado, MetodoPago, ID_Socio, ID_Usuario, DVH
                                FROM VentaProducto
                                ORDER BY NroVenta ASC";
-                using (SqlCommand cmd = new SqlCommand(sql, cx))
+                using (SqlCommand cmd = new SqlCommand(sql, cx, unidadLectura?.Transaccion))
                 using (SqlDataReader dr = cmd.ExecuteReader())
                 {
                     while (dr.Read())
@@ -264,10 +307,10 @@ namespace DAL
         public List<string> ObtenerTodosLosDVHVentas()
         {
             List<string> lista = new List<string>();
-            using (SqlConnection cx = ConexionDAL.Instancia.ObtenerConexion())
+            using (var acceso = new AccesoSeguridadDAL(unidadLectura))
             {
-                cx.Open();
-                using (SqlCommand cmd = new SqlCommand("SELECT DVH FROM VentaProducto ORDER BY NroVenta ASC", cx))
+                SqlConnection cx = acceso.Conexion;
+                using (SqlCommand cmd = new SqlCommand("SELECT DVH FROM VentaProducto ORDER BY NroVenta ASC", cx, unidadLectura?.Transaccion))
                 using (SqlDataReader dr = cmd.ExecuteReader())
                 {
                     while (dr.Read())
@@ -282,9 +325,9 @@ namespace DAL
         public List<(int CodigoProducto, int Anio, int Mes, int CantidadVendida, decimal MontoVendido, decimal CostoVendido)> ObtenerVentasMensualesPorProducto(DateTime desde, DateTime hasta)
         {
             var resultado = new List<(int, int, int, int, decimal, decimal)>();
-            using (SqlConnection cx = ConexionDAL.Instancia.ObtenerConexion())
+            using (var acceso = new AccesoSeguridadDAL(unidadLectura))
             {
-                cx.Open();
+                SqlConnection cx = acceso.Conexion;
                 string sql = @"SELECT d.CodigoProducto,
                                       YEAR(v.Fecha) AS Anio,
                                       MONTH(v.Fecha) AS Mes,
@@ -296,7 +339,7 @@ namespace DAL
                                WHERE v.Fecha >= @desde AND v.Fecha <= @hasta
                                GROUP BY d.CodigoProducto, YEAR(v.Fecha), MONTH(v.Fecha)
                                ORDER BY d.CodigoProducto ASC, YEAR(v.Fecha) ASC, MONTH(v.Fecha) ASC";
-                using (SqlCommand cmd = new SqlCommand(sql, cx))
+                using (SqlCommand cmd = new SqlCommand(sql, cx, unidadLectura?.Transaccion))
                 {
                     cmd.Parameters.AddWithValue("@desde", desde.Date);
                     cmd.Parameters.AddWithValue("@hasta", hasta.Date.AddDays(1).AddSeconds(-1));
@@ -322,15 +365,15 @@ namespace DAL
         public Dictionary<int, int> ObtenerCantidadesEnTransitoPorProducto()
         {
             Dictionary<int, int> enTransito = new Dictionary<int, int>();
-            using (SqlConnection cx = ConexionDAL.Instancia.ObtenerConexion())
+            using (var acceso = new AccesoSeguridadDAL(unidadLectura))
             {
-                cx.Open();
+                SqlConnection cx = acceso.Conexion;
                 string sql = @"SELECT d.CodigoProducto, SUM(d.CantidadAprobadaAdmin) AS TotalEnTransito
                                FROM DetalleOrdenReabastecimiento d
                                INNER JOIN OrdenReabastecimiento o ON d.NroOrden = o.NroOrden
                                WHERE o.Estado = N'Pendiente'
                                GROUP BY d.CodigoProducto";
-                using (SqlCommand cmd = new SqlCommand(sql, cx))
+                using (SqlCommand cmd = new SqlCommand(sql, cx, unidadLectura?.Transaccion))
                 using (SqlDataReader dr = cmd.ExecuteReader())
                 {
                     while (dr.Read())
@@ -344,13 +387,25 @@ namespace DAL
 
         public void RegistrarOrdenReabastecimientoTransaccional(OrdenReabastecimientoBE orden, Func<object, string> calcularDVH)
         {
-            using (SqlConnection cx = ConexionDAL.Instancia.ObtenerConexion())
+            if (orden.NroOrden != 0) throw new InvalidOperationException("La orden ya fue registrada.");
+            using (var unidad = new UnidadTrabajoSeguridadDAL())
             {
-                cx.Open();
-                using (SqlTransaction tx = cx.BeginTransaction())
+                SqlConnection cx = unidad.Conexion;
+                SqlTransaction tx = unidad.Transaccion;
                 {
                     try
                     {
+                        var administrador = ValidarAutor(unidad, orden.ID_UsuarioParaDVH, "ANALIZAR_DEMANDA", "GESTION_ROLES");
+                        IntegridadTransaccionalDAL.VerificarDVV(unidad, "OrdenReabastecimiento");
+                        if (orden.Detalles == null || orden.Detalles.Count == 0)
+                            throw new InvalidOperationException("La orden debe contener al menos un producto.");
+                        foreach (var detalle in orden.Detalles)
+                        {
+                            if (detalle.CantidadAprobadaAdmin <= 0 || detalle.CostoUnitarioCompra < 0)
+                                throw new InvalidOperationException("La cantidad y el costo de los productos de la orden no son válidos.");
+                            detalle.SubtotalCosto = Math.Round(detalle.CantidadAprobadaAdmin * detalle.CostoUnitarioCompra, 2);
+                        }
+                        orden.CostoTotalOrden = Math.Round(orden.Detalles.Sum(d => d.SubtotalCosto), 2);
                         string sqlInsOrden = @"INSERT INTO OrdenReabastecimiento
                                                (FechaGeneracion, FechaRecepcion, MetodoPrediccion, HorizonteDias, Estado, CostoTotalOrden, Observaciones, ID_Usuario, DVH)
                                                OUTPUT INSERTED.NroOrden
@@ -392,26 +447,33 @@ namespace DAL
                                 cmdDet.ExecuteNonQuery();
                             }
                         }
-                        tx.Commit();
+                        IntegridadTransaccionalDAL.ActualizarDVV(unidad, "OrdenReabastecimiento");
+                        RegistrarEvento(unidad, administrador, $"Orden de reabastecimiento #{orden.NroOrden:D5} emitida.", "ALTA");
+                        unidad.Confirmar();
                     }
                     catch
                     {
-                        tx.Rollback();
+                        orden.NroOrden = 0;
+                        orden.DVH = string.Empty;
+                        foreach (var detalle in orden.Detalles) detalle.NroOrden = 0;
                         throw;
                     }
                 }
             }
         }
 
-        public void RecibirOrdenReabastecimientoTransaccional(int nroOrden, Func<object, string> calcularDVH)
+        public void RecibirOrdenReabastecimientoTransaccional(int nroOrden, Func<object, string> calcularDVH, UsuarioBE? autor = null)
         {
-            using (SqlConnection cx = ConexionDAL.Instancia.ObtenerConexion())
+            using (var unidad = new UnidadTrabajoSeguridadDAL())
             {
-                cx.Open();
-                using (SqlTransaction tx = cx.BeginTransaction())
+                SqlConnection cx = unidad.Conexion;
+                SqlTransaction tx = unidad.Transaccion;
                 {
                     try
                     {
+                        if (autor == null) throw new UnauthorizedAccessException("Se requiere la identidad del usuario que recibe la orden.");
+                        var receptor = ValidarAutor(unidad, autor.ID, "ANALIZAR_DEMANDA", "CONSULTAR_STOCK", "GESTION_ROLES");
+                        IntegridadTransaccionalDAL.VerificarDVV(unidad, "Producto", "OrdenReabastecimiento");
                         OrdenReabastecimientoBE orden = null;
                         string sqlOrd = @"SELECT NroOrden, FechaGeneracion, FechaRecepcion, MetodoPrediccion, HorizonteDias,
                                                  Estado, CostoTotalOrden, Observaciones, ID_Usuario, DVH
@@ -434,13 +496,16 @@ namespace DAL
                                         Estado = dr["Estado"].ToString() ?? string.Empty,
                                         CostoTotalOrden = Convert.ToDecimal(dr["CostoTotalOrden"]),
                                         ID_Usuario = idUsu,
-                                        Administrador = new UsuarioBE { ID = idUsu }
+                                        Administrador = new UsuarioBE { ID = idUsu },
+                                        DVH = dr["DVH"].ToString() ?? string.Empty
                                     };
                                 }
                             }
                         }
                         if (orden == null)
                             throw new Exception($"No se encontró la Orden de Reabastecimiento #{nroOrden}.");
+                        if (orden.DVH != calcularDVH(orden))
+                            throw new InvalidOperationException("La integridad de la orden requiere revisión administrativa.");
                         if (!string.Equals(orden.Estado, "Pendiente", StringComparison.OrdinalIgnoreCase))
                             throw new Exception($"La Orden #{nroOrden} ya se encuentra en estado '{orden.Estado}' y no puede volver a recepcionarse.");
                         List<(int CodigoProducto, int CantidadAprobada, decimal CostoUnitario)> items = new List<(int, int, decimal)>();
@@ -466,7 +531,7 @@ namespace DAL
                             ProductoBE prod = null;
                             string sqlProd = @"SELECT CodigoProducto, CodigoSKU, Nombre, Categoria, PrecioVenta, CostoCompra,
                                                       StockActual, StockMinimo, TiempoReposicionDias, ObjetivoFisicoAfin,
-                                                      ObjetivoNutricionalAfin, Activo
+                                                      ObjetivoNutricionalAfin, Activo, DVH
                                                FROM Producto WITH (UPDLOCK, ROWLOCK)
                                                WHERE CodigoProducto = @idProd";
                             using (SqlCommand cmdP = new SqlCommand(sqlProd, cx, tx))
@@ -487,14 +552,19 @@ namespace DAL
                                             StockActual = Convert.ToInt32(dr["StockActual"]),
                                             StockMinimo = Convert.ToInt32(dr["StockMinimo"]),
                                             TiempoReposicionDias = Convert.ToInt32(dr["TiempoReposicionDias"]),
-                                            Activo = Convert.ToBoolean(dr["Activo"])
+                                            ObjetivoFisicoAfin = dr["ObjetivoFisicoAfin"] != DBNull.Value ? dr["ObjetivoFisicoAfin"].ToString() : "Todos",
+                                            ObjetivoNutricionalAfin = dr["ObjetivoNutricionalAfin"] != DBNull.Value ? dr["ObjetivoNutricionalAfin"].ToString() : "Todos",
+                                            Activo = Convert.ToBoolean(dr["Activo"]),
+                                            DVH = dr["DVH"].ToString() ?? string.Empty
                                         };
                                     }
                                 }
                             }
+                            if (prod == null) throw new InvalidOperationException("Un producto de la orden ya no existe; se revierte la recepción.");
+                            if (prod.DVH != calcularDVH(prod)) throw new InvalidOperationException("La integridad del producto requiere revisión administrativa.");
                             if (prod != null)
                             {
-                                prod.StockActual += item.CantidadAprobada;
+                                prod.StockActual = checked(prod.StockActual + item.CantidadAprobada);
                                 if (item.CostoUnitario > 0)
                                     prod.CostoCompra = item.CostoUnitario;
                                 prod.DVH = calcularDVH(prod);
@@ -510,7 +580,8 @@ namespace DAL
                             }
                         }
                         orden.Estado = "Recibida";
-                        orden.FechaRecepcion = DateTime.Now;
+                        var ahora = DateTime.Now;
+                        orden.FechaRecepcion = new DateTime(ahora.Year, ahora.Month, ahora.Day, ahora.Hour, ahora.Minute, ahora.Second);
                         orden.DVH = calcularDVH(orden);
                         string sqlUpdOrd = "UPDATE OrdenReabastecimiento SET Estado = @estado, FechaRecepcion = @fechaRec, DVH = @dvh WHERE NroOrden = @nro";
                         using (SqlCommand cmdUpdOrd = new SqlCommand(sqlUpdOrd, cx, tx))
@@ -521,11 +592,12 @@ namespace DAL
                             cmdUpdOrd.Parameters.AddWithValue("@nro", orden.NroOrden);
                             cmdUpdOrd.ExecuteNonQuery();
                         }
-                        tx.Commit();
+                        IntegridadTransaccionalDAL.ActualizarDVV(unidad, "Producto", "OrdenReabastecimiento");
+                        RegistrarEvento(unidad, receptor, $"Orden de reabastecimiento #{nroOrden:D5} recibida; stock actualizado.", "ALTA");
+                        unidad.Confirmar();
                     }
                     catch
                     {
-                        tx.Rollback();
                         throw;
                     }
                 }
@@ -535,16 +607,16 @@ namespace DAL
         public List<OrdenReabastecimientoBE> ConsultarOrdenesReabastecimiento()
         {
             List<OrdenReabastecimientoBE> lista = new List<OrdenReabastecimientoBE>();
-            using (SqlConnection cx = ConexionDAL.Instancia.ObtenerConexion())
+            using (var acceso = new AccesoSeguridadDAL(unidadLectura))
             {
-                cx.Open();
+                SqlConnection cx = acceso.Conexion;
                 string sql = @"SELECT o.NroOrden, o.FechaGeneracion, o.FechaRecepcion, o.MetodoPrediccion,
                                       o.HorizonteDias, o.Estado, o.CostoTotalOrden, o.Observaciones,
                                       o.ID_Usuario, o.DVH, u.Nombre AS AdminNombre
                                FROM OrdenReabastecimiento o
                                INNER JOIN Usuario u ON o.ID_Usuario = u.ID
                                ORDER BY o.FechaGeneracion DESC, o.NroOrden DESC";
-                using (SqlCommand cmd = new SqlCommand(sql, cx))
+                using (SqlCommand cmd = new SqlCommand(sql, cx, unidadLectura?.Transaccion))
                 using (SqlDataReader dr = cmd.ExecuteReader())
                 {
                     while (dr.Read())
@@ -585,7 +657,7 @@ namespace DAL
                            INNER JOIN Producto p ON d.CodigoProducto = p.CodigoProducto
                            WHERE d.NroOrden = @nro
                            ORDER BY d.ID_DetalleOrden ASC";
-            using (SqlCommand cmd = new SqlCommand(sql, cx))
+            using (SqlCommand cmd = new SqlCommand(sql, cx, unidadLectura?.Transaccion))
             {
                 cmd.Parameters.AddWithValue("@nro", nroOrden);
                 using (SqlDataReader dr = cmd.ExecuteReader())
@@ -615,14 +687,14 @@ namespace DAL
         public List<OrdenReabastecimientoBE> LeerTodasLasOrdenes()
         {
             List<OrdenReabastecimientoBE> lista = new List<OrdenReabastecimientoBE>();
-            using (SqlConnection cx = ConexionDAL.Instancia.ObtenerConexion())
+            using (var acceso = new AccesoSeguridadDAL(unidadLectura))
             {
-                cx.Open();
+                SqlConnection cx = acceso.Conexion;
                 string sql = @"SELECT NroOrden, FechaGeneracion, FechaRecepcion, MetodoPrediccion,
                                       HorizonteDias, Estado, CostoTotalOrden, Observaciones, ID_Usuario, DVH
                                FROM OrdenReabastecimiento
                                ORDER BY NroOrden ASC";
-                using (SqlCommand cmd = new SqlCommand(sql, cx))
+                using (SqlCommand cmd = new SqlCommand(sql, cx, unidadLectura?.Transaccion))
                 using (SqlDataReader dr = cmd.ExecuteReader())
                 {
                     while (dr.Read())
@@ -651,10 +723,10 @@ namespace DAL
         public List<string> ObtenerTodosLosDVHOrdenes()
         {
             List<string> lista = new List<string>();
-            using (SqlConnection cx = ConexionDAL.Instancia.ObtenerConexion())
+            using (var acceso = new AccesoSeguridadDAL(unidadLectura))
             {
-                cx.Open();
-                using (SqlCommand cmd = new SqlCommand("SELECT DVH FROM OrdenReabastecimiento ORDER BY NroOrden ASC", cx))
+                SqlConnection cx = acceso.Conexion;
+                using (SqlCommand cmd = new SqlCommand("SELECT DVH FROM OrdenReabastecimiento ORDER BY NroOrden ASC", cx, unidadLectura?.Transaccion))
                 using (SqlDataReader dr = cmd.ExecuteReader())
                 {
                     while (dr.Read())

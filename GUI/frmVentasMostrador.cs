@@ -166,7 +166,7 @@ namespace GUI
             RefrescarBannerSocio();
             AplicarFiltroCatalogo();
             RefrescarGrillaCarrito();
-            TraducirColumnasHistorial();
+            PoblarGrillaHistorialVentas();
         }
 
         private void RefrescarBannerSocio()
@@ -227,14 +227,22 @@ namespace GUI
                     _objetivoNutricionalSocio = string.Empty;
                     _resumenSinergiaSocio = string.Empty;
                     RefrescarBannerSocio();
-                    MessageBox.Show("No se encontró ningún socio registrado con el DNI ingresado.", "Socio no encontrado", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    MessageBox.Show(
+                        T("msgSocioNoEncontrado", "No se encontró ningún socio registrado con el DNI ingresado."),
+                        T("titSocioNoEncontrado", "Socio no encontrado"),
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Warning);
                     return;
                 }
                 if (!socio.EstadoActivo)
                 {
                     _socioActual = null;
                     RefrescarBannerSocio();
-                    MessageBox.Show("El socio ingresado se encuentra dado de baja / inactivo en el padrón.", "Socio Inactivo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    MessageBox.Show(
+                        T("msgSocioInactivo", "El socio ingresado se encuentra dado de baja / inactivo en el padrón."),
+                        T("titSocioInactivo", "Socio Inactivo"),
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Warning);
                     return;
                 }
                 _socioActual = socio;
@@ -246,7 +254,7 @@ namespace GUI
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message, "Atención", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show(T(ex.Message, ex.Message), T("titAtencion", "Atención"), MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
         }
 
@@ -272,6 +280,20 @@ namespace GUI
             if (categoriaOriginal.Equals("Hidratación y Bebidas", StringComparison.OrdinalIgnoreCase))
                 return T("catHidratacion", "Hidratación y Bebidas");
             return categoriaOriginal;
+        }
+
+        private string TraducirMetodoPago(string metodoOriginal)
+        {
+            if (string.IsNullOrWhiteSpace(metodoOriginal)) return string.Empty;
+            if (metodoOriginal.Equals("Efectivo", StringComparison.OrdinalIgnoreCase))
+                return TRec("metodoEfectivo", "Efectivo");
+            if (metodoOriginal.Equals("Transferencia", StringComparison.OrdinalIgnoreCase))
+                return TRec("metodoTransferencia", "Transferencia");
+            if (metodoOriginal.Equals("Tarjeta de Débito", StringComparison.OrdinalIgnoreCase))
+                return TRec("metodoDebito", "Tarjeta de Débito");
+            if (metodoOriginal.Equals("Tarjeta de Crédito", StringComparison.OrdinalIgnoreCase))
+                return TRec("metodoCredito", "Tarjeta de Crédito");
+            return metodoOriginal;
         }
 
         private void AplicarFiltroCatalogo()
@@ -407,7 +429,11 @@ namespace GUI
         {
             if (!(cmbProductoSelect.SelectedItem is ProductoBE prod))
             {
-                MessageBox.Show("Seleccione un producto válido del catálogo.", "Atención", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show(
+                    T("msgSeleccioneProducto", "Seleccione un producto válido del catálogo."),
+                    T("titAtencion", "Atención"),
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
                 return;
             }
             int cantSolicitada = (int)nudCantidadVenta.Value;
@@ -415,9 +441,12 @@ namespace GUI
             if (cantSolicitada + cantYaEnCarrito > prod.StockActual)
             {
                 MessageBox.Show(
-                    $"Stock físico insuficiente para '{prod.Nombre}'.\r\n" +
-                    $"Disponible en inventario: {prod.StockActual} u. | Ya en carrito: {cantYaEnCarrito} u.",
-                    "Control de Inventario",
+                    string.Format(
+                        T("msgStockInsuficiente", "Stock físico insuficiente para '{0}'.\r\nDisponible en inventario: {1} u. | Ya en carrito: {2} u."),
+                        prod.Nombre,
+                        prod.StockActual,
+                        cantYaEnCarrito),
+                    T("titControlInventario", "Control de Inventario"),
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Warning);
                 return;
@@ -490,69 +519,73 @@ namespace GUI
             lblTotalCarritoValor.Text = T("lblTotalPrefijo", "TOTAL: $ ") + total.ToString("N2");
         }
 
+        private bool confirmandoVenta;
+
         private void btnConfirmarVentaProd_Click(object sender, EventArgs e)
         {
+            if (confirmandoVenta) return;
+            confirmandoVenta = true;
+            btnConfirmarVentaProd.Enabled = false;
+            VentaProductoBE ventaConfirmada = null;
             try
             {
                 if (_socioActual == null && !string.IsNullOrWhiteSpace(txtDNISocio.Text))
-                {
                     btnVerificarSocio_Click(sender, e);
-                }
-                if (_socioActual == null)
-                    throw new Exception("Debe ingresar y verificar el DNI del socio comprador antes de confirmar la venta.");
-                if (_carrito.Count == 0)
-                    throw new Exception("El carrito de compra está vacío. Agregue al menos un artículo.");
-                string metodoPago = cmbMetodoPagoVenta.SelectedValue != null
-                    ? cmbMetodoPagoVenta.SelectedValue.ToString()
-                    : "Efectivo";
-                string dniComprador = _socioActual.DNI;
-                VentaProductoBE nuevaVenta = new VentaProductoBE
+                if (_socioActual == null) throw new Exception("Debe verificar el socio antes de confirmar la venta.");
+                if (_carrito.Count == 0) throw new Exception("El carrito de compra está vacío.");
+                bool emitir = chkEmitirComprobante.Checked;
+                var venta = new VentaProductoBE
                 {
-                    Fecha = DateTime.Now,
-                    Socio = _socioActual,
+                    Fecha = DateTime.Now, Socio = _socioActual,
                     Vendedor = SessionManager.Instancia.UsuarioActual,
-                    MetodoPago = metodoPago,
+                    MetodoPago = cmbMetodoPagoVenta.SelectedValue?.ToString() ?? "Efectivo",
                     Detalles = _carrito.Select(d => new DetalleVentaProductoBE
                     {
-                        CodigoProducto = d.CodigoProducto,
-                        CodigoSKU = d.CodigoSKU,
-                        NombreProducto = d.NombreProducto,
-                        Categoria = d.Categoria,
-                        Cantidad = d.Cantidad,
-                        PrecioUnitario = d.PrecioUnitario,
-                        CostoUnitario = d.CostoUnitario,
-                        Subtotal = d.Subtotal
+                        CodigoProducto = d.CodigoProducto, CodigoSKU = d.CodigoSKU,
+                        NombreProducto = d.NombreProducto, Categoria = d.Categoria,
+                        Cantidad = d.Cantidad, PrecioUnitario = d.PrecioUnitario,
+                        CostoUnitario = d.CostoUnitario, Subtotal = d.Subtotal
                     }).ToList()
                 };
-                _mercadoBLL.RegistrarVentaMostrador(nuevaVenta);
-                MessageBox.Show(
-                    $"Venta #{nuevaVenta.NroVenta:D5} registrada exitosamente.\r\n" +
-                    $"Total cobrado: $ {nuevaVenta.MontoTotal:N2} ({metodoPago}).\r\n" +
-                    $"El inventario físico fue actualizado.",
-                    "Venta Registrada",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Information);
-                if (chkEmitirComprobante.Checked)
-                {
-                    using (SaveFileDialog sfd = new SaveFileDialog())
-                    {
-                        sfd.Filter = "Documento PDF (*.pdf)|*.pdf";
-                        sfd.Title = "Guardar Comprobante Oficial de Venta";
-                        sfd.FileName = $"Venta_UAIFIT_{nuevaVenta.NroVenta:D6}_DNI_{dniComprador}.pdf";
-                        if (sfd.ShowDialog() == DialogResult.OK)
-                        {
-                            PdfCorporativoHelper.GenerarComprobanteVentaProductoPDF(sfd.FileName, nuevaVenta, true);
-                        }
-                    }
-                }
+                _mercadoBLL.RegistrarVentaMostrador(venta);
+                ventaConfirmada = venta;
+                // Finalizar primero el estado comercial. Un PDF o una consulta
+                // posterior no pueden dejar el mismo carrito listo para cobrar.
+                _carrito.Clear();
+                _socioActual = null;
                 LimpiarFormularioVentaCompleto();
                 dtpHistHasta.Value = DateTime.Today;
                 CargarHistorialVentas();
+                MessageBox.Show($"Venta #{venta.NroVenta:D6} registrada. Total: $ {venta.MontoTotal:N2}.",
+                    "Venta registrada", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                if (emitir)
+                {
+                    try
+                    {
+                        using var sfd = new SaveFileDialog
+                        {
+                            Filter = "Documento PDF (*.pdf)|*.pdf",
+                            FileName = $"Venta_UAIFIT_{venta.NroVenta:D6}.pdf"
+                        };
+                        if (sfd.ShowDialog(this) == DialogResult.OK)
+                            PdfCorporativoHelper.GenerarComprobanteVentaProductoPDF(sfd.FileName, venta, true);
+                    }
+                    catch (Exception ex)
+                    {
+                        InstaladorBLL.RegistrarLog("Venta confirmada; fallo PDF: " + ex.Message);
+                        MessageBox.Show($"La venta #{venta.NroVenta:D6} ya está guardada. No vuelva a cobrarla. Puede reimprimirla desde el historial.\r\n\r\n{ex.Message}",
+                            "Comprobante pendiente", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    }
+                }
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message, "Error en Punto de Venta", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                if (ventaConfirmada != null)
+                    MessageBox.Show($"La venta #{ventaConfirmada.NroVenta:D6} está guardada; falló una tarea posterior. No vuelva a cobrarla.\r\n\r\n{ex.Message}",
+                        "Venta confirmada", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                else MessageBox.Show(ex.Message, "Venta no registrada", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
+            finally { confirmandoVenta = false; btnConfirmarVentaProd.Enabled = true; }
         }
 
         private void CargarHistorialVentas()
@@ -564,23 +597,29 @@ namespace GUI
                     dtpHistHasta.Value,
                     null,
                     "Todos");
-                dgvHistorialVentas.DataSource = null;
-                dgvHistorialVentas.DataSource = _historialCargado.Select(v => new
-                {
-                    v.NroVenta,
-                    v.Fecha,
-                    Socio = v.NombreSocio,
-                    DNI = v.DNISocio,
-                    Articulos = v.Detalles != null ? string.Join(", ", v.Detalles.Select(d => $"{d.Cantidad}x {d.CodigoSKU}")) : "-",
-                    Medio = v.MetodoPago,
-                    Total = v.MontoTotal
-                }).ToList();
-                TraducirColumnasHistorial();
+                PoblarGrillaHistorialVentas();
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message, "Atención", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show(T(ex.Message, ex.Message), T("titAtencion", "Atención"), MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
+        }
+
+        private void PoblarGrillaHistorialVentas()
+        {
+            if (_historialCargado == null) return;
+            dgvHistorialVentas.DataSource = null;
+            dgvHistorialVentas.DataSource = _historialCargado.Select(v => new
+            {
+                v.NroVenta,
+                v.Fecha,
+                Socio = v.NombreSocio,
+                DNI = v.DNISocio,
+                Articulos = v.Detalles != null ? string.Join(", ", v.Detalles.Select(d => $"{d.Cantidad}x {d.CodigoSKU}")) : "-",
+                Medio = TraducirMetodoPago(v.MetodoPago),
+                Total = v.MontoTotal
+            }).ToList();
+            TraducirColumnasHistorial();
         }
 
         private void TraducirColumnasHistorial()
@@ -615,7 +654,11 @@ namespace GUI
             {
                 if (dgvHistorialVentas.CurrentRow == null || _historialCargado.Count == 0)
                 {
-                    MessageBox.Show("Seleccione una operación de la grilla de historial para emitir su comprobante en PDF.", "Atención", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    MessageBox.Show(
+                        T("msgSeleccioneVentaHist", "Seleccione una operación de la grilla de historial para emitir su comprobante en PDF."),
+                        T("titAtencion", "Atención"),
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Warning);
                     return;
                 }
                 int nroVenta = Convert.ToInt32(dgvHistorialVentas.CurrentRow.Cells["NroVenta"].Value);
@@ -623,8 +666,8 @@ namespace GUI
                 if (ventaSel == null) return;
                 using (SaveFileDialog sfd = new SaveFileDialog())
                 {
-                    sfd.Filter = "Documento PDF (*.pdf)|*.pdf";
-                    sfd.Title = "Reimprimir Comprobante de Venta en PDF";
+                    sfd.Filter = T("filtroPDF", "Documento PDF (*.pdf)|*.pdf");
+                    sfd.Title = T("titReimprimirPDF", "Reimprimir Comprobante de Venta en PDF");
                     sfd.FileName = $"Venta_UAIFIT_{ventaSel.NroVenta:D6}_DNI_{ventaSel.DNISocio}.pdf";
                     if (sfd.ShowDialog() == DialogResult.OK)
                     {
@@ -634,7 +677,7 @@ namespace GUI
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(T(ex.Message, ex.Message), T("titError", "Error"), MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 

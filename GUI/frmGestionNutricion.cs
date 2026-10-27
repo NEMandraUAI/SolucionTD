@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -28,6 +28,7 @@ namespace GUI
             return _traducciones != null && _traducciones.ContainsKey(clave) ? _traducciones[clave] : textoPorDefecto;
         }
         private SocioBE _socioActual;
+        private TurnoBE? _turnoAtendidoSeleccionado;
         private EvaluacionBiometricaBE _biometriaActual = new EvaluacionBiometricaBE();
         private List<PuntoEvolucionBE> _serieEvolucion = new List<PuntoEvolucionBE>();
         private bool _cargandoControles = false;
@@ -43,6 +44,8 @@ namespace GUI
 
         private void frmGestionNutricion_Load(object sender, EventArgs e)
         {
+            try
+            {
             _cargandoControles = true;
             typeof(Panel).InvokeMember("DoubleBuffered",
                 BindingFlags.SetProperty | BindingFlags.Instance | BindingFlags.NonPublic,
@@ -54,6 +57,17 @@ namespace GUI
             _cargandoControles = false;
             ActualizarCalculosBiometricosEnVivo();
             pnlGraficoNutricion.Invalidate();
+            }
+            catch (Exception ex) { MostrarErrorConsulta(ex); }
+            finally { _cargandoControles=false; }
+        }
+
+        private void MostrarErrorConsulta(Exception ex)
+        {
+            InstaladorBLL.RegistrarLog("Error de consulta nutricional: " + ex.Message);
+            BloquearCamposPlan(true);
+            MessageBox.Show("No se pudo completar la consulta. Vuelva a abrir la pantalla cuando se restablezca la conexión.\r\n" + ex.Message,
+                "Consulta no disponible", MessageBoxButtons.OK, MessageBoxIcon.Warning);
         }
 
         private void CargarCombosBiometricos()
@@ -140,6 +154,7 @@ namespace GUI
         {
             if (e.RowIndex >= 0 && dgvAgendaHoy.Rows[e.RowIndex].DataBoundItem is TurnoBE turno)
             {
+                _turnoAtendidoSeleccionado = turno;
                 if (!string.IsNullOrWhiteSpace(turno.DNISocio))
                 {
                     txtDNISocio.Text = turno.DNISocio;
@@ -350,6 +365,7 @@ namespace GUI
 
         private void btnAsignarPlan_Click(object sender, EventArgs e)
         {
+            bool guardado = false;
             try
             {
                 if (_socioActual == null) throw new Exception("Primero debe buscar y cargar un socio.");
@@ -367,13 +383,19 @@ namespace GUI
                     ID_Nutricionista = SessionManager.Instancia.UsuarioActual.ID
                 };
                 nuevoPlan.SincronizarBiometriaAJson();
-                _planBLL.AsignarPlan(nuevoPlan);
+                int? nroAtendido = _turnoAtendidoSeleccionado != null && _turnoAtendidoSeleccionado.ID_Socio == _socioActual.ID_Socio
+                    && _turnoAtendidoSeleccionado.Estado == "Pendiente" ? _turnoAtendidoSeleccionado.NroTurno : null;
+                _planBLL.AsignarPlan(nuevoPlan, nroAtendido);
+                guardado = true;
+                _turnoAtendidoSeleccionado = null;
+                BloquearCamposPlan(true);
                 MessageBox.Show(T("msgPlanGuardadoExito", "Plan nutricional y evaluación biométrica guardados correctamente."), T("titExito", "Éxito"), MessageBoxButtons.OK, MessageBoxIcon.Information);
                 CargarPlanesHistoricos();
+                CargarAgendaDelDia();
             }
             catch (Exception ex)
             {
-                MessageBox.Show(T(ex.Message, ex.Message), T("titError", "Error"), MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show(guardado ? "El plan quedó guardado; no se pudo actualizar la consulta posterior.\r\n" + ex.Message : T(ex.Message, ex.Message), T("titError", "Error"), MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
         }
 

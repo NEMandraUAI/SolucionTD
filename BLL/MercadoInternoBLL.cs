@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -82,7 +82,7 @@ namespace BLL
             return _productoDAL.LeerTodos();
         }
 
-        public void GuardarProducto(ProductoBE prod)
+        public void GuardarProducto(ProductoBE prod, int? stockOriginal = null)
         {
             UsuarioBE actual = SessionManager.Instancia.UsuarioActual;
             if (actual == null || (!actual.TienePermiso("ANALIZAR_DEMANDA") && !actual.TienePermiso("GESTION_ROLES")))
@@ -110,22 +110,7 @@ namespace BLL
             var existentePorSku = _productoDAL.ObtenerPorSKU(prod.CodigoSKU);
             if (existentePorSku != null && existentePorSku.CodigoProducto != prod.CodigoProducto)
                 throw new Exception($"Ya existe otro producto registrado con el código SKU '{prod.CodigoSKU}'.");
-            if (prod.CodigoProducto == 0)
-            {
-                prod.DVH = string.Empty;
-                _productoDAL.InsertarProducto(prod);
-                prod.DVH = DVManager.CalcularDVH(prod);
-                _productoDAL.ActualizarDVH(prod.CodigoProducto, prod.DVH);
-                RecalcularDVVProducto();
-                _registroBLL.RegistrarEvento($"Alta de producto en catálogo: [{prod.CodigoSKU}] {prod.Nombre}", actual, "ALTA");
-            }
-            else
-            {
-                prod.DVH = DVManager.CalcularDVH(prod);
-                _productoDAL.ActualizarProducto(prod);
-                RecalcularDVVProducto();
-                _registroBLL.RegistrarEvento($"Actualización de producto en catálogo: [{prod.CodigoSKU}] {prod.Nombre}", actual, "INFO");
-            }
+            _productoDAL.GuardarProductoTransaccional(prod, entidad => DVManager.CalcularDVH(entidad), actual, stockOriginal);
         }
 
         public bool ObtenerPerfilAfinidadSocio(
@@ -234,12 +219,6 @@ namespace BLL
             venta.MontoTotal = Math.Round(venta.Detalles.Sum(d => d.Cantidad * d.PrecioUnitario), 2);
             venta.CostoTotalEstimado = Math.Round(venta.Detalles.Sum(d => d.Cantidad * d.CostoUnitario), 2);
             _mercadoDAL.RegistrarVentaProductoTransaccional(venta, entidad => DVManager.CalcularDVH(entidad));
-            RecalcularDVVProducto();
-            RecalcularDVVVentaProducto();
-            _registroBLL.RegistrarEvento(
-                $"Venta de mostrador registrada (Op. #{venta.NroVenta:D5}) por $ {venta.MontoTotal:N2} al socio DNI {venta.Socio.DNI}.",
-                vendedor,
-                "INFO");
         }
 
         public List<VentaProductoBE> ConsultarHistorialVentas(DateTime desde, DateTime hasta, string dniSocio, string metodoPago)
@@ -641,11 +620,6 @@ namespace BLL
             }
             orden.CostoTotalOrden = Math.Round(orden.Detalles.Sum(d => d.SubtotalCosto), 2);
             _mercadoDAL.RegistrarOrdenReabastecimientoTransaccional(orden, entidad => DVManager.CalcularDVH(entidad));
-            RecalcularDVVOrdenReabastecimiento();
-            _registroBLL.RegistrarEvento(
-                $"Orden de Reabastecimiento #{orden.NroOrden:D5} emitida ({orden.Detalles.Count} ítem(s) por $ {orden.CostoTotalOrden:N2}).",
-                admin,
-                "ALTA");
             return orden;
         }
 
@@ -654,13 +628,7 @@ namespace BLL
             UsuarioBE actual = SessionManager.Instancia.UsuarioActual;
             if (actual == null || (!actual.TienePermiso("ANALIZAR_DEMANDA") && !actual.TienePermiso("CONSULTAR_STOCK") && !actual.TienePermiso("GESTION_ROLES")))
                 throw new Exception("Operación denegada: No posee permisos para recepcionar órdenes de reabastecimiento.");
-            _mercadoDAL.RecibirOrdenReabastecimientoTransaccional(nroOrden, entidad => DVManager.CalcularDVH(entidad));
-            RecalcularDVVProducto();
-            RecalcularDVVOrdenReabastecimiento();
-            _registroBLL.RegistrarEvento(
-                $"Orden de Reabastecimiento #{nroOrden:D5} marcada como RECIBIDA. Stock actualizado en inventario local.",
-                actual,
-                "ALTA");
+            _mercadoDAL.RecibirOrdenReabastecimientoTransaccional(nroOrden, entidad => DVManager.CalcularDVH(entidad), actual);
         }
 
         public List<OrdenReabastecimientoBE> ListarOrdenesReabastecimiento()
@@ -883,23 +851,23 @@ namespace BLL
 
         public void RecalcularDVVProducto()
         {
-            var dvhs = _productoDAL.ObtenerTodosLosDVH();
-            string dvv = DVManager.CalcularDVV(dvhs);
-            _integridadDAL.ActualizarDVV("Producto", dvv);
+            using var unidad = new UnidadTrabajoSeguridadDAL();
+            IntegridadTransaccionalDAL.ActualizarDVV(unidad, "Producto");
+            unidad.Confirmar();
         }
 
         public void RecalcularDVVVentaProducto()
         {
-            var dvhs = _mercadoDAL.ObtenerTodosLosDVHVentas();
-            string dvv = DVManager.CalcularDVV(dvhs);
-            _integridadDAL.ActualizarDVV("VentaProducto", dvv);
+            using var unidad = new UnidadTrabajoSeguridadDAL();
+            IntegridadTransaccionalDAL.ActualizarDVV(unidad, "VentaProducto");
+            unidad.Confirmar();
         }
 
         public void RecalcularDVVOrdenReabastecimiento()
         {
-            var dvhs = _mercadoDAL.ObtenerTodosLosDVHOrdenes();
-            string dvv = DVManager.CalcularDVV(dvhs);
-            _integridadDAL.ActualizarDVV("OrdenReabastecimiento", dvv);
+            using var unidad = new UnidadTrabajoSeguridadDAL();
+            IntegridadTransaccionalDAL.ActualizarDVV(unidad, "OrdenReabastecimiento");
+            unidad.Confirmar();
         }
     }
 }

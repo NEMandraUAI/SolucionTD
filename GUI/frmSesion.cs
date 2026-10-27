@@ -609,6 +609,8 @@ namespace GUI
                     {
                         this.Show();
                         this.BringToFront();
+                        CargarDatosDashboard();
+                        EjecutarFiltro();
                     }
                 };
                 this.Hide();

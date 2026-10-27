@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
@@ -274,10 +274,13 @@ namespace GUI
                 SocioBE socioCompleto = comp.Socio != null && !string.IsNullOrWhiteSpace(comp.Socio.DNI)
                     ? (socioBLL.ConsultarSocio(comp.Socio.DNI) ?? comp.Socio)
                     : comp.Socio;
-                var planes = planBLL.ListarPlanes();
-                PlanSuscripcionBE planAsociado = planes.FirstOrDefault(p => p.Precio == comp.MontoTotal)
-                    ?? (socioCompleto?.PlanAsociado != null ? planes.FirstOrDefault(p => p.CodigoPlan == socioCompleto.PlanAsociado.CodigoPlan) : null)
-                    ?? new PlanSuscripcionBE { CodigoPlan = 1, Nombre = "Plan de Suscripcion", Precio = comp.MontoTotal, DuracionDias = 30 };
+                PlanSuscripcionBE planAsociado = new PlanSuscripcionBE
+                {
+                    CodigoPlan = comp.CodigoPlanVendido ?? 0,
+                    Nombre = comp.NombrePlanVendido ?? "Plan histórico no disponible",
+                    Precio = comp.MontoTotal,
+                    DuracionDias = comp.DuracionDiasVendida ?? 0
+                };
                 using (SaveFileDialog sfd = new SaveFileDialog())
                 {
                     sfd.Filter = "Documento PDF (*.pdf)|*.pdf";

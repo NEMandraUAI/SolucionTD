@@ -14,10 +14,12 @@ namespace Seguridad
         private List<IObserverIdioma> observadores = new List<IObserverIdioma>();
         public IdiomaBE IdiomaActual { get; private set; }
         public IReadOnlyList<Exception> UltimosErroresNotificacion { get; private set; } = Array.Empty<Exception>();
+
         private GestorIdioma()
         {
             IdiomaActual = new IdiomaBE { ID = 1, Nombre = "Español" };
         }
+
         public static GestorIdioma Instancia
         {
             get
@@ -30,22 +32,26 @@ namespace Seguridad
                 }
             }
         }
+
         public void CambiarIdioma(IdiomaBE nuevoIdioma)
         {
             ArgumentNullException.ThrowIfNull(nuevoIdioma);
             IdiomaActual = nuevoIdioma;
             Notificar();
         }
+
         public void Suscribir(IObserverIdioma observador)
         {
             if (!observadores.Contains(observador))
                 observadores.Add(observador);
         }
+
         public void Desuscribir(IObserverIdioma observador)
         {
             if (observadores.Contains(observador))
                 observadores.Remove(observador);
         }
+
         public void Notificar()
         {
             var copiaObservadores = new List<IObserverIdioma>(observadores);

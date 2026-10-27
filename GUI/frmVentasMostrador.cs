@@ -11,6 +11,7 @@ namespace GUI
 {
     public partial class frmVentasMostrador : Form, IObserverIdioma
     {
+        private bool confirmandoVenta;
         private readonly MercadoInternoBLL _mercadoBLL = new MercadoInternoBLL();
         private readonly IdiomaBLL _idiomaBLL = new IdiomaBLL();
         private Dictionary<string, string> _traducciones = new Dictionary<string, string>();
@@ -73,7 +74,7 @@ namespace GUI
         private void AplicarPermisosRol()
         {
             UsuarioBE u = SessionManager.Instancia.UsuarioActual;
-            bool puedeVender = u != null && (u.TienePermiso("VENDER_PRODUCTO") || u.TienePermiso("GESTION_ROLES"));
+            bool puedeVender = u != null && u.TienePermiso("VENDER_PRODUCTO");
             btnAgregarCarrito.Enabled = puedeVender;
             btnQuitarCarrito.Enabled = puedeVender;
             btnConfirmarVentaProd.Enabled = puedeVender;
@@ -519,8 +520,6 @@ namespace GUI
             lblTotalCarritoValor.Text = T("lblTotalPrefijo", "TOTAL: $ ") + total.ToString("N2");
         }
 
-        private bool confirmandoVenta;
-
         private void btnConfirmarVentaProd_Click(object sender, EventArgs e)
         {
             if (confirmandoVenta) return;
@@ -549,8 +548,6 @@ namespace GUI
                 };
                 _mercadoBLL.RegistrarVentaMostrador(venta);
                 ventaConfirmada = venta;
-                // Finalizar primero el estado comercial. Un PDF o una consulta
-                // posterior no pueden dejar el mismo carrito listo para cobrar.
                 _carrito.Clear();
                 _socioActual = null;
                 LimpiarFormularioVentaCompleto();

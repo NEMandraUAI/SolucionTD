@@ -18,7 +18,7 @@ namespace GUI
 {
     public partial class frmMenu : Form, IObserverIdioma
     {
-        private MdiClient mdiClient;
+        private bool recuperacionEnCurso;
         private Dictionary<string, string> _traducciones = new Dictionary<string, string>();
         private Form formularioActivo = null;
 
@@ -51,8 +51,6 @@ namespace GUI
             formHijo.Show();
         }
 
-        private bool recuperacionEnCurso;
-
         private void FrmMenu_KeyDown(object sender, KeyEventArgs e)
         {
             if (!e.Control || !e.Alt || e.KeyCode != Keys.R) return;
@@ -74,7 +72,6 @@ namespace GUI
                 {
                     InstaladorBLL.RegistrarLog("Diagnóstico previo a recuperación administrativa: " + ex.Message);
                 }
-
                 var opcion = MessageBox.Show(
                     "Recuperación administrativa. Antes de continuar debe conservar un respaldo de la base actual.\r\n\r\n" +
                     "SÍ: recalcular los dígitos después de una intervención técnica legítima. Esta acción acepta los datos actuales como válidos.\r\n" +
@@ -82,7 +79,6 @@ namespace GUI
                     "Cancelar: salir sin cambios.",
                     "Recuperación administrativa", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Warning);
                 if (opcion == DialogResult.Cancel) return;
-
                 string? rutaBackup = null;
                 if (opcion == DialogResult.No)
                 {
@@ -100,7 +96,6 @@ namespace GUI
                     : "¿Confirma la sustitución de la base configurada por el backup seleccionado? Los cambios posteriores al backup se perderán.";
                 if (MessageBox.Show(confirmacion, "Confirmar recuperación", MessageBoxButtons.YesNo,
                     MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2) != DialogResult.Yes) return;
-
                 SessionManager.Instancia.Cerrar();
                 CerrarTodosLosFormularios();
                 AplicarPermisosUI();
@@ -245,6 +240,29 @@ namespace GUI
             }
         }
 
+        private void RecargarComboIdiomas()
+        {
+            IdiomaBLL idiomaBLL = new IdiomaBLL();
+            var idiomas = idiomaBLL.ObtenerIdiomas();
+            int idActual = GestorIdioma.Instancia.IdiomaActual?.ID ?? 1;
+            if (!idiomas.Any(i => i.ID == idActual))
+            {
+                var espanol = idiomas.FirstOrDefault(i => i.ID == 1) ?? idiomas.FirstOrDefault();
+                if (espanol != null)
+                {
+                    idActual = espanol.ID;
+                    GestorIdioma.Instancia.CambiarIdioma(espanol);
+                }
+            }
+            cmbIdiomas.SelectedIndexChanged -= cmbIdiomas_SelectedIndexChanged;
+            cmbIdiomas.DataSource = null;
+            cmbIdiomas.DisplayMember = "Nombre";
+            cmbIdiomas.ValueMember = "ID";
+            cmbIdiomas.DataSource = idiomas;
+            cmbIdiomas.SelectedValue = idActual;
+            cmbIdiomas.SelectedIndexChanged += cmbIdiomas_SelectedIndexChanged;
+        }
+
         private void cmbIdiomas_SelectedIndexChanged(object sender, EventArgs e)
         {
             if (cmbIdiomas.SelectedItem is IdiomaBE idiomaSeleccionado)
@@ -253,13 +271,27 @@ namespace GUI
                 {
                     return;
                 }
-                GestorIdioma.Instancia.CambiarIdioma(idiomaSeleccionado);
-                if (SessionManager.Instancia.UsuarioActual != null)
+                try
                 {
-                    UsuarioBE usuarioActual = SessionManager.Instancia.UsuarioActual;
-                    usuarioActual.Idioma = idiomaSeleccionado;
-                    UsuarioBLL usuarioBLL = new UsuarioBLL();
-                    usuarioBLL.ActualizarIdiomaUsuario(usuarioActual.ID, idiomaSeleccionado.ID);
+                    IdiomaBLL idiomaBLL = new IdiomaBLL();
+                    if (!idiomaBLL.ObtenerIdiomas().Any(i => i.ID == idiomaSeleccionado.ID))
+                    {
+                        RecargarComboIdiomas();
+                        return;
+                    }
+                    GestorIdioma.Instancia.CambiarIdioma(idiomaSeleccionado);
+                    if (SessionManager.Instancia.UsuarioActual != null)
+                    {
+                        UsuarioBE usuarioActual = SessionManager.Instancia.UsuarioActual;
+                        usuarioActual.Idioma = idiomaSeleccionado;
+                        UsuarioBLL usuarioBLL = new UsuarioBLL();
+                        usuarioBLL.ActualizarIdiomaUsuario(usuarioActual.ID, idiomaSeleccionado.ID);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    InstaladorBLL.RegistrarLog("Aviso al cambiar idioma: " + ex.Message);
+                    RecargarComboIdiomas();
                 }
             }
         }
@@ -306,11 +338,8 @@ namespace GUI
                                       usuario.TienePermiso("CONSULTAR_AGENDA") ||
                                       usuario.TienePermiso("CONSULTAR_PLANES_NUT");
                 btnMenuNutricion.Visible = puedeNutricion;
-                bool puedeVentasMostrador = usuario.TienePermiso("VENDER_PRODUCTO") ||
-                                            usuario.TienePermiso("CONSULTAR_STOCK") ||
-                                            usuario.TienePermiso("GESTION_ROLES");
-                bool puedePrediccionDemanda = usuario.TienePermiso("ANALIZAR_DEMANDA") ||
-                                              usuario.TienePermiso("GESTION_ROLES");
+                bool puedeVentasMostrador = usuario.TienePermiso("VENDER_PRODUCTO");
+                bool puedePrediccionDemanda = usuario.TienePermiso("ANALIZAR_DEMANDA");
                 btnSubVentasMostrador.Visible = puedeVentasMostrador;
                 btnSubPrediccionDemanda.Visible = puedePrediccionDemanda;
                 btnMenuComercial.Visible = puedeVentasMostrador || puedePrediccionDemanda;
@@ -397,14 +426,8 @@ namespace GUI
         private void btnNuevoIdioma_Click(object sender, EventArgs e)
         {
             frmGestionIdiomas frm = new frmGestionIdiomas();
-            frm.FormClosed += (s, args) =>
-            {
-                IdiomaBLL idiomaBLL = new IdiomaBLL();
-                cmbIdiomas.SelectedIndexChanged -= cmbIdiomas_SelectedIndexChanged;
-                cmbIdiomas.DataSource = idiomaBLL.ObtenerIdiomas();
-                cmbIdiomas.SelectedValue = GestorIdioma.Instancia.IdiomaActual.ID;
-                cmbIdiomas.SelectedIndexChanged += cmbIdiomas_SelectedIndexChanged;
-            };
+            frm.IdiomasActualizados += (s, args) => RecargarComboIdiomas();
+            frm.FormClosed += (s, args) => RecargarComboIdiomas();
             OcultarSubMenus();
             AbrirFormularioHijo(frm);
         }

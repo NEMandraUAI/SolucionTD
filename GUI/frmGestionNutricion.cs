@@ -23,15 +23,16 @@ namespace GUI
         private SocioBLL _socioBLL;
         private PlanNutricionalBLL _planBLL;
         private Dictionary<string, string> _traducciones;
-        private string T(string clave, string textoPorDefecto)
-        {
-            return _traducciones != null && _traducciones.ContainsKey(clave) ? _traducciones[clave] : textoPorDefecto;
-        }
         private SocioBE _socioActual;
         private TurnoBE? _turnoAtendidoSeleccionado;
         private EvaluacionBiometricaBE _biometriaActual = new EvaluacionBiometricaBE();
         private List<PuntoEvolucionBE> _serieEvolucion = new List<PuntoEvolucionBE>();
         private bool _cargandoControles = false;
+
+        private string T(string clave, string textoPorDefecto)
+        {
+            return _traducciones != null && _traducciones.ContainsKey(clave) ? _traducciones[clave] : textoPorDefecto;
+        }
 
         public frmGestionNutricion()
         {
@@ -46,17 +47,15 @@ namespace GUI
         {
             try
             {
-            _cargandoControles = true;
-            typeof(Panel).InvokeMember("DoubleBuffered",
-                BindingFlags.SetProperty | BindingFlags.Instance | BindingFlags.NonPublic,
-                null, pnlGraficoNutricion, new object[] { true });
-            CargarCombosBiometricos();
-            ActualizarIdioma(GestorIdioma.Instancia.IdiomaActual);
-            CargarAgendaDelDia();
-            BloquearCamposPlan(true);
-            _cargandoControles = false;
-            ActualizarCalculosBiometricosEnVivo();
-            pnlGraficoNutricion.Invalidate();
+                _cargandoControles = true;
+                typeof(Panel).InvokeMember("DoubleBuffered", BindingFlags.SetProperty | BindingFlags.Instance | BindingFlags.NonPublic, null, pnlGraficoNutricion, new object[] { true });
+                CargarCombosBiometricos();
+                ActualizarIdioma(GestorIdioma.Instancia.IdiomaActual);
+                CargarAgendaDelDia();
+                BloquearCamposPlan(true);
+                _cargandoControles = false;
+                ActualizarCalculosBiometricosEnVivo();
+                pnlGraficoNutricion.Invalidate();
             }
             catch (Exception ex) { MostrarErrorConsulta(ex); }
             finally { _cargandoControles=false; }
@@ -388,7 +387,7 @@ namespace GUI
                 _planBLL.AsignarPlan(nuevoPlan, nroAtendido);
                 guardado = true;
                 _turnoAtendidoSeleccionado = null;
-                BloquearCamposPlan(true);
+                BloquearCamposPlan(false);
                 MessageBox.Show(T("msgPlanGuardadoExito", "Plan nutricional y evaluación biométrica guardados correctamente."), T("titExito", "Éxito"), MessageBoxButtons.OK, MessageBoxIcon.Information);
                 CargarPlanesHistoricos();
                 CargarAgendaDelDia();

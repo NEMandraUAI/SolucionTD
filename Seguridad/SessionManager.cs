@@ -25,16 +25,20 @@ namespace Seguridad
                 }
             }
         }
+
         private SessionManager() { }
+
         public void Iniciar(UsuarioBE usuario)
         {
             UsuarioActual = usuario;
         }
+
         public void Cerrar()
         {
             lock (candado) UsuarioActual = null;
             NotificarPermisosActualizados();
         }
+
         public void ActualizarUsuarioEnSesion(UsuarioBE usuarioActualizado)
         {
             lock (candado)
@@ -44,6 +48,7 @@ namespace Seguridad
             }
             NotificarPermisosActualizados();
         }
+
         private void NotificarPermisosActualizados()
         {
             var observadores = PermisosActualizados;

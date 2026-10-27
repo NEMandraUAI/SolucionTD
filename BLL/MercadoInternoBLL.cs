@@ -196,7 +196,7 @@ namespace BLL
         public void RegistrarVentaMostrador(VentaProductoBE venta)
         {
             UsuarioBE vendedor = SessionManager.Instancia.UsuarioActual;
-            if (vendedor == null || (!vendedor.TienePermiso("VENDER_PRODUCTO") && !vendedor.TienePermiso("GESTION_ROLES")))
+            if (vendedor == null || !vendedor.TienePermiso("VENDER_PRODUCTO"))
                 throw new Exception("Operación denegada: No posee el permiso requerido (VENDER_PRODUCTO) para registrar ventas en el Mercado Interno.");
             if (venta == null || venta.Socio == null || venta.Socio.ID_Socio <= 0)
                 throw new Exception("Debe verificar y asociar un socio válido antes de confirmar la venta.");

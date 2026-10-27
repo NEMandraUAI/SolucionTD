@@ -14,6 +14,7 @@ namespace BE.Excepciones
             TipoError = tipo;
         }
     }
+
     public enum TipoErrorSeguridad
     {
         CredencialesInvalidas,

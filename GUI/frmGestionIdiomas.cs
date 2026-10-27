@@ -16,10 +16,6 @@ namespace GUI
     public partial class frmGestionIdiomas : Form, IObserverIdioma
     {
         private Dictionary<string, string> _traducciones = new Dictionary<string, string>();
-        private string T(string clave, string textoPorDefecto)
-        {
-            return _traducciones != null && _traducciones.ContainsKey(clave) ? _traducciones[clave] : textoPorDefecto;
-        }
         private Label lblSeleccion;
         private ComboBox cmbIdiomasAdmin;
         private Button btnNuevo;
@@ -36,6 +32,13 @@ namespace GUI
         private Button btnLimpiarFiltros;
         private List<TraduccionBE> _traduccionesActuales = new List<TraduccionBE>();
         private IdiomaBLL idiomaBLL = new IdiomaBLL();
+        public event EventHandler? IdiomasActualizados;
+
+        private string T(string clave, string textoPorDefecto)
+        {
+            return _traducciones != null && _traducciones.ContainsKey(clave) ? _traducciones[clave] : textoPorDefecto;
+        }
+
         public frmGestionIdiomas()
         {
             InitializeComponent();
@@ -44,6 +47,7 @@ namespace GUI
             this.Load += frmGestionIdiomas_Load;
             this.FormClosing += frmGestionIdiomas_FormClosing;
         }
+
         private void ConfigurarUI()
         {
             this.Name = "frmGestionIdiomas";
@@ -92,11 +96,13 @@ namespace GUI
             this.Controls.Add(dgvTraducciones);
             this.Controls.Add(btnGuardar);
         }
+
         private void frmGestionIdiomas_Load(object sender, EventArgs e)
         {
             CargarIdiomas();
             ActualizarIdioma(GestorIdioma.Instancia.IdiomaActual);
         }
+
         public void ActualizarIdioma(IdiomaBE idioma)
         {
             if (idioma == null) return;
@@ -121,6 +127,7 @@ namespace GUI
                 cmbFiltroFormulario.SelectedIndexChanged += CmbFiltroFormulario_SelectedIndexChanged;
             }
         }
+
         private void TraducirControlesRecursivo(Control.ControlCollection controles, Dictionary<string, string> traducciones)
         {
             foreach (Control control in controles)
@@ -145,21 +152,39 @@ namespace GUI
                 }
             }
         }
+
         private void CargarIdiomas()
         {
+            int? idPrevio = (cmbIdiomasAdmin.SelectedItem is IdiomaBE prev) ? prev.ID : null;
+            var listaIdiomas = idiomaBLL.ObtenerIdiomas();
             cmbIdiomasAdmin.SelectedIndexChanged -= CmbIdiomasAdmin_SelectedIndexChanged;
-            cmbIdiomasAdmin.DataSource = idiomaBLL.ObtenerIdiomas();
+            cmbIdiomasAdmin.DataSource = null;
             cmbIdiomasAdmin.DisplayMember = "Nombre";
             cmbIdiomasAdmin.ValueMember = "ID";
+            cmbIdiomasAdmin.DataSource = listaIdiomas;
+            if (idPrevio.HasValue && listaIdiomas.Any(i => i.ID == idPrevio.Value))
+            {
+                cmbIdiomasAdmin.SelectedValue = idPrevio.Value;
+            }
+            else if (listaIdiomas.Count > 0)
+            {
+                cmbIdiomasAdmin.SelectedIndex = 0;
+            }
             cmbIdiomasAdmin.SelectedIndexChanged += CmbIdiomasAdmin_SelectedIndexChanged;
-            if (cmbIdiomasAdmin.Items.Count > 0)
-                CargarTraducciones((int)cmbIdiomasAdmin.SelectedValue);
+            if (cmbIdiomasAdmin.SelectedItem is IdiomaBE idiomaSel)
+            {
+                CargarTraducciones(idiomaSel.ID);
+            }
         }
+
         private void CmbIdiomasAdmin_SelectedIndexChanged(object sender, EventArgs e)
         {
-            if (cmbIdiomasAdmin.SelectedValue != null)
-                CargarTraducciones((int)cmbIdiomasAdmin.SelectedValue);
+            if (cmbIdiomasAdmin.SelectedItem is IdiomaBE idiomaSel)
+            {
+                CargarTraducciones(idiomaSel.ID);
+            }
         }
+
         private void CargarTraducciones(int idIdioma)
         {
             _traduccionesActuales = idiomaBLL.ObtenerTodasLasTraducciones(idIdioma);
@@ -178,6 +203,7 @@ namespace GUI
             txtFiltroTexto.TextChanged += TxtFiltroTexto_TextChanged;
             AplicarFiltros();
         }
+
         private void BtnNuevo_Click(object sender, EventArgs e)
         {
             string nuevoNombre = Microsoft.VisualBasic.Interaction.InputBox(T("msgInputNuevo", "Ingrese el nombre del nuevo idioma:"), T("titInputNuevo", "Nuevo Idioma"));
@@ -187,8 +213,9 @@ namespace GUI
                 try
                 {
                     idiomaBLL.AgregarNuevoIdioma(nuevoNombre, sufijo);
-                    MessageBox.Show(T("msgNuevoExito", "Idioma generado con las etiquetas base. Ahora puede editarlas en la grilla."), T("titExito", "Éxito"), MessageBoxButtons.OK, MessageBoxIcon.Information);
                     CargarIdiomas();
+                    IdiomasActualizados?.Invoke(this, EventArgs.Empty);
+                    MessageBox.Show(T("msgNuevoExito", "Idioma generado con las etiquetas base. Ahora puede editarlas en la grilla."), T("titExito", "Éxito"), MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
                 catch (Exception ex)
                 {
@@ -196,23 +223,25 @@ namespace GUI
                 }
             }
         }
+
         private void BtnEliminar_Click(object sender, EventArgs e)
         {
-            if (cmbIdiomasAdmin.SelectedValue != null)
+            if (cmbIdiomasAdmin.SelectedItem is IdiomaBE idiomaSeleccionado)
             {
-                int idIdioma = (int)cmbIdiomasAdmin.SelectedValue;
+                int idIdioma = idiomaSeleccionado.ID;
                 if (MessageBox.Show(T("msgConfirmarEliminar", "¿Eliminar este idioma? Los usuarios que lo tengan volverán a Español."), T("titConfirmarEliminar", "Advertencia"), MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes)
                 {
                     try
                     {
                         idiomaBLL.EliminarIdioma(idIdioma);
-                        MessageBox.Show(T("msgEliminarExito", "Idioma eliminado correctamente."), T("titExito", "Éxito"), MessageBoxButtons.OK, MessageBoxIcon.Information);
-                        if (GestorIdioma.Instancia.IdiomaActual.ID == idIdioma)
+                        if (GestorIdioma.Instancia.IdiomaActual != null && GestorIdioma.Instancia.IdiomaActual.ID == idIdioma)
                         {
                             var espanol = idiomaBLL.ObtenerIdiomas().FirstOrDefault(i => i.ID == 1);
                             if (espanol != null) GestorIdioma.Instancia.CambiarIdioma(espanol);
                         }
                         CargarIdiomas();
+                        IdiomasActualizados?.Invoke(this, EventArgs.Empty);
+                        MessageBox.Show(T("msgEliminarExito", "Idioma eliminado correctamente."), T("titExito", "Éxito"), MessageBoxButtons.OK, MessageBoxIcon.Information);
                     }
                     catch (Exception ex)
                     {
@@ -221,6 +250,7 @@ namespace GUI
                 }
             }
         }
+
         private void BtnGuardar_Click(object sender, EventArgs e)
         {
             dgvTraducciones.EndEdit();
@@ -230,7 +260,7 @@ namespace GUI
                 {
                     idiomaBLL.ActualizarTraducciones(_traduccionesActuales);
                     MessageBox.Show(T("msgGuardarExito", "Las traducciones se han guardado exitosamente."), T("titGuardarExito", "Guardado"), MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    if (cmbIdiomasAdmin.SelectedValue != null && (int)cmbIdiomasAdmin.SelectedValue == GestorIdioma.Instancia.IdiomaActual.ID)
+                    if (cmbIdiomasAdmin.SelectedItem is IdiomaBE idiomaSel && idiomaSel.ID == GestorIdioma.Instancia.IdiomaActual.ID)
                     {
                         GestorIdioma.Instancia.Notificar();
                     }
@@ -241,10 +271,12 @@ namespace GUI
                 }
             }
         }
+
         private void frmGestionIdiomas_FormClosing(object sender, FormClosingEventArgs e)
         {
             GestorIdioma.Instancia.Desuscribir(this);
         }
+
         private void AplicarFiltros()
         {
             if (_traduccionesActuales == null) return;
@@ -267,14 +299,17 @@ namespace GUI
             }
             dgvTraducciones.DataSource = new BindingList<TraduccionBE>(traduccionesFiltradas.ToList());
         }
+
         private void CmbFiltroFormulario_SelectedIndexChanged(object sender, EventArgs e)
         {
             AplicarFiltros();
         }
+
         private void TxtFiltroTexto_TextChanged(object sender, EventArgs e)
         {
             AplicarFiltros();
         }
+
         private void BtnLimpiarFiltros_Click(object sender, EventArgs e)
         {
             cmbFiltroFormulario.SelectedIndex = 0;

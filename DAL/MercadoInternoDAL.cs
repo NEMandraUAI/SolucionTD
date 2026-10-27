@@ -9,7 +9,9 @@ namespace DAL
     public class MercadoInternoDAL
     {
         private readonly UnidadTrabajoSeguridadDAL? unidadLectura;
+
         public MercadoInternoDAL(UnidadTrabajoSeguridadDAL? unidad = null) { unidadLectura = unidad; }
+
         internal static UsuarioBE ValidarAutor(UnidadTrabajoSeguridadDAL unidad, int idUsuario, params string[] codigosPermitidos)
         {
             var usuario = new UsuarioDAL(unidad).ObtenerPorID(idUsuario);
@@ -40,7 +42,7 @@ namespace DAL
                 {
                     try
                     {
-                        var vendedor = ValidarAutor(unidad, venta.ID_UsuarioParaDVH, "VENDER_PRODUCTO", "GESTION_ROLES");
+                        var vendedor = ValidarAutor(unidad, venta.ID_UsuarioParaDVH, "VENDER_PRODUCTO");
                         IntegridadTransaccionalDAL.VerificarDVV(unidad, "Producto", "VentaProducto");
                         using (var socio = new SqlCommand("SELECT EstadoActivo FROM dbo.Socio WHERE ID_Socio=@id", cx, tx))
                         {

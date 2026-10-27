@@ -271,7 +271,7 @@ namespace BLL
                 Directory.CreateDirectory(carpeta);
             }
             if (string.IsNullOrWhiteSpace(carpeta)) throw new InvalidOperationException("No se pudo resolver la carpeta SQL de respaldo. Un administrador debe respaldar la base antes de actualizar.");
-            string archivo = carpeta.TrimEnd('\\', '/') + "\\" + b.InitialCatalog + "_antes_410_" + Guid.NewGuid().ToString("N") + ".bak";
+            string archivo = carpeta.TrimEnd('\\', '/') + "\\" + b.InitialCatalog + "_antes_500_" + Guid.NewGuid().ToString("N") + ".bak";
             using var backup = new SqlCommand($"BACKUP DATABASE [{NombreBase(b.InitialCatalog)}] TO DISK=@ruta WITH COPY_ONLY,CHECKSUM,NAME=N'UAI-FIT;Schema=1'; RESTORE VERIFYONLY FROM DISK=@ruta WITH CHECKSUM;", cn) { CommandTimeout = 180 };
             backup.Parameters.AddWithValue("@ruta", archivo);
             backup.ExecuteNonQuery();

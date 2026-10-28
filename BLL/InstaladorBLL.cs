@@ -449,8 +449,28 @@ namespace BLL
 
         private static bool ProbarConexion(string connectionString, int timeout)
         {
-            try { using var cn = new SqlConnection(new SqlConnectionStringBuilder(connectionString) { ConnectTimeout = timeout }.ConnectionString); cn.Open(); return true; }
-            catch (SqlException ex) { RegistrarLog("Prueba SQL fallida (" + ex.Number + "): " + ex.Message); return false; }
+            string connStr = new SqlConnectionStringBuilder(connectionString) { ConnectTimeout = timeout }.ConnectionString;
+            int intentosMax = timeout >= 8 ? 4 : 1;
+            for (int i = 0; i < intentosMax; i++)
+            {
+                try
+                {
+                    using var cn = new SqlConnection(connStr);
+                    cn.Open();
+                    return true;
+                }
+                catch (SqlException ex)
+                {
+                    RegistrarLog("Prueba SQL fallida (" + ex.Number + "): " + ex.Message);
+                    if (i + 1 < intentosMax && (ex.Number == 4060 || ex.Number == 233 || ex.Number == -2))
+                    {
+                        Thread.Sleep(1200);
+                        continue;
+                    }
+                    return false;
+                }
+            }
+            return false;
         }
 
         private static void IniciarLocalDb(string servidor)

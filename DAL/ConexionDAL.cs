@@ -48,11 +48,21 @@ namespace DAL
                     string localConn = File.ReadAllText(RutaConfigUsuario, Encoding.UTF8).Trim();
                     if (string.IsNullOrWhiteSpace(localConn) || string.Equals(localConn, PlaceholderConfig, StringComparison.OrdinalIgnoreCase))
                         throw new InvalidOperationException("El archivo de conexión está vacío o no fue configurado.");
-                    if (!string.IsNullOrWhiteSpace(localConn) &&
-                        !string.Equals(localConn, PlaceholderConfig, StringComparison.OrdinalIgnoreCase))
+                    if (!System.Text.RegularExpressions.Regex.IsMatch(localConn, @"(^|;)\s*(Data\s+Source|Server)\s*=", System.Text.RegularExpressions.RegexOptions.IgnoreCase) ||
+                        !System.Text.RegularExpressions.Regex.IsMatch(localConn, @"(^|;)\s*(Initial\s+Catalog|Database)\s*=", System.Text.RegularExpressions.RegexOptions.IgnoreCase))
                     {
-                        return new SqlConnectionStringBuilder(localConn).ConnectionString;
+                        throw new InvalidOperationException("El archivo de configuración no contiene los parámetros obligatorios de servidor y base de datos.");
                     }
+                    var builder = new SqlConnectionStringBuilder(localConn);
+                    string[] basesSistema = { "master", "model", "msdb", "tempdb" };
+                    if (string.IsNullOrWhiteSpace(builder.DataSource) ||
+                        string.IsNullOrWhiteSpace(builder.InitialCatalog) ||
+                        Array.Exists(basesSistema, b => b.Equals(builder.InitialCatalog.Trim(), StringComparison.OrdinalIgnoreCase)) ||
+                        !builder.IntegratedSecurity)
+                    {
+                        throw new InvalidOperationException("Los parámetros de conexión SQL en el archivo de configuración son incompletos o inválidos.");
+                    }
+                    return builder.ConnectionString;
                 }
             }
             catch (Exception ex)

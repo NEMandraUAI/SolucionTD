@@ -2,7 +2,7 @@
 
 Plataforma transaccional de escritorio desarrollada en **C# (.NET 9.0 Windows Forms)** y **Microsoft SQL Server / LocalDB**, diseñada para la administración integral de un establecimiento deportivo, consultorio nutricional y mercado interno.
 
-📥 **[Descargar Instalador Oficial v5.0.0 (UAI-FIT_Setup_5.0.0_x64.exe)]([PEGAR_AQUI_EL_ENLACE_DEL_RELEASE])**
+📥 **[Descargar Instalador Oficial v5.0.0 (UAI-FIT_Setup_5.0.0_x64.exe)](https://github.com/NEMandraUAI/SolucionTD/releases/tag/v5.0.0)**
 
 ---
 
